@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from http.server import ThreadingHTTPServer
 
 from unittest.mock import patch
-from server import Store, make_handler, recommend, RateLimited
+from server import Store, make_handler, recommend, RateLimited, BoundedServer
 
 
 class PrivateCloudTests(unittest.TestCase):
@@ -72,10 +72,109 @@ class PrivateCloudTests(unittest.TestCase):
                 recommend({"taste": "warm jazz"}, {"models": ["primary", "fallback"], "proxy_url": "https://proxy.invalid/v1", "proxy_key": "dummy"})
             self.assertEqual(call.call_count, 1)
 
+    def test_proxy_failure_never_falls_back_to_a_heavier_model(self):
+        with patch("server.urllib.request.OpenerDirector.open", side_effect=TimeoutError) as call:
+            self.assertIsNone(recommend({"taste": "warm jazz"}, {
+                "models": ["gpt-6.1-sol", "gpt-6-luna"],
+                "proxy_url": "https://proxy.invalid/v1", "proxy_key": "dummy"}))
+            self.assertEqual(call.call_count, 1)
+            self.assertEqual(json.loads(call.call_args.args[0].data)["model"], "gpt-6-luna")
+
     def test_unexpected_secret_fields_are_rejected_before_committing(self):
         document = {"version": 1, "records": {"taste": {"stamp": {"counter": 1, "device": "a" * 32}, "value": {"kind": "taste", "text": "jazz", "spotify_token": "dummy"}}}}
         self.assertEqual(self.request("PUT", document, 0)[0], 400)
         self.assertEqual(self.store.read()["revision"], 0)
+
+
+    def test_feedback_alone_recommends_without_a_taste_prompt_or_uris(self):
+        captured = []
+        feedback = [{"kind": "feedback", "uri": "spotify:track:" + "a" * 22, "title": "Prayer", "artist": "Prospa", "rating": "love"},
+                    {"kind": "feedback", "uri": "spotify:track:" + "b" * 22, "title": "Saving Up", "artist": "Dom Dolla", "rating": "less"}]
+        answer = {"suggestions": [{"title": "Prayer", "artist": "prospa", "reason": "repeat"},
+                                  {"title": "Imagination", "artist": "Gorgon City", "reason": "warm vocal house"},
+                                  {"title": "imagination", "artist": "GORGON CITY", "reason": "duplicate"}]}
+        result = self.recommend_with({"taste": "  ", "feedback": feedback, "exploration": "adventurous"}, answer, captured)
+        self.assertEqual(captured[0]["model"], "gpt-6-luna")
+        self.assertEqual(result["model"], "gpt-6-luna")
+        self.assertEqual([s["title"] for s in result["suggestions"]], ["Imagination"])
+        prompt = json.dumps(captured[0]["messages"])
+        self.assertNotIn("spotify:track", prompt)
+        self.assertIn("does not know", prompt)
+        self.assertIn("primary credited artist", prompt)
+        self.assertEqual(json.loads(captured[0]["messages"][1]["content"])["feedback"][0], {"title": "Prayer", "artist": "Prospa", "rating": "love"})
+
+    def test_empty_input_and_unknown_exploration_are_rejected_before_ai(self):
+        config = {"models": ["primary"], "proxy_url": "https://proxy.invalid/v1", "proxy_key": "dummy"}
+        with patch("server.urllib.request.OpenerDirector.open") as call:
+            for body in [{"taste": ""}, {"taste": " ", "feedback": []}, {}, {"taste": "jazz", "exploration": "wild"},
+                         {"taste": "jazz", "exploration": ["balanced"]}, {"taste": "jazz", "exploration": "Balanced"}]:
+                with self.assertRaises(ValueError):
+                    recommend(body, config)
+            self.assertEqual(call.call_count, 0)
+        captured = []
+        self.recommend_with({"taste": "jazz"}, {"suggestions": [{"title": "So What", "artist": "Miles Davis", "reason": "modal"}]}, captured)
+        self.assertIn("about half close matches", captured[0]["messages"][0]["content"])
+
+    def test_server_busy_and_model_rate_limits_report_distinct_codes(self):
+        started, release = threading.Event(), threading.Event()
+
+        def slow(body, config):
+            started.set()
+            release.wait(5)
+            raise RateLimited
+
+        server = BoundedServer(("127.0.0.1", 0), make_handler(self.store, "dummy-private-test-token", {"models": []}))
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        url = f"http://127.0.0.1:{server.server_port}/v1/recommendations"
+
+        def post(results):
+            request = urllib.request.Request(url, data=b'{"taste": "jazz"}', method="POST",
+                headers={"Authorization": "Bearer dummy-private-test-token", "Content-Type": "application/json"})
+            try:
+                with urllib.request.urlopen(request) as response:
+                    results.append((response.status, json.load(response)))
+            except urllib.error.HTTPError as error:
+                with error:
+                    results.append((error.code, json.load(error)))
+
+        try:
+            with patch("server.recommend", side_effect=slow):
+                first = []
+                worker = threading.Thread(target=post, args=(first,))
+                worker.start()
+                self.assertTrue(started.wait(5))
+                second = []
+                post(second)
+                release.set()
+                worker.join(5)
+            self.assertEqual(second[0][0], 429)
+            self.assertEqual(second[0][1]["code"], "busy")
+            self.assertEqual(first[0][0], 429)
+            self.assertEqual(first[0][1]["code"], "rate_limited")
+        finally:
+            release.set()
+            server.shutdown()
+            server.server_close()
+            thread.join()
+
+    def recommend_with(self, body, answer, captured):
+        class Reply:
+            def __init__(self, request):
+                captured.append(json.loads(request.data))
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self, limit):
+                return json.dumps({"choices": [{"message": {"content": json.dumps(answer)}}]}).encode()
+
+        with patch("server.urllib.request.OpenerDirector.open", side_effect=lambda request, timeout: Reply(request)):
+            # An old deployment/configuration cannot restore an expensive model.
+            return recommend(body, {"models": ["gpt-6.1-sol", "gpt-6-luna"], "proxy_url": "https://proxy.invalid/v1", "proxy_key": "dummy"})
 
 
 if __name__ == "__main__":

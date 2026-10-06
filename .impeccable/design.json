@@ -1,0 +1,667 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-06T21:53:17.462109Z",
+  "title": "Design System: Spotiurge native desktop",
+  "extensions": {
+    "colorMeta": {
+      "dark-window": {
+        "role": "neutral",
+        "displayName": "Dark Window",
+        "tonalRamp": [
+          "oklch(15% 0.00699 258.37)",
+          "oklch(25% 0.00699 258.37)",
+          "oklch(35% 0.00699 258.37)",
+          "oklch(45% 0.00699 258.37)",
+          "oklch(55% 0.00699 258.37)",
+          "oklch(65% 0.00699 258.37)",
+          "oklch(80% 0.00699 258.37)",
+          "oklch(95% 0.00699 258.37)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-panel": {
+        "role": "neutral",
+        "displayName": "Dark Panel",
+        "tonalRamp": [
+          "oklch(15% 0.00920 255.62)",
+          "oklch(25% 0.00920 255.62)",
+          "oklch(35% 0.00920 255.62)",
+          "oklch(45% 0.00920 255.62)",
+          "oklch(55% 0.00920 255.62)",
+          "oklch(65% 0.00920 255.62)",
+          "oklch(80% 0.00920 255.62)",
+          "oklch(95% 0.00920 255.62)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Dark Surface",
+        "tonalRamp": [
+          "oklch(15% 0.01288 258.37)",
+          "oklch(25% 0.01288 258.37)",
+          "oklch(35% 0.01288 258.37)",
+          "oklch(45% 0.01288 258.37)",
+          "oklch(55% 0.01288 258.37)",
+          "oklch(65% 0.01288 258.37)",
+          "oklch(80% 0.01288 258.37)",
+          "oklch(95% 0.01288 258.37)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-surface-hover": {
+        "role": "neutral",
+        "displayName": "Dark Surface Hover",
+        "tonalRamp": [
+          "oklch(15% 0.01631 259.79)",
+          "oklch(25% 0.01631 259.79)",
+          "oklch(35% 0.01631 259.79)",
+          "oklch(45% 0.01631 259.79)",
+          "oklch(55% 0.01631 259.79)",
+          "oklch(65% 0.01631 259.79)",
+          "oklch(80% 0.01631 259.79)",
+          "oklch(95% 0.01631 259.79)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-surface-active": {
+        "role": "neutral",
+        "displayName": "Dark Surface Active",
+        "tonalRamp": [
+          "oklch(15% 0.01960 260.65)",
+          "oklch(25% 0.01960 260.65)",
+          "oklch(35% 0.01960 260.65)",
+          "oklch(45% 0.01960 260.65)",
+          "oklch(55% 0.01960 260.65)",
+          "oklch(65% 0.01960 260.65)",
+          "oklch(80% 0.01960 260.65)",
+          "oklch(95% 0.01960 260.65)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-outline": {
+        "role": "neutral",
+        "displayName": "Dark Outline",
+        "tonalRamp": [
+          "oklch(15% 0.01670 255.65)",
+          "oklch(25% 0.01670 255.65)",
+          "oklch(35% 0.01670 255.65)",
+          "oklch(45% 0.01670 255.65)",
+          "oklch(55% 0.01670 255.65)",
+          "oklch(65% 0.01670 255.65)",
+          "oklch(80% 0.01670 255.65)",
+          "oklch(95% 0.01670 255.65)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-text": {
+        "role": "neutral",
+        "displayName": "Dark Text",
+        "tonalRamp": [
+          "oklch(15% 0.00343 247.86)",
+          "oklch(25% 0.00343 247.86)",
+          "oklch(35% 0.00343 247.86)",
+          "oklch(45% 0.00343 247.86)",
+          "oklch(55% 0.00343 247.86)",
+          "oklch(65% 0.00343 247.86)",
+          "oklch(80% 0.00343 247.86)",
+          "oklch(95% 0.00343 247.86)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-secondary": {
+        "role": "neutral",
+        "displayName": "Dark Secondary",
+        "tonalRamp": [
+          "oklch(15% 0.01814 256.30)",
+          "oklch(25% 0.01814 256.30)",
+          "oklch(35% 0.01814 256.30)",
+          "oklch(45% 0.01814 256.30)",
+          "oklch(55% 0.01814 256.30)",
+          "oklch(65% 0.01814 256.30)",
+          "oklch(80% 0.01814 256.30)",
+          "oklch(95% 0.01814 256.30)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-dim": {
+        "role": "neutral",
+        "displayName": "Dark Dim",
+        "tonalRamp": [
+          "oklch(15% 0.02283 257.50)",
+          "oklch(25% 0.02283 257.50)",
+          "oklch(35% 0.02283 257.50)",
+          "oklch(45% 0.02283 257.50)",
+          "oklch(55% 0.02283 257.50)",
+          "oklch(65% 0.02283 257.50)",
+          "oklch(80% 0.02283 257.50)",
+          "oklch(95% 0.02283 257.50)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-accent": {
+        "role": "primary",
+        "displayName": "Dark Accent",
+        "tonalRamp": [
+          "oklch(15% 0.21236 148.67)",
+          "oklch(25% 0.21236 148.67)",
+          "oklch(35% 0.21236 148.67)",
+          "oklch(45% 0.21236 148.67)",
+          "oklch(55% 0.21236 148.67)",
+          "oklch(65% 0.21236 148.67)",
+          "oklch(80% 0.21236 148.67)",
+          "oklch(95% 0.21236 148.67)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-accent-hover": {
+        "role": "primary",
+        "displayName": "Dark Accent Hover",
+        "tonalRamp": [
+          "oklch(15% 0.20438 150.48)",
+          "oklch(25% 0.20438 150.48)",
+          "oklch(35% 0.20438 150.48)",
+          "oklch(45% 0.20438 150.48)",
+          "oklch(55% 0.20438 150.48)",
+          "oklch(65% 0.20438 150.48)",
+          "oklch(80% 0.20438 150.48)",
+          "oklch(95% 0.20438 150.48)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-on-accent": {
+        "role": "neutral",
+        "displayName": "Dark On Accent",
+        "tonalRamp": [
+          "oklch(15% 0.01934 157.43)",
+          "oklch(25% 0.01934 157.43)",
+          "oklch(35% 0.01934 157.43)",
+          "oklch(45% 0.01934 157.43)",
+          "oklch(55% 0.01934 157.43)",
+          "oklch(65% 0.01934 157.43)",
+          "oklch(80% 0.01934 157.43)",
+          "oklch(95% 0.01934 157.43)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-warning": {
+        "role": "neutral",
+        "displayName": "Dark Warning",
+        "tonalRamp": [
+          "oklch(15% 0.12782 76.81)",
+          "oklch(25% 0.12782 76.81)",
+          "oklch(35% 0.12782 76.81)",
+          "oklch(45% 0.12782 76.81)",
+          "oklch(55% 0.12782 76.81)",
+          "oklch(65% 0.12782 76.81)",
+          "oklch(80% 0.12782 76.81)",
+          "oklch(95% 0.12782 76.81)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "dark-overlay": {
+        "role": "neutral",
+        "displayName": "Dark Overlay",
+        "tonalRamp": [
+          "oklch(15% 0.01490 256.80)",
+          "oklch(25% 0.01490 256.80)",
+          "oklch(35% 0.01490 256.80)",
+          "oklch(45% 0.01490 256.80)",
+          "oklch(55% 0.01490 256.80)",
+          "oklch(65% 0.01490 256.80)",
+          "oklch(80% 0.01490 256.80)",
+          "oklch(95% 0.01490 256.80)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-window": {
+        "role": "neutral",
+        "displayName": "Light Window",
+        "tonalRamp": [
+          "oklch(15% 0.00286 264.54)",
+          "oklch(25% 0.00286 264.54)",
+          "oklch(35% 0.00286 264.54)",
+          "oklch(45% 0.00286 264.54)",
+          "oklch(55% 0.00286 264.54)",
+          "oklch(65% 0.00286 264.54)",
+          "oklch(80% 0.00286 264.54)",
+          "oklch(95% 0.00286 264.54)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-panel": {
+        "role": "neutral",
+        "displayName": "Light Panel",
+        "tonalRamp": [
+          "oklch(15% 0.00000 0.00)",
+          "oklch(25% 0.00000 0.00)",
+          "oklch(35% 0.00000 0.00)",
+          "oklch(45% 0.00000 0.00)",
+          "oklch(55% 0.00000 0.00)",
+          "oklch(65% 0.00000 0.00)",
+          "oklch(80% 0.00000 0.00)",
+          "oklch(95% 0.00000 0.00)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-surface": {
+        "role": "neutral",
+        "displayName": "Light Surface",
+        "tonalRamp": [
+          "oklch(15% 0.00456 258.32)",
+          "oklch(25% 0.00456 258.32)",
+          "oklch(35% 0.00456 258.32)",
+          "oklch(45% 0.00456 258.32)",
+          "oklch(55% 0.00456 258.32)",
+          "oklch(65% 0.00456 258.32)",
+          "oklch(80% 0.00456 258.32)",
+          "oklch(95% 0.00456 258.32)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-surface-hover": {
+        "role": "neutral",
+        "displayName": "Light Surface Hover",
+        "tonalRamp": [
+          "oklch(15% 0.00750 260.73)",
+          "oklch(25% 0.00750 260.73)",
+          "oklch(35% 0.00750 260.73)",
+          "oklch(45% 0.00750 260.73)",
+          "oklch(55% 0.00750 260.73)",
+          "oklch(65% 0.00750 260.73)",
+          "oklch(80% 0.00750 260.73)",
+          "oklch(95% 0.00750 260.73)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-surface-active": {
+        "role": "neutral",
+        "displayName": "Light Surface Active",
+        "tonalRamp": [
+          "oklch(15% 0.00929 258.34)",
+          "oklch(25% 0.00929 258.34)",
+          "oklch(35% 0.00929 258.34)",
+          "oklch(45% 0.00929 258.34)",
+          "oklch(55% 0.00929 258.34)",
+          "oklch(65% 0.00929 258.34)",
+          "oklch(80% 0.00929 258.34)",
+          "oklch(95% 0.00929 258.34)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-outline": {
+        "role": "neutral",
+        "displayName": "Light Outline",
+        "tonalRamp": [
+          "oklch(15% 0.00807 253.86)",
+          "oklch(25% 0.00807 253.86)",
+          "oklch(35% 0.00807 253.86)",
+          "oklch(45% 0.00807 253.86)",
+          "oklch(55% 0.00807 253.86)",
+          "oklch(65% 0.00807 253.86)",
+          "oklch(80% 0.00807 253.86)",
+          "oklch(95% 0.00807 253.86)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-text": {
+        "role": "neutral",
+        "displayName": "Light Text",
+        "tonalRamp": [
+          "oklch(15% 0.00759 248.20)",
+          "oklch(25% 0.00759 248.20)",
+          "oklch(35% 0.00759 248.20)",
+          "oklch(45% 0.00759 248.20)",
+          "oklch(55% 0.00759 248.20)",
+          "oklch(65% 0.00759 248.20)",
+          "oklch(80% 0.00759 248.20)",
+          "oklch(95% 0.00759 248.20)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-secondary": {
+        "role": "neutral",
+        "displayName": "Light Secondary",
+        "tonalRamp": [
+          "oklch(15% 0.02050 256.35)",
+          "oklch(25% 0.02050 256.35)",
+          "oklch(35% 0.02050 256.35)",
+          "oklch(45% 0.02050 256.35)",
+          "oklch(55% 0.02050 256.35)",
+          "oklch(65% 0.02050 256.35)",
+          "oklch(80% 0.02050 256.35)",
+          "oklch(95% 0.02050 256.35)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-dim": {
+        "role": "neutral",
+        "displayName": "Light Dim",
+        "tonalRamp": [
+          "oklch(15% 0.01878 256.31)",
+          "oklch(25% 0.01878 256.31)",
+          "oklch(35% 0.01878 256.31)",
+          "oklch(45% 0.01878 256.31)",
+          "oklch(55% 0.01878 256.31)",
+          "oklch(65% 0.01878 256.31)",
+          "oklch(80% 0.01878 256.31)",
+          "oklch(95% 0.01878 256.31)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-accent": {
+        "role": "primary",
+        "displayName": "Light Accent",
+        "tonalRamp": [
+          "oklch(15% 0.17377 148.97)",
+          "oklch(25% 0.17377 148.97)",
+          "oklch(35% 0.17377 148.97)",
+          "oklch(45% 0.17377 148.97)",
+          "oklch(55% 0.17377 148.97)",
+          "oklch(65% 0.17377 148.97)",
+          "oklch(80% 0.17377 148.97)",
+          "oklch(95% 0.17377 148.97)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-accent-hover": {
+        "role": "primary",
+        "displayName": "Light Accent Hover",
+        "tonalRamp": [
+          "oklch(15% 0.15441 149.20)",
+          "oklch(25% 0.15441 149.20)",
+          "oklch(35% 0.15441 149.20)",
+          "oklch(45% 0.15441 149.20)",
+          "oklch(55% 0.15441 149.20)",
+          "oklch(65% 0.15441 149.20)",
+          "oklch(80% 0.15441 149.20)",
+          "oklch(95% 0.15441 149.20)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-on-accent": {
+        "role": "neutral",
+        "displayName": "Light On Accent",
+        "tonalRamp": [
+          "oklch(15% 0.00000 0.00)",
+          "oklch(25% 0.00000 0.00)",
+          "oklch(35% 0.00000 0.00)",
+          "oklch(45% 0.00000 0.00)",
+          "oklch(55% 0.00000 0.00)",
+          "oklch(65% 0.00000 0.00)",
+          "oklch(80% 0.00000 0.00)",
+          "oklch(95% 0.00000 0.00)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-warning": {
+        "role": "neutral",
+        "displayName": "Light Warning",
+        "tonalRamp": [
+          "oklch(15% 0.12919 72.19)",
+          "oklch(25% 0.12919 72.19)",
+          "oklch(35% 0.12919 72.19)",
+          "oklch(45% 0.12919 72.19)",
+          "oklch(55% 0.12919 72.19)",
+          "oklch(65% 0.12919 72.19)",
+          "oklch(80% 0.12919 72.19)",
+          "oklch(95% 0.12919 72.19)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      },
+      "light-overlay": {
+        "role": "neutral",
+        "displayName": "Light Overlay",
+        "tonalRamp": [
+          "oklch(15% 0.00000 0.00)",
+          "oklch(25% 0.00000 0.00)",
+          "oklch(35% 0.00000 0.00)",
+          "oklch(45% 0.00000 0.00)",
+          "oklch(55% 0.00000 0.00)",
+          "oklch(65% 0.00000 0.00)",
+          "oklch(80% 0.00000 0.00)",
+          "oklch(95% 0.00000 0.00)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Home workspace title; no separate display family."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Taste, mix and history headings."
+      },
+      "track-title": {
+        "displayName": "Track Title",
+        "purpose": "Inherited native track titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Taste input."
+      },
+      "secondary": {
+        "displayName": "Secondary",
+        "purpose": "Summaries and notices."
+      },
+      "detail": {
+        "displayName": "Detail",
+        "purpose": "Artists, reasons and history detail."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Pill actions."
+      },
+      "choice": {
+        "displayName": "Choice",
+        "purpose": "Exploration soft buttons."
+      },
+      "menu": {
+        "displayName": "Menu",
+        "purpose": "Shared popup commands."
+      }
+    },
+    "shadows": [
+      {
+        "name": "window-dark",
+        "value": "0 6px 24px rgba(0,0,0,0.5490196)",
+        "purpose": "Inherited theme window shadow; native blur maps illustratively to CSS."
+      },
+      {
+        "name": "window-light",
+        "value": "0 6px 24px rgba(0,0,0,0.1960784)",
+        "purpose": "Inherited theme window shadow; native blur maps illustratively to CSS."
+      },
+      {
+        "name": "popup-dark",
+        "value": "0 4px 16px rgba(0,0,0,0.5490196)",
+        "purpose": "Inherited generic popup shadow; native blur maps illustratively to CSS."
+      },
+      {
+        "name": "popup-light",
+        "value": "0 4px 16px rgba(0,0,0,0.1960784)",
+        "purpose": "Inherited generic popup shadow; native blur maps illustratively to CSS."
+      },
+      {
+        "name": "discovery-menu-dark",
+        "value": "0 6px 20px rgba(0,0,0,0.5490196)",
+        "purpose": "Shared widgets::menu_frame shadow; native blur maps illustratively to CSS."
+      },
+      {
+        "name": "discovery-menu-light",
+        "value": "0 6px 20px rgba(0,0,0,0.1960784)",
+        "purpose": "Shared widgets::menu_frame shadow; native blur maps illustratively to CSS."
+      }
+    ],
+    "motion": [
+      {
+        "name": "circle-hover",
+        "value": "painted radius × 1.05; immediate state change",
+        "purpose": "Inherited circle controls; layout rect does not grow."
+      },
+      {
+        "name": "icon-pressed",
+        "value": "icon size × 0.92; immediate state change",
+        "purpose": "Inherited frameless icon press."
+      },
+      {
+        "name": "busy-spinner",
+        "value": "1.2 turns/s; 33 ms repaint request while drawn",
+        "purpose": "Existing busy indicator; smoothness and reduced-motion behavior were not assessed."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "discovery-reason-column",
+        "value": "available content width > 920 logical points",
+        "purpose": "Reason is 30% width, clamped to 200–360 points; at or below threshold use a row tooltip."
+      }
+    ],
+    "nativeMaterial": {
+      "source": "src/ui/discovery.rs::show and glow_mesh",
+      "fillDark": "palette.surface.gamma_multiply(0.72)",
+      "fillLight": "palette.surface.gamma_multiply(0.80)",
+      "tintSource": "app.now_playing_tint().unwrap_or(palette.accent)",
+      "meshCenter": [
+        0.22,
+        0.18
+      ],
+      "meshCenterDark": "tint.gamma_multiply(0.16)",
+      "meshCenterLight": "tint.gamma_multiply(0.12)",
+      "meshEdges": "Color32::TRANSPARENT",
+      "paneShadow": "none",
+      "backdropBlur": "none"
+    },
+    "nativeFocus": {
+      "source": "src/theme.rs::focus_ring",
+      "stroke": "1 logical point, palette.accent",
+      "rect": "response.rect.expand(2.0), StrokeKind::Outside",
+      "cornerRadius": "4 logical points"
+    },
+    "previewScope": "Illustrative HTML/CSS native-component translations at unit zoom, not application code or pixel-matching evidence. Synthesized ramps are panel metadata only."
+  },
+  "components": [
+    {
+      "name": "Save taste (dark)",
+      "kind": "button",
+      "refersTo": "save-taste-dark",
+      "description": "Native taste-editor primary action. Light preserves the scoped black text fix.",
+      "html": "<button class=\"ds-save-dark\">Save taste</button>",
+      "css": ".ds-save-dark{position:relative;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:8px 18px;border:0;border-radius:calc(1lh / 2 + 8px);background:#1ed760;color:#0a140e} .ds-save-dark:hover{background:#3ce87a}.ds-save-dark:focus-visible{outline:none} .ds-save-dark:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #1ed760;border-radius:4px;pointer-events:none}"
+    },
+    {
+      "name": "Save taste (light)",
+      "kind": "button",
+      "refersTo": "save-taste-light",
+      "description": "Native taste-editor primary action. Light preserves the scoped black text fix.",
+      "html": "<button class=\"ds-save-light\">Save taste</button>",
+      "css": ".ds-save-light{position:relative;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:8px 18px;border:0;border-radius:calc(1lh / 2 + 8px);background:#15a64a;color:#000000} .ds-save-light:hover{background:#128f40}.ds-save-light:focus-visible{outline:none} .ds-save-light:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #15a64a;border-radius:4px;pointer-events:none}"
+    },
+    {
+      "name": "Outlined action",
+      "kind": "button",
+      "refersTo": "button-outline-dark",
+      "description": "Inherited secondary pill, with dim outline that changes to text color on hover.",
+      "html": "<button class=\"ds-outline\">Cancel</button>",
+      "css": ".ds-outline{position:relative;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:8px 18px;border:1px solid #6e7784;border-radius:calc(1lh / 2 + 8px);background:transparent;color:#f2f4f6} .ds-outline:hover{border-color:#f2f4f6}.ds-outline:focus-visible{outline:none} .ds-outline:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #1ed760;border-radius:4px;pointer-events:none}"
+    },
+    {
+      "name": "Exploration choice",
+      "kind": "chip",
+      "refersTo": "choice-dark",
+      "description": "Existing soft-button primitive; active choice inverts neutral colors.",
+      "html": "<button class=\"ds-choice\" aria-pressed=\"false\">Familiar</button><button class=\"ds-choice\" aria-pressed=\"true\">Balanced</button><button class=\"ds-choice\" aria-pressed=\"false\">Adventurous</button>",
+      "css": ".ds-choice{position:relative;font-family:Inter,sans-serif;font-size:13px;font-weight:500;padding:7px 12px;border:0;border-radius:calc(1lh / 2 + 7px);background:#1d2127;color:#f2f4f6} .ds-choice:hover{background:#262b33} .ds-choice[aria-pressed=\"true\"]{background:#f2f4f6;color:#0f1114}.ds-choice:focus-visible{outline:none} .ds-choice:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #1ed760;border-radius:4px;pointer-events:none}"
+    },
+    {
+      "name": "Taste input",
+      "kind": "input",
+      "refersTo": "taste-input-dark",
+      "description": "Three-row native multiline field; preview retains its source font and material.",
+      "html": "<textarea class=\"ds-taste\" rows=\"3\" aria-label=\"Your taste\" placeholder=\"Warm jazz, spacious electronics, a few surprises…\"></textarea>",
+      "css": ".ds-taste{font-family:Inter,sans-serif;font-size:15px;font-weight:400;width:100%;border:0;border-radius:6px;background:#1d2127;color:#f2f4f6;caret-color:#1ed760} .ds-taste:hover{background:#262b33} .ds-taste:focus-visible{outline:1px solid #1ed760;outline-offset:2px} .ds-taste::placeholder{color:#a9b1bc}"
+    },
+    {
+      "name": "Discovery pane",
+      "kind": "card",
+      "refersTo": "discovery-pane",
+      "description": "Preview approximates the static mesh with a gradient using the accent fallback; it is not live backdrop blur.",
+      "html": "<section class=\"ds-pane\"><h2 class=\"ds-pane-title\">For you</h2><p class=\"ds-pane-detail\">4 ready to play</p></section>",
+      "css": ".ds-pane{padding:18px 20px;border:1px solid #2a3038;border-radius:14px;background:radial-gradient(ellipse at 22% 18%,rgba(30,215,96,0.16),transparent),rgba(29,33,39,0.72);color:#f2f4f6} .ds-pane-title{font-family:Inter,sans-serif;font-size:26px;font-weight:700} .ds-pane-detail{font-family:Inter,sans-serif;font-size:13px;font-weight:400;color:#a9b1bc}"
+    },
+    {
+      "name": "Discovery options menu",
+      "kind": "nav",
+      "refersTo": "discovery-menu-dark",
+      "description": "Shared popup frame and commands; this is not a replacement sidebar.",
+      "html": "<nav class=\"ds-menu\" aria-label=\"More discovery options\"><button class=\"ds-menu-item\">Save this mix</button><button class=\"ds-menu-item\">Sync my devices</button><button class=\"ds-menu-item\">Tune taste</button></nav>",
+      "css": ".ds-menu{min-width:220px;padding:6px;border:1px solid #2a3038;border-radius:8px;background:#22272e;box-shadow:0 6px 20px rgba(0,0,0,0.5490196)} .ds-menu-item{position:relative;display:block;width:100%;height:28px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:#f2f4f6;font-family:Inter,sans-serif;font-size:13.5px;font-weight:400;text-align:left} .ds-menu-item:hover{background:#262b33}.ds-menu-item:focus-visible{outline:none} .ds-menu-item:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #1ed760;border-radius:4px;pointer-events:none}"
+    },
+    {
+      "name": "Play all",
+      "kind": "button",
+      "refersTo": "play-all",
+      "description": "44-point native circle with existing play-filled SVG. Hover grows painted disc without shifting layout.",
+      "html": "<button class=\"ds-play\" aria-label=\"Play all\"><svg aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  viewBox=\"0 0 24 24\"\n  fill=\"currentColor\"\n  stroke=\"currentColor\"\n  stroke-width=\"2\"\n  stroke-linecap=\"round\"\n  stroke-linejoin=\"round\"\n>\n  <path d=\"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z\" />\n</svg>\n</button>",
+      "css": ".ds-play{position:relative;width:44px;height:44px;padding:0;border:0;background:transparent;color:#0a140e} .ds-play::before{content:\"\";position:absolute;inset:0;border-radius:50%;background:#1ed760} .ds-play:hover::before{transform:scale(1.05);background:#3ce87a} .ds-play svg{position:relative;width:46%;height:46%;transform:translateX(-0.236px)}.ds-play:focus-visible{outline:none} .ds-play:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #1ed760;border-radius:4px;pointer-events:none}"
+    },
+    {
+      "name": "More feedback",
+      "kind": "button",
+      "refersTo": "feedback",
+      "description": "28-point native toggle with the existing 15-point thumbs-up SVG; selected More uses accent/on-accent.",
+      "html": "<button class=\"ds-more\" aria-label=\"More like this\" aria-pressed=\"true\"><svg aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  viewBox=\"0 0 24 24\"\n  fill=\"none\"\n  stroke=\"currentColor\"\n  stroke-width=\"2\"\n  stroke-linecap=\"round\"\n  stroke-linejoin=\"round\"\n>\n  <path d=\"M7 10v12\" />\n  <path d=\"M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z\" />\n</svg>\n</button>",
+      "css": ".ds-more{position:relative;width:28px;height:28px;padding:0;border:0;border-radius:50%;background:transparent;color:#a9b1bc} .ds-more:hover,.ds-more:focus-visible{background:#262b33;color:#f2f4f6} .ds-more[aria-pressed=\"true\"]{background:#1ed760;color:#0a140e} .ds-more svg{width:15px;height:15px}.ds-more:focus-visible{outline:none} .ds-more:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #1ed760;border-radius:4px;pointer-events:none}"
+    },
+    {
+      "name": "Track row type and rhythm",
+      "kind": "custom",
+      "refersTo": "discovery-row",
+      "description": "Illustrative subset of the inherited row. Artwork and library controls are omitted, not replaced with invented assets.",
+      "html": "<button class=\"ds-row\"><span class=\"ds-row-copy\"><span class=\"ds-row-title\">Tides</span><span class=\"ds-row-artist\">Little Simz</span></span><span class=\"ds-row-duration\">4:51</span></button>",
+      "css": ".ds-row{display:flex;align-items:center;justify-content:space-between;width:100%;height:56px;padding:0 8px;border:0;border-radius:6px;background:transparent;color:#f2f4f6;font-family:Inter,sans-serif;text-align:left} .ds-row:hover,.ds-row:focus-visible{outline:none;background:rgba(38,43,51,0.70)} .ds-row-copy{display:flex;flex-direction:column;gap:1px} .ds-row-title{font-size:14.5px;font-weight:500} .ds-row-artist,.ds-row-duration{font-size:12.5px;font-weight:400;color:#a9b1bc}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Personal radio desk",
+    "overview": "A calm native listening workspace uses neutral text, compact track geometry and\ncover-derived light within a restrained frosted pane. Inter and the existing\ntheme palettes connect this Home expression to the inherited music player.\nMusic and controls carry the identity; there is no ornamental display face or\ninvented imagery.\n\nThis is a scan of the implemented Home replacement, not an approval of a wider\nredesign. The sidebar, library shelves, search, player and Connect keep their\nincumbent layout. Tokens come from [src/theme.rs](src/theme.rs),\n[src/ui/discovery.rs](src/ui/discovery.rs) and shared native\n[widgets](src/ui/widgets.rs). Portable sizes represent egui logical points as\nCSS pixels at unit zoom. Native code remains the runtime source of truth; the\nsidecar's HTML/CSS is an illustrative translation, not a browser-based app.",
+    "keyCharacteristics": [
+      "Compact native controls and readable neutral type.",
+      "Static translucent material with bounded, cover-derived light.",
+      "Green for playback and intentional positive state; neutral selection for choices.",
+      "Existing player chrome remains familiar across light and dark themes."
+    ],
+    "rules": [
+      {
+        "name": "The State Color Rule",
+        "body": "Use the existing palette roles for interaction; cover-derived tint belongs behind the content and does not replace text or state colors.",
+        "section": "colors"
+      },
+      {
+        "name": "The Native Type Rule",
+        "body": "Use the bundled weight helpers and lay out logical text before bidi positioning; the design does not add pre-reordered strings or a decorative display family.",
+        "section": "typography"
+      },
+      {
+        "name": "The Quiet Material Rule",
+        "body": "Keep the pane's light static and bounded; do not add an idle repaint loop for blur or shimmer.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** use the existing theme roles and real Inter weight helpers.",
+      "**Do** keep static pane light below neutral text and interactive controls.",
+      "**Do** preserve native row geometry and keep recommendation text bounded.",
+      "**Do** preserve the local black light-theme Save taste label when using that component.",
+      "**Do** keep shell changes outside this Home replacement unless separately requested."
+    ],
+    "donts": [
+      "**Don't** turn cover tint into a new foreground or selection palette.",
+      "**Don't** treat the static mesh as proof of a native live-blur compositor.",
+      "**Don't** promote this Home composition into a rule for every future surface.",
+      "**Don't** infer visual approval, motion quality or platform-wide validation from static macOS captures."
+    ]
+  }
+}

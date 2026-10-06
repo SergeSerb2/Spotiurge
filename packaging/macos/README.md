@@ -32,4 +32,4 @@ disable Gatekeeper or remove quarantine to claim that this gate passed. See
 Sign in to Spotify separately on each laptop. The cloud pairing token must be
 provided separately through a protected channel and stored in the native
 credential store, following the [private cloud setup](../../services/private-cloud/README.md).
-Do not put it in the DMG, source tree, command arguments, or email.
+Do not put it in the DMG, source tree, or command arguments.

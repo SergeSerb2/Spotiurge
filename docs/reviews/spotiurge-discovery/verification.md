@@ -1,12 +1,13 @@
 # First-slice verification
 
-Recorded October 6, 2026 against fork main `e46f894` and this branch's candidate.
+Recorded October 6, 2026. Initial live proofs below used preview `5ba0ea9`;
+the redesign and Luna-only broker verification are recorded separately.
 Read this separately from the synthetic [visual comparison](index.html).
 The active scope is desktop discovery; Serge deferred iOS while remote.
 
 | Platform/environment | Actually verified | Still unverified |
 | --- | --- | --- |
-| Apple Silicon Mac, macOS 27.2 (26B5091g) | Native UI; separate Web API/playback OAuth; independent librespot decoded playback with official Spotify closed; Connect both directions using a Spotify playlist; real CLIProxyAPI recommendation; saved mix; native Keychain pairing; cloud sync; full required local Rust checks | Human listening judgment, recommendation parity, sustained background/route testing, completed liquid-glass redesign |
+| Apple Silicon Mac, macOS 27.2 (26B5091g) | Native UI; separate Web API/playback OAuth; independent librespot decoded playback with official Spotify closed; Connect both directions using a Spotify playlist; real CLIProxyAPI recommendation; saved mix; native Keychain pairing; cloud sync; full required local Rust checks | Human listening judgment, recommendation parity, sustained background/route testing, full platform-wide glass treatment |
 | Windows 11 Pro Insider Preview 26340, direct LAN `windows-5080` | Native executable and production Rust probe build; authenticated live Railway sync; offline edit replay; concurrent conflict convergence; native Credential Manager pairing and restore in the existing interactive user session | Native UI screenshots, playback/audio, full local Windows suite |
 | Intel Mac | Universal release target build and package validation are recorded below | Launch and playback on real Intel hardware |
 | Linux | Target-specific native store remains isolated; existing CI matrix retained | Local native build, Secret Service round trip and Flatpak runtime test |
@@ -93,14 +94,14 @@ backups and routine-use retention remain follow-up work.
 
 All required local Cargo checks passed: formatting; default/all-feature Clippy
 with warnings denied; both all-target test suites; all-feature doctests; and
-rustdoc with warnings denied. Library counts were 930 passed / one ignored for
-default features and 953 passed / one ignored for all features; integration
+rustdoc with warnings denied. Current library counts are 954 passed / one ignored for
+default features and 977 passed / one ignored for all features; integration
 suites also passed. The ignored native credential-store test was run explicitly
 and passed with temporary dummy grants deleted afterward.
 
 Launcher packaging, release-name migration, Flatpak metainfo and Jekyll checks
-passed. The private service's six authentication/CAS/restart/schema/rate-limit
-tests passed. Windows built the app and diagnostic with default features
+passed. The private service's ten authentication/CAS/restart/schema/rate-limit,
+exploration, promptless-feedback and Luna-only tests passed. Windows built the app and diagnostic with default features
 disabled; optional MilkDrop was not part of that build. No dependencies or
 lockfile changed, so no Nix vendor hash refresh was required. Nix and a Flatpak
 runtime are unavailable on this Mac; those native checks were not claimed.
@@ -130,8 +131,66 @@ Developer ID Application signing is absent. `spctl --assess --type execute`
 Gatekeeper setting was changed. Installation on another laptop remains gated
 on proper distribution signing and notarization; this is a development preview.
 
-The eighteen matched/state demo screenshots were captured on this Mac. The
-HTML comparison has light/dark, narrow/normal and relevant state selectors.
-T3's HTML browser preview failed to load its preload module, so automated browser
-interaction with that comparison was unavailable. Native captures were inspected
-directly. No startup, memory, FPS or assistive-technology benchmark was recorded.
+## Discovery redesign and Luna-only update
+
+Serge rejected the initial preview's discovery layout and selected a working
+native redesign. Opus 5.5 with high reasoning supplied the design advice, native
+workspace and catalogue-resolution changes. This is a scoped Home redesign;
+sidebar, library and the player retain their inherited layout.
+
+The comparison now uses the delivered preview `5ba0ea9` as Before and this
+candidate as After. Four matched candidate captures cover normal/narrow sizes in
+light/dark; twenty-four candidate state captures cover matching, partial results,
+missing tracks, onboarding, unavailable AI, busy requests, pairing, editor focus,
+feedback, history, options menu and expanded unmatched suggestions. All are
+native Mac demo fixtures with no external requests. Baseline/main captures remain
+preserved. The independent finish review and its precise scope are recorded in
+[design-review.md](design-review.md).
+
+Automatic recommendations use saved taste and/or intentional feedback, with
+12-hour cache freshness and bounded debounce/backoff. Tests cover stale replies,
+one in-flight request, feedback-only input, catalogue-only retry, retained matches,
+UTF-8 limits, copied writer clocks and remote discovery playback gating. Strict
+credited-artist matching fixes collaboration formatting without accepting unknown
+artists or replacing recording versions. Fixture tests do not prove the entire
+live Spotify catalogue match rate.
+
+At Serge's request, the deployed broker uses **GPT-6 Luna only**. No Sol or other
+model is selected on failure; legacy model configuration is ignored. Railway
+deployment `49c86e0b-d09c-4093-aee4-db5a78b136f4` reached `SUCCESS`. A real authenticated
+request using the stored taste returned HTTP 200, `model: gpt-6-luna`, and twelve
+suggestions in nine seconds. The API probe did not submit fabricated feedback or
+change the user's synced records. Recommendation quality and Spotify parity
+still require Serge's listening judgment.
+
+No startup, memory, FPS or assistive-technology benchmark was recorded. Current
+Windows and Linux checks must be confirmed on the pushed candidate; earlier CI
+results are not presented as verification of the redesign. iOS remains deferred.
+
+
+### Exact redesigned DMG acceptance
+
+Artifact: `Spotiurge-discovery-universal-20261006.dmg`, 29,360,284 bytes.
+SHA-256: `1df061ae201570eb35c765aa4a7a47d99baa819f9cc2fdb88376612ead59746d`.
+Both native release architectures built without demo or MilkDrop. DMG checksum,
+read-only mount, universal payload, system-only dynamic libraries, plist and
+strict Apple Development code signature checks passed. Gatekeeper assessment
+still rejects this unnotarized development preview; no security setting changed.
+
+The exact mounted payload was copied into a fresh QA bundle and launched on the
+Apple Silicon Mac. Spotify grants, saved mix and private cloud token restored
+without an environment bootstrap. Home automatically generated twelve new
+suggestions from the saved taste, with the live broker locked to GPT-6 Luna.
+The catalogue's twenty-second deadline expired before any of these suggestions
+could be verified. A catalogue-only retry also retained twelve unchecked picks;
+separate Spotify library requests explicitly reported rate limiting. This live
+run does not establish that the collaboration fixes resolve every catalogue item.
+
+The new Options menu completed **Sync my devices** using the restored Keychain
+token. The existing two-song discovery mix remained playable. With the official
+Spotify app quit, local playback advanced from 9,849 ms to 39,041 ms. The native
+mini-player showed 320 kbps / 44 kHz and a nonzero decoded spectrum at 00:29.
+Mac speaker mute and app volume zero were verified; playback was paused afterward.
+No human listening judgment was recorded. The new Windows and Linux builds await
+this revision's CI; their previous evidence above is not a new-version UI/audio
+acceptance test. iOS remains deferred.

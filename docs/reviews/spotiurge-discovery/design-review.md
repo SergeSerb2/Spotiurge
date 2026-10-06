@@ -1,125 +1,132 @@
-# Native Home discovery review
+# Native Home discovery redesign review
 
-Recorded October 6, 2026. Baseline: fork main at `e46f894`. Candidate: the
-working-tree Home extension on that baseline. The [comparison](index.html)
-contains actual macOS native demo captures, with light/dark and normal/narrow
-selectors and separate candidate state captures.
+Recorded October 6, 2026. The [comparison](index.html) presents actual native
+macOS captures at matching theme and window sizes. `before-*` preserves original
+fork main `e46f894`; `preview-*` preserves the prior delivered Home extension at
+`5ba0ea9`, which Serge rejected. `after-*` and the current `state-*` family show
+the working native personal radio desk replacement.
 
-This record documents the scoped implementation and the disposition of the fresh
-finish review. It does not grant new independent approval, establish a new visual
-world, or certify the broader product milestones.
+This record replaces the prior extension's design review. It documents the
+implemented scope and the independent finish review's disposition. It does not
+grant broader design approval or certify the product milestones.
 
 ## Scope and visual authority
 
-Home now starts with a Spotiurge heading, a personal taste prompt, recommendation
-actions, explained catalogue matches, intentional feedback and saved mixes. The
-existing library shelves follow the discovery workspace. The populated captures
-put them below the first viewport; the empty-state captures show that they remain
-present. The sidebar, search, player and Connect controls retain their incumbent
-appearance and position.
+The new Home pane opens with a 26-point For you heading and play, shuffle,
+refresh and options controls. Familiar, Balanced and Adventurous choices follow.
+One catalogue summary precedes compact 56-point playable rows with cover,
+artist, duration, a bounded reason and two recommendation feedback controls.
+Taste editing opens inline for onboarding or on request. Unplayable suggestions
+and AI history are initially hidden; saved mixes use compact native rows.
+The sidebar, library shelves, search, player and Connect retain the inherited
+layout. The normal captures show the Home shelves below the new pane.
 
-The authority for this ordinary extension is the inherited native interface,
-[PRODUCT.md](../../../PRODUCT.md), the
-[surface direction contract](../../../.impeccable/surfaces/discovery.md) and the
-matched baseline captures. No approved redesign comp or visual-world seed was
-selected. The wider liquid/frosted glass redesign, richer motion and platform-wide
-branding remain separate work. macOS is the active priority; Serge deferred iOS.
+Serge requested a working native redesign, Opus 5.5 high-reasoning design advice,
+additional discovery controls, automatic recommendations from saved taste and
+feedback, and explicit GPT-6 Luna for recommendations. This visual review does
+not independently verify service routing or automatic request behavior; those
+claims belong to the [verification record](verification.md).
 
-## Incumbent system checked
+The current visual authority is [PRODUCT.md](../../../PRODUCT.md), the user's
+scoped native Home request, the
+[current direction contract](../../../.impeccable/surfaces/src-ui-discovery-rs.md)
+and the implemented artifact. The direction seed proof at
+`.qa/redesign-concept-seed-proof.txt` records key `0f7cc59f`, assigned candidate
+`5`, before implementation. It establishes the grounded personal radio desk
+direction; it does not establish user approval of an external image or an
+implemented comp.
 
-[src/theme.rs](../../../src/theme.rs) remains the palette and widget source of
-truth and is unchanged from the baseline. These are observed existing roles, not
-a new token specification:
+No selected external QUALITY BAR card was persisted. No approved comp exists
+for this code-led implementation. This is a remaining process-evidence gap,
+not a fabricated asset or a claim that the chosen-world comparison passed.
+Serge's redesign request authorizes this Home visual scope. A finish verdict
+does not authorize extending that scope to the inherited shell.
 
-| Role | Dark | Light | Use in this extension |
-| --- | --- | --- | --- |
-| Window | `#0f1114` | `#f8f9fb` | Existing Home background |
-| Surface | `#1d2127` | `#eef0f3` | Prompt material and native field |
-| Outline | `#2a3038` | `#dde1e6` | Prompt boundary |
-| Text | `#f2f4f6` | `#14171a` | Headings, entered taste and track titles |
-| Secondary | `#a9b1bc` | `#535b66` | Supporting copy, reasons and status |
-| Accent | `#1ed760` | `#15a64a` | Existing primary action and selection vocabulary |
+## Implemented system
 
-The existing font setup uses Inter at real regular, medium, semibold and bold
-weights, with its incumbent emoji and script fallbacks. Discovery uses a bold
-36-point product heading, regular 16-point introduction and input, bold 24-point
-prompt title, bold 20-point recommendation heading, regular 14-point help and
-regular 13-point reasons/status. Shared pill buttons retain semibold 13-point
-labels, 18-by-8-point padding, a half-height corner radius, outlined secondary
-actions and accent-filled primary actions. Track rows reuse the existing native
-row component rather than introducing a new card family.
+[DESIGN.md](../../../DESIGN.md) and
+[.impeccable/design.json](../../../.impeccable/design.json) now record the actual
+native code values. This is the first code-derived record of the new Home world,
+with inherited palette and shell decisions preserved. Frontmatter owns primitive
+tokens; the sidecar carries native material formulas, interaction facts,
+breakpoints and illustrative portable component previews. Its synthesized tonal
+ramps are panel metadata, not additional application palette tokens.
 
-[src/ui/discovery.rs](../../../src/ui/discovery.rs) adds one quiet prompt frame:
-the current surface color at `gamma_multiply(0.88)`, a one-point outline,
-16-point corners and a 20-point inset. It creates depth through translucent tonal
-layering; it is not a live background-blur or liquid-glass compositor. No new
-shadow or motion system was added. The shared theme still supplies existing
-widget states and focus treatments.
+[src/theme.rs](../../../src/theme.rs) supplies the inherited Inter typography,
+paired native theme palettes, soft buttons, pills, circles and focus treatment.
+The discovery feedback vectors are registered there; palette values are preserved.
+The Home pane in [src/ui/discovery.rs](../../../src/ui/discovery.rs) uses the
+surface color at `gamma_multiply(0.72)` in dark mode or `0.80` in light mode,
+14-point corners, a one-point outline and 20-by-18-point inset. A static tint
+mesh is reserved below the content, with cover-derived light or accent fallback.
+It adds no blur pass, shadow or continuous repaint loop.
 
-[src/ui/home.rs](../../../src/ui/home.rs) draws discovery and then the inherited
-`library_shelves`. Action groups, recommendation headings, feedback and saved
-mix controls use wrapping layouts. At 900-by-760 the taste text and feedback
-wrap cleanly while the player and Connect remain accessible. At 1440-by-900
-the reasons and feedback share a row. Focus is visible on the prompt in both
-themes; the shared pill control also calls the incumbent `focus_ring` helper.
+Reasons occupy a separate column only above 920 points of available content
+width; below that threshold the complete reason is available on row hover.
+Feedback keeps two 28-point targets and 15-point vector icons. More uses the
+accent when selected; Less uses neutral inversion. The choices use neutral
+inversion for active state. These are native controls, not web mockups.
 
-No root `DESIGN.md` or `.impeccable/design.json` was introduced by this scoped
-documentation pass. This review preserves the native implementation as the
-system authority rather than inventing portable CSS tokens or a new identity.
+The only change requested by the valid independent finish review was light
+Save taste text contrast. Its initial white text on light accent measured
+3.19:1. The fix overrides `on_accent` to black only in the taste editor's local
+light-theme button palette. The shared theme and inherited controls retain their
+source values. Black on light accent now measures 6.59:1 at rest and 5.03:1 on
+hover, both above the 4.5:1 small-text threshold.
 
 ## Evidence and finish-review disposition
 
-All 18 PNGs in this directory were inspected. Eight populated captures compare
-baseline/candidate at 1440-by-900 and 900-by-760 in both themes. Ten additional
-captures show candidate states at 1440-by-900 in both themes. Pixel dimensions
-match the comparison labels. Artwork in the final baseline and candidate
-captures has settled; the same inherited demo fixture URLs supply the covers.
+The current set comprises 28 native macOS captures:
 
-The fresh reviewer requested the following changes. The final source and
-captures document their implementation; this disposition is not a second
-independent reviewer approval.
-
-| Review finding | Final evidence and disposition |
+| Capture family | Coverage |
 | --- | --- |
-| Demo feedback appeared available despite disabled external work | `app.discovery.ready && !app.offline` now guards both feedback buttons. Populated captures show muted feedback, and the prompt status explicitly says feedback, recommendations and cloud requests are disabled. Resolved for the demo surface. |
-| Baseline artwork had not settled | Final `before-*-*.png` captures contain loaded cover art, matching the inherited fixtures used by the candidate. Resolved in the recorded comparison. |
-| Empty state was missing | `state-empty-*.png` shows an empty taste field with its hint, no recommendation section and preserved Home shelves. Added in both themes. |
-| Loading state was missing | `state-loading-*.png` shows “Finding music…”, a spinner and a status explaining that playback stays available; prior picks remain visible. Added in both themes. |
-| Error state was missing | `state-error-*.png` states that recommendations are unavailable and previous discoveries are kept; rows and player remain visible. Added in both themes. |
-| Selected feedback was missing | `state-feedback-*.png` shows the first “More like this” selection using the incumbent green selection treatment. This is a preselected, disabled demo fixture, not evidence of a live submitted rating. Added in both themes. |
-| Keyboard focus was missing | `state-focus-*.png` shows a green focus outline on the taste field. The fixture requests focus programmatically; full keyboard traversal and assistive-technology behavior are not established by a still image. Added in both themes. |
+| `after-{dark,light}-{normal,narrow}.png` | Current replacement in both themes at 1440-by-900 and 900-by-760 |
+| `state-{matched,partial,not-found,onboarding,offline,busy,pairing,focus,history,feedback,menu,unmatched}-{dark,light}.png` | Twelve current demo states, each in both themes at 1440-by-900 |
 
-The captures are native application screenshots, not generated imagery. Demo
-recommendations identify themselves as samples for visual review.
-[src/demo.rs](../../../src/demo.rs) supplies the synthetic state fixtures and a
-Spotify-shaped fixture URI for the selected-feedback example; no service receives
-that fixture. No detector ran because the surface is Rust/egui. Review evidence
-consists of source inspection and the native captures.
+All 28 were recaptured after the contrast fix. The independent reviewer validated
+the recaptures and reported no regressions from that fix. The four original
+`before-*`, four rejected `preview-*` and one earlier live Mac decoded-audio
+image remain separate historical evidence. These families total 37 PNG-named
+rasters. Every one carries embedded origin metadata; the provenance scan at
+`.qa/redesign-provenance.log` records `SCAN: 37 rasters, 0 missing`.
 
-The baseline player timestamp reads 1:28 and the populated candidate reads 1:26.
-Fixtures, page, theme, zoom and window sizes match, but the elapsed playback
-indicator is not pixel-identical. Additional states are candidate-only and
-normal-size; they are not before/after or narrow-state comparisons. These limits
-do not conceal the changed layout, but prevent a claim of exact pixel matching.
+| Finish finding | Resolution and disposition |
+| --- | --- |
+| Light Save taste white label fails small-text contrast | Scoped black foreground applied in `taste_editor`; rest 6.59:1, hover 5.03:1. Resolved. |
+| Post-fix capture validation | All 28 current captures valid, with no regression from the scored fix. Pass. |
+| Selected-world QUALITY BAR evidence | No selected card persisted; chosen-world parity is not established. Gap remains. |
+
+The review verdict is pass, with a ship disposition for the scored contrast fix.
+Its scope is static macOS source/capture evidence. It is not a broad system
+approval, a chosen-world QUALITY BAR certification, or Serge's approval to merge
+a wider redesign. Motion and performance were not assessed.
+
+The screenshots use deterministic demo fixtures and identify sample picks.
+Remote-playback gates and disabled demo feedback are visible in the fixtures.
+Local candidate fixtures retain their playback controls. The selected-feedback
+fixture represents stored demo state; it does not
+prove a submitted live rating. Focus is requested programmatically in its fixture.
+State captures are candidate-only at normal size, not before/after comparisons or
+narrow-state validation. The fixture page, theme and window sizes are aligned,
+but the animated player timestamp need not be pixel-identical.
+
+No web detector ran because the artifact is Rust/egui. Source inspection and
+native screenshots establish the visible material and layout. Full application
+checks and supported platform coverage are reported separately in
+[verification.md](verification.md).
 
 ## Remaining acceptance
 
-The scoped Home extension and the requested finish evidence are recorded. The
-translucent prompt is an incremental material treatment; the broader glass
-redesign still needs a defined visual scope, implementation and Serge's explicit
-visual approval before merging that redesign.
+The implemented Home world and the contrast fix are documented. The missing
+selected QUALITY BAR asset remains explicit. This documentation does not repair
+unrelated inherited visual drift or extend the new appearance to the shell.
 
-These demo screenshots do not demonstrate authenticated Spotify playback, real
-CLIProxyAPI output, recommendation quality or cloud synchronization. The separate
-[verification record](verification.md) reports live Mac playback, playlist Connect
-handoff and real Mac/Windows offline/concurrent sync. Remaining acceptance includes
-custom-mix outbound handoff, Windows native rendering/playback and listening
-evaluation against a fixed Spotify baseline. Saved-mix playback and the expanded
-AI history are present in source but are not shown in this capture set. Full
-application checks and platform build results must be reported separately.
-
-iPhone independent background playback, iOS architecture and TestFlight remain
-deferred and gated by real-device evidence. No iOS framework choice or quality
-parity claim follows from this work. See the
-[architecture and milestones](../../_reference/spotiurge-architecture.md) for
-the remaining product and platform acceptance.
+Static demo screenshots do not establish authenticated playback, real model
+output, recommendation quality, sync behavior, keyboard traversal or assistive
+technology support. Windows native rendering/playback, custom-mix outbound
+handoff and listening evaluation require their own evidence. iPhone independent
+background playback, iOS architecture and TestFlight remain deferred and gated
+by real-device evidence. See the
+[architecture and milestones](../../_reference/spotiurge-architecture.md) and
+the [verification record](verification.md) for product acceptance beyond this
+visual review.

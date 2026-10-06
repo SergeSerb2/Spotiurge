@@ -561,44 +561,230 @@ struct PlaylistCacheWrite {
     next_offset: Option<u32>,
 }
 
+/// Fold presentation-only differences: whitespace, Unicode case, typographic
+/// apostrophes/quotes/dashes. Meaningful punctuation such as "Fred again.."
+/// stays, so it must still match exactly.
+fn fold_name(text: &str) -> String {
+    text.chars()
+        .map(|c| match c {
+            '\u{2018}' | '\u{2019}' | '\u{02BC}' | '`' | '\u{00B4}' => '\'',
+            '\u{201C}' | '\u{201D}' => '"',
+            '\u{2010}'..='\u{2015}' => '-',
+            _ => c,
+        })
+        .flat_map(char::to_lowercase)
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+const CREDIT_SEPARATORS: [&str; 15] = [
+    ", and ",
+    ", ",
+    " & ",
+    " and ",
+    " featuring ",
+    " feat. ",
+    " feat ",
+    " ft. ",
+    " ft ",
+    " with ",
+    " vs. ",
+    " vs ",
+    " x ",
+    " + ",
+    " / ",
+];
+
+/// Whether `rest` consists only of the track's credited artists joined by
+/// separators, with `accept` approving the set of named artists. Backtracks
+/// over the actual names, so "Simon & Garfunkel" or "Above & Beyond" parse
+/// as one artist when that is how Spotify credits them. Nothing is fuzzy.
+fn credits_only(rest: &str, names: &[String], named: u64, accept: &dyn Fn(u64) -> bool) -> bool {
+    names.iter().enumerate().take(64).any(|(i, name)| {
+        if named & (1 << i) != 0 {
+            return false;
+        }
+        let Some(after) = rest
+            .strip_prefix(name.as_str())
+            .filter(|_| !name.is_empty())
+        else {
+            return false;
+        };
+        let named = named | 1 << i;
+        (after.is_empty() && accept(named))
+            || CREDIT_SEPARATORS.iter().any(|separator| {
+                after
+                    .strip_prefix(separator)
+                    .is_some_and(|next| credits_only(next, names, named, accept))
+            })
+    })
+}
+
+/// Drop "(feat. X)"/"[with X]" groups and a trailing "feat. X" only when X
+/// names credited artists. Remix, Edit, Live and other versions remain.
+fn without_credits(title: &str, names: &[String]) -> String {
+    let credited = |credit: &str| credits_only(credit, names, 0, &|_| true);
+    let mut title = title.to_owned();
+    let mut from = 0;
+    while let Some(open) = title[from..].find(['(', '[']).map(|at| at + from) {
+        let close = if title[open..].starts_with('(') {
+            ')'
+        } else {
+            ']'
+        };
+        let Some(end) = title[open..].find(close).map(|at| at + open) else {
+            break;
+        };
+        let inner = &title[open + 1..end];
+        if ["feat. ", "feat ", "ft. ", "ft ", "featuring ", "with "]
+            .iter()
+            .any(|marker| inner.strip_prefix(marker).is_some_and(credited))
+        {
+            title.replace_range(open..=end, "");
+        } else {
+            from = end + 1;
+        }
+    }
+    for marker in [" feat. ", " feat ", " ft. ", " ft ", " featuring "] {
+        if let Some(at) = title.rfind(marker)
+            && credited(&title[at + marker.len()..])
+        {
+            title.truncate(at);
+        }
+    }
+    title.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// A strict, correct match: the same title and version, and an artist credit
+/// made only of the track's actual artists that includes its primary artist.
+fn discovery_matches(suggestion: &crate::discovery::Suggestion, track: &Track) -> bool {
+    let names: Vec<String> = track.artists.iter().map(|a| fold_name(&a.name)).collect();
+    track.is_playable != Some(false)
+        && crate::discovery::spotify_track(&track.uri)
+        && credits_only(&fold_name(&suggestion.artist), &names, 0, &|named| {
+            named & 1 != 0
+        })
+        && without_credits(&fold_name(&suggestion.title), &names)
+            == without_credits(&fold_name(&track.name), &names)
+}
+
+/// Free-text search favours recall; `discovery_matches` decides correctness.
+/// Only the requested primary artist is a hint, as guests vary in spelling.
+fn discovery_search_term(suggestion: &crate::discovery::Suggestion) -> String {
+    let artist = fold_name(&suggestion.artist);
+    let primary = [
+        ", ",
+        " feat",
+        " ft. ",
+        " ft ",
+        " featuring ",
+        " with ",
+        " x ",
+        " vs",
+    ]
+    .iter()
+    .filter_map(|separator| artist.find(separator))
+    .min()
+    .map_or(artist.as_str(), |end| &artist[..end]);
+    format!("{} {primary}", suggestion.title).replace('"', "")
+}
+
+fn catalogue_outcome(error: &ApiError) -> crate::discovery::CatalogueOutcome {
+    use crate::discovery::CatalogueOutcome;
+    match error {
+        ApiError::RateLimited | ApiError::Status { status: 429, .. } => {
+            CatalogueOutcome::RateLimited
+        }
+        ApiError::QuotaExhausted => CatalogueOutcome::QuotaExhausted,
+        ApiError::NotSignedIn
+        | ApiError::SignInExpired { .. }
+        | ApiError::Status { status: 401, .. } => CatalogueOutcome::SignInNeeded,
+        _ => CatalogueOutcome::Unavailable,
+    }
+}
+
 /// Keep AI suggestions when Spotify is slow; only exact, available catalogue
 /// matches become playable. A single deadline bounds all catalogue searches.
+/// Only unchecked picks are searched, so a retry keeps earlier matches and
+/// order. The first error stops searching: after a rate limit or exhausted
+/// quota, more requests would only extend Spotify's cooldown.
 async fn resolve_discovery<F, Fut>(
-    suggestions: Vec<crate::discovery::Suggestion>,
+    mut picks: Vec<crate::discovery::Pick>,
     budget: Duration,
     mut search: F,
-) -> Vec<crate::discovery::Pick>
+) -> crate::discovery::ResolvedDiscovery
 where
     F: FnMut(crate::discovery::Suggestion) -> Fut,
-    Fut: std::future::Future<Output = Vec<crate::api::models::Track>> + Send,
+    Fut: std::future::Future<Output = Result<Vec<Track>, ApiError>> + Send,
 {
-    let mut picks: Vec<_> = suggestions
-        .into_iter()
-        .map(|suggestion| crate::discovery::Pick {
-            suggestion,
-            track: None,
-        })
+    use crate::discovery::CatalogueOutcome;
+    let mut seen: HashSet<String> = picks
+        .iter()
+        .filter_map(|pick| pick.track.as_ref().map(|track| track.uri.clone()))
         .collect();
-    let mut seen = HashSet::new();
-    let _ = tokio::time::timeout(budget, async {
-        for pick in &mut picks {
-            pick.track = search(pick.suggestion.clone())
-                .await
-                .into_iter()
-                .find(|track| {
-                    track.is_playable != Some(false)
-                        && crate::discovery::spotify_track(&track.uri)
-                        && track.name.eq_ignore_ascii_case(&pick.suggestion.title)
-                        && track
-                            .artists
-                            .iter()
-                            .any(|a| a.name.eq_ignore_ascii_case(&pick.suggestion.artist))
-                        && seen.insert(track.uri.clone())
-                });
+    let mut outcome = CatalogueOutcome::Complete;
+    // Older caches predate `checked`, but a stored catalogue match is already
+    // resolved. Retrying must not discard it as a duplicate of itself.
+    for pick in &mut picks {
+        if pick.track.is_some() {
+            pick.checked = true;
+        }
+    }
+    let finished = tokio::time::timeout(budget, async {
+        for pick in picks.iter_mut().filter(|pick| !pick.checked) {
+            match search(pick.suggestion.clone()).await {
+                Ok(tracks) => {
+                    pick.track = tracks.into_iter().find(|track| {
+                        discovery_matches(&pick.suggestion, track) && seen.insert(track.uri.clone())
+                    });
+                    pick.checked = true;
+                }
+                Err(error) => {
+                    outcome = catalogue_outcome(&error);
+                    break;
+                }
+            }
         }
     })
     .await;
-    picks
+    if finished.is_err() {
+        outcome = CatalogueOutcome::TimedOut;
+    }
+    crate::discovery::ResolvedDiscovery { picks, outcome }
+}
+
+/// Match picks against Spotify's catalogue without another AI request.
+async fn resolve_with_catalogue(
+    api: Arc<ApiGateway>,
+    picks: Vec<crate::discovery::Pick>,
+) -> crate::discovery::ResolvedDiscovery {
+    let catalog = match tokio::time::timeout(
+        Duration::from_secs(2),
+        api.client_for(Operation::CatalogSearch),
+    )
+    .await
+    {
+        Ok(Ok(catalog)) => catalog,
+        failed => {
+            let outcome = match failed {
+                Ok(Err(error)) => catalogue_outcome(&error),
+                _ => crate::discovery::CatalogueOutcome::Unavailable,
+            };
+            return crate::discovery::ResolvedDiscovery { picks, outcome };
+        }
+    };
+    resolve_discovery(picks, Duration::from_secs(20), move |suggestion| {
+        let catalog = catalog.clone();
+        async move {
+            catalog
+                .search(&discovery_search_term(&suggestion), &["track"])
+                .await
+                .map(|results| results.tracks.map(|page| page.items).unwrap_or_default())
+        }
+    })
+    .await
 }
 
 pub enum Command {
@@ -608,6 +794,12 @@ pub enum Command {
     RecommendDiscovery {
         request: u64,
         document: crate::discovery::Document,
+        exploration: crate::discovery::Exploration,
+    },
+    /// Retry catalogue matching for unchecked picks without another AI call.
+    ResolveDiscovery {
+        request: u64,
+        picks: Vec<crate::discovery::Pick>,
     },
     OpenThemesFolder,
     ProxyRestored {
@@ -799,7 +991,11 @@ pub enum Event {
     DiscoveryRecommended {
         request: u64,
         prompt: String,
-        result: Result<Vec<crate::discovery::Pick>, String>,
+        result: Result<crate::discovery::ResolvedDiscovery, crate::discovery::RecommendationError>,
+    },
+    DiscoveryResolved {
+        request: u64,
+        result: crate::discovery::ResolvedDiscovery,
     },
     ProxyRestored {
         config: ProxyConfig,
@@ -1713,67 +1909,73 @@ impl Worker {
                         waker.wake();
                     });
                 }
-                Command::RecommendDiscovery { request, document } => {
+                Command::RecommendDiscovery {
+                    request,
+                    document,
+                    exploration,
+                } => {
                     let prompt = document.taste().to_owned();
                     let events = self.events.clone();
                     let waker = self.waker.clone();
                     let proxy = self.engine_config.proxy.clone();
                     let api = self.api.clone();
                     tokio::spawn(async move {
-                        let result = tokio::time::timeout(Duration::from_secs(120), async {
-                            let client = crate::http::client_builder(&proxy)?
+                        use crate::discovery::{Pick, RecommendationError};
+                        // Bound only the AI stage, so a slow catalogue cannot
+                        // discard suggestions that already arrived.
+                        let suggestions = tokio::time::timeout(Duration::from_secs(100), async {
+                            let client = crate::http::client_builder(&proxy)
+                                .map_err(RecommendationError::unavailable)?
                                 .redirect(reqwest::redirect::Policy::none())
                                 .build()
-                                .map_err(|_| "Cannot connect to the private cloud.")?;
-                            let suggestions = crate::discovery_cloud::recommend(
+                                .map_err(|_| {
+                                    RecommendationError::unavailable(
+                                        "Cannot connect to the private cloud.",
+                                    )
+                                })?;
+                            crate::discovery_cloud::recommend(
                                 &client,
                                 &crate::discovery_cloud::endpoint(),
                                 &document,
-                            )
-                            .await?;
-                            let catalog = tokio::time::timeout(
-                                Duration::from_secs(2),
-                                api.client_for(Operation::CatalogSearch),
+                                exploration,
                             )
                             .await
-                            .ok()
-                            .and_then(Result::ok);
-                            let picks = resolve_discovery(
-                                suggestions,
-                                Duration::from_secs(20),
-                                move |suggestion| {
-                                    let catalog = catalog.clone();
-                                    async move {
-                                        let Some(catalog) = catalog else {
-                                            return Vec::new();
-                                        };
-                                        let term = format!(
-                                            "track:{} artist:{}",
-                                            suggestion.title.replace('"', ""),
-                                            suggestion.artist.replace('"', "")
-                                        );
-                                        catalog
-                                            .search(&term, &["track"])
-                                            .await
-                                            .ok()
-                                            .and_then(|r| r.tracks)
-                                            .map(|p| p.items)
-                                            .unwrap_or_default()
-                                    }
-                                },
-                            )
-                            .await;
-                            Ok(picks)
                         })
                         .await
                         .unwrap_or_else(|_| {
-                            Err("Recommendations timed out. Previous discoveries are kept.".into())
+                            Err(RecommendationError::unavailable(
+                                "Recommendations timed out. Previous discoveries are kept.",
+                            ))
                         });
+                        let result = match suggestions {
+                            Ok(suggestions) => {
+                                let picks = suggestions
+                                    .into_iter()
+                                    .map(|suggestion| Pick {
+                                        suggestion,
+                                        track: None,
+                                        checked: false,
+                                    })
+                                    .collect();
+                                Ok(resolve_with_catalogue(api, picks).await)
+                            }
+                            Err(error) => Err(error),
+                        };
                         let _ = events.send(Event::DiscoveryRecommended {
                             request,
                             prompt,
                             result,
                         });
+                        waker.wake();
+                    });
+                }
+                Command::ResolveDiscovery { request, picks } => {
+                    let events = self.events.clone();
+                    let waker = self.waker.clone();
+                    let api = self.api.clone();
+                    tokio::spawn(async move {
+                        let result = resolve_with_catalogue(api, picks).await;
+                        let _ = events.send(Event::DiscoveryResolved { request, result });
                         waker.wake();
                     });
                 }
@@ -6395,38 +6597,254 @@ mod cover_routing_tests {
 mod tests {
     use super::*;
 
+    fn suggestion(title: &str, artist: &str) -> crate::discovery::Suggestion {
+        crate::discovery::Suggestion {
+            title: title.into(),
+            artist: artist.into(),
+            reason: "A discovery trial.".into(),
+        }
+    }
+
+    fn pick(title: &str, artist: &str) -> crate::discovery::Pick {
+        crate::discovery::Pick {
+            suggestion: suggestion(title, artist),
+            track: None,
+            checked: false,
+        }
+    }
+
+    fn track(name: &str, artists: &[&str], id: char) -> Track {
+        Track {
+            name: name.into(),
+            uri: format!("spotify:track:{}", id.to_string().repeat(22)),
+            artists: artists
+                .iter()
+                .map(|name| ArtistRef {
+                    name: (*name).into(),
+                    ..Default::default()
+                })
+                .collect(),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn discovery_matches_collaborations_by_their_credited_artists() {
+        for (title, artist, name, artists) in [
+            (
+                "adore u",
+                "Fred again.. and Obongjayar",
+                "adore u",
+                vec!["Fred again..", "Obongjayar"],
+            ),
+            (
+                "Imagination",
+                "Gorgon City feat. Katy Menditta",
+                "Imagination",
+                vec!["Gorgon City", "Katy Menditta"],
+            ),
+            (
+                "Where You Are",
+                "John Summit & HAYLA",
+                "Where You Are",
+                vec!["John Summit", "HAYLA"],
+            ),
+            (
+                "Butterflies",
+                "Skrillex, Starrah & Four Tet",
+                "Butterflies",
+                vec!["Skrillex", "Starrah", "Four Tet"],
+            ),
+            (
+                "Sun In Your Eyes",
+                "Above & Beyond",
+                "Sun In Your Eyes",
+                vec!["Above & Beyond"],
+            ),
+            (
+                "The Boxer",
+                "Simon & Garfunkel",
+                "The Boxer",
+                vec!["Simon & Garfunkel"],
+            ),
+            (
+                "Dog Days",
+                "Florence and the Machine",
+                "Dog Days",
+                vec!["Florence and the Machine"],
+            ),
+            (
+                "Imagination",
+                "Gorgon City",
+                "Imagination (feat. Katy Menditta)",
+                vec!["Gorgon City", "Katy Menditta"],
+            ),
+            (
+                "Imagination feat. Katy Menditta",
+                "GORGON  CITY",
+                "Imagination",
+                vec!["Gorgon City", "Katy Menditta"],
+            ),
+            ("Don\u{2019}t Stop", "Prospa", "Don't Stop", vec!["Prospa"]),
+        ] {
+            assert!(
+                discovery_matches(&suggestion(title, artist), &track(name, &artists, 'a')),
+                "{title} by {artist}"
+            );
+        }
+    }
+
+    #[test]
+    fn discovery_rejects_credits_and_versions_spotify_does_not_have() {
+        for (title, artist, name, artists) in [
+            // Missing collaborator, missing primary, typo and unknown extras.
+            (
+                "Imagination",
+                "Gorgon City feat. Katy Menditta",
+                "Imagination",
+                vec!["Gorgon City"],
+            ),
+            (
+                "Imagination",
+                "Katy Menditta",
+                "Imagination",
+                vec!["Gorgon City", "Katy Menditta"],
+            ),
+            (
+                "Imagination",
+                "Gorgon City feat. Katy Mendita",
+                "Imagination",
+                vec!["Gorgon City", "Katy Menditta"],
+            ),
+            (
+                "Imagination",
+                "Gorgon City (Official)",
+                "Imagination",
+                vec!["Gorgon City"],
+            ),
+            ("Imagination", "Gorgon", "Imagination", vec!["Gorgon City"]),
+            ("adore u", "Fred again", "adore u", vec!["Fred again.."]),
+            // Versions are distinct recordings.
+            (
+                "Imagination",
+                "Gorgon City",
+                "Imagination - Extended Mix",
+                vec!["Gorgon City"],
+            ),
+            (
+                "Imagination - Radio Edit",
+                "Gorgon City",
+                "Imagination",
+                vec!["Gorgon City"],
+            ),
+            (
+                "Imagination",
+                "Gorgon City",
+                "Imagination (Live)",
+                vec!["Gorgon City"],
+            ),
+            (
+                "Imagination",
+                "Gorgon City",
+                "Imagination (Prospa Remix)",
+                vec!["Gorgon City", "Prospa"],
+            ),
+            // A title credit for someone not credited on the track stays.
+            (
+                "Imagination",
+                "Gorgon City",
+                "Imagination (feat. Someone Else)",
+                vec!["Gorgon City"],
+            ),
+            ("Imagine", "Gorgon City", "Imagination", vec!["Gorgon City"]),
+        ] {
+            assert!(
+                !discovery_matches(&suggestion(title, artist), &track(name, &artists, 'a')),
+                "{title} by {artist} vs {name}"
+            );
+        }
+        let mut unavailable = track("Imagination", &["Gorgon City"], 'a');
+        unavailable.is_playable = Some(false);
+        assert!(!discovery_matches(
+            &suggestion("Imagination", "Gorgon City"),
+            &unavailable
+        ));
+        let mut invented = track("Imagination", &["Gorgon City"], 'a');
+        invented.uri = "spotify:track:invented".into();
+        assert!(!discovery_matches(
+            &suggestion("Imagination", "Gorgon City"),
+            &invented
+        ));
+    }
+
+    #[test]
+    fn discovery_searches_free_text_with_only_the_primary_artist() {
+        assert_eq!(
+            discovery_search_term(&suggestion(
+                "Imagination",
+                "Gorgon City feat. Katy Menditta"
+            )),
+            "Imagination gorgon city"
+        );
+        assert_eq!(
+            discovery_search_term(&suggestion(
+                "\"Butterflies\"",
+                "Skrillex, Starrah & Four Tet"
+            )),
+            "Butterflies skrillex"
+        );
+        assert_eq!(
+            discovery_search_term(&suggestion("Sun", "Above & Beyond")),
+            "Sun above & beyond"
+        );
+    }
+
+    #[tokio::test]
+    async fn discovery_retry_preserves_matches_from_an_older_cache() {
+        let mut cached = pick("Cached", "Artist");
+        cached.track = Some(track("Cached", &["Artist"], 'a'));
+        assert!(!cached.checked);
+        let result = resolve_discovery(
+            vec![cached.clone()],
+            Duration::from_secs(1),
+            |_| -> std::future::Ready<Result<Vec<Track>, ApiError>> {
+                panic!("a stored match must not be searched again");
+            },
+        )
+        .await;
+        assert_eq!(result.picks[0].track, cached.track);
+        assert!(result.picks[0].checked);
+        assert_eq!(result.outcome, crate::discovery::CatalogueOutcome::Complete);
+    }
+
+    #[test]
+    fn discovery_rejects_repeated_artist_segments() {
+        assert!(!discovery_matches(
+            &suggestion("Song", "Artist & Artist"),
+            &track("Song", &["Artist"], 'a')
+        ));
+    }
+
     #[tokio::test]
     async fn discovery_keeps_suggestions_when_catalogue_matching_times_out() {
-        let suggestion = crate::discovery::Suggestion {
-            title: "Trial track".into(),
-            artist: "Trial artist".into(),
-            reason: "A discovery trial.".into(),
-        };
-        let picks = resolve_discovery(vec![suggestion.clone()], Duration::from_millis(1), |_| {
-            std::future::pending()
-        })
+        let mut first = pick("Matched", "Trial artist");
+        first.track = Some(track("Matched", &["Trial artist"], 'a'));
+        first.checked = true;
+        let result = resolve_discovery(
+            vec![first.clone(), pick("Trial track", "Trial artist")],
+            Duration::from_millis(1),
+            |_| std::future::pending(),
+        )
         .await;
-        assert_eq!(picks.len(), 1);
-        assert_eq!(picks[0].suggestion, suggestion);
-        assert!(picks[0].track.is_none());
+        assert_eq!(result.outcome, crate::discovery::CatalogueOutcome::TimedOut);
+        assert_eq!(result.picks[0], first);
+        assert!(result.picks[1].track.is_none());
+        assert!(!result.picks[1].checked, "an untouched pick can be retried");
     }
 
     #[tokio::test]
     async fn discovery_only_plays_exact_available_unique_catalogue_matches() {
-        let suggestion = crate::discovery::Suggestion {
-            title: "Trial track".into(),
-            artist: "Trial artist".into(),
-            reason: "A discovery trial.".into(),
-        };
-        let valid = crate::api::models::Track {
-            name: "TRIAL TRACK".into(),
-            uri: "spotify:track:1234567890123456789012".into(),
-            artists: vec![crate::api::models::ArtistRef {
-                name: "Trial Artist".into(),
-                ..Default::default()
-            }],
-            ..Default::default()
-        };
+        let valid = track("TRIAL TRACK", &["Trial Artist"], 'a');
         let mut wrong_title = valid.clone();
         wrong_title.name = "Another song".into();
         let mut wrong_artist = valid.clone();
@@ -6436,14 +6854,90 @@ mod tests {
         let mut invalid_uri = valid.clone();
         invalid_uri.uri = "spotify:track:invented".into();
         let candidates = vec![wrong_title, wrong_artist, unavailable, invalid_uri, valid];
-        let picks = resolve_discovery(
-            vec![suggestion.clone(), suggestion],
+        let result = resolve_discovery(
+            vec![
+                pick("Trial track", "Trial artist"),
+                pick("Trial track", "Trial artist"),
+            ],
             Duration::from_secs(1),
-            move |_| std::future::ready(candidates.clone()),
+            move |_| std::future::ready(Ok(candidates.clone())),
         )
         .await;
-        assert!(picks[0].track.is_some());
-        assert!(picks[1].track.is_none());
+        assert_eq!(result.outcome, crate::discovery::CatalogueOutcome::Complete);
+        assert!(result.picks[0].track.is_some());
+        assert!(result.picks[1].track.is_none(), "duplicate URI");
+        assert!(result.picks.iter().all(|pick| pick.checked));
+    }
+
+    #[tokio::test]
+    async fn discovery_stops_at_the_first_rate_limit_and_retries_only_unchecked_picks() {
+        use crate::discovery::CatalogueOutcome;
+        let picks = vec![
+            pick("One", "Artist"),
+            pick("Two", "Artist"),
+            pick("Three", "Artist"),
+            pick("Four", "Artist"),
+        ];
+        let searched = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let log = searched.clone();
+        let result = resolve_discovery(picks, Duration::from_secs(1), move |s| {
+            log.lock().unwrap().push(s.title.clone());
+            std::future::ready(match s.title.as_str() {
+                "One" => Ok(vec![track("One", &["Artist"], 'a')]),
+                "Two" => Ok(Vec::new()),
+                _ => Err(ApiError::RateLimited),
+            })
+        })
+        .await;
+        assert_eq!(result.outcome, CatalogueOutcome::RateLimited);
+        assert_eq!(*searched.lock().unwrap(), ["One", "Two", "Three"]);
+        assert!(result.picks[0].checked && result.picks[0].track.is_some());
+        assert!(result.picks[1].checked && result.picks[1].track.is_none());
+        assert!(!result.picks[2].checked && !result.picks[3].checked);
+
+        let searched = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let log = searched.clone();
+        let retried = resolve_discovery(result.picks.clone(), Duration::from_secs(1), move |s| {
+            log.lock().unwrap().push(s.title.clone());
+            // The earlier match's URI cannot be claimed twice.
+            std::future::ready(Ok(vec![
+                track(&s.title, &["Artist"], 'a'),
+                track(
+                    &s.title,
+                    &["Artist"],
+                    if s.title == "Three" { 'c' } else { 'd' },
+                ),
+            ]))
+        })
+        .await;
+        assert_eq!(retried.outcome, CatalogueOutcome::Complete);
+        assert_eq!(*searched.lock().unwrap(), ["Three", "Four"]);
+        assert_eq!(retried.picks[..2], result.picks[..2]);
+        let titles: Vec<_> = retried
+            .picks
+            .iter()
+            .map(|p| p.suggestion.title.as_str())
+            .collect();
+        assert_eq!(titles, ["One", "Two", "Three", "Four"]);
+        assert!(retried.picks[2].track.as_ref().unwrap().uri.ends_with('c'));
+        assert!(retried.picks[3].track.as_ref().unwrap().uri.ends_with('d'));
+    }
+
+    #[test]
+    fn catalogue_errors_map_to_truthful_outcomes() {
+        use crate::discovery::CatalogueOutcome;
+        assert_eq!(
+            catalogue_outcome(&ApiError::QuotaExhausted),
+            CatalogueOutcome::QuotaExhausted
+        );
+        assert_eq!(
+            catalogue_outcome(&ApiError::NotSignedIn),
+            CatalogueOutcome::SignInNeeded
+        );
+        assert_eq!(
+            catalogue_outcome(&ApiError::Network("offline".into())),
+            CatalogueOutcome::Unavailable
+        );
     }
 
     #[test]

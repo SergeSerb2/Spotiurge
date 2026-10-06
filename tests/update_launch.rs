@@ -1,15 +1,12 @@
-//! What the previous release's updater relies on from a new binary: the
-//! update flags are taken out before the argument parser sees them, and
-//! `--apply-update` makes the process the helper before anything else runs.
+//! The fork preview must reject updater flags before any legacy package
+//! discovery, install or profile mutation can run.
 
 use std::process::Command;
 
-/// An update relaunch passes `--update-receipt` (or `--update-error`)
-/// alongside the app's own arguments. The command must accept them, which
-/// it only does if the flags are intercepted before clap parses the rest;
-/// `--version` also answers `<command> <version>`, as old helpers check.
+/// There is no fork update contract until package identities are migrated.
 #[test]
-fn update_flags_are_intercepted_before_the_arguments_are_parsed() {
+fn update_relaunch_flags_are_rejected_while_fork_updates_are_disabled() {
+    const { assert!(!spotifast::updates::ENABLED) };
     for flags in [
         [
             "--update-receipt",
@@ -25,20 +22,16 @@ fn update_flags_are_intercepted_before_the_arguments_are_parsed() {
             .arg("--version")
             .output()
             .unwrap();
-        assert!(output.status.success(), "{flags:?}: {output:?}");
-        assert_eq!(
-            String::from_utf8_lossy(&output.stdout).trim(),
-            format!("spotifast {}", env!("CARGO_PKG_VERSION"))
-        );
+        assert_eq!(output.status.code(), Some(2), "{flags:?}: {output:?}");
+        assert!(String::from_utf8_lossy(&output.stderr).contains("unexpected argument"));
+        assert!(output.stdout.is_empty());
     }
 }
 
-/// `--apply-update <job>` runs the helper and exits before the app starts:
-/// a missing job fails with a message on standard error and exit code 1,
-/// and no log file or profile is touched (the environment points them at a
-/// scratch folder that must stay empty).
+/// A helper request must fail at the parser, without touching a profile or job.
 #[test]
-fn apply_update_runs_the_helper_before_the_app() {
+fn apply_update_is_rejected_before_any_helper_or_app_work() {
+    const { assert!(!spotifast::updates::ENABLED) };
     let scratch = std::env::temp_dir().join(format!(
         "spotifast-apply-update-{:016x}",
         rand::random::<u64>()
@@ -58,7 +51,7 @@ fn apply_update_runs_the_helper_before_the_app() {
         .unwrap();
     let left = std::fs::read_dir(&scratch).unwrap().count();
     std::fs::remove_dir_all(&scratch).unwrap();
-    assert_eq!(output.status.code(), Some(1), "{output:?}");
-    assert!(!output.stderr.is_empty(), "the helper explains its failure");
-    assert_eq!(left, 0, "the helper must not start the app");
+    assert_eq!(output.status.code(), Some(2), "{output:?}");
+    assert!(String::from_utf8_lossy(&output.stderr).contains("unexpected argument"));
+    assert_eq!(left, 0, "disabled updates must not touch the profile");
 }

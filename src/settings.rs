@@ -223,6 +223,8 @@ fn proxy_mode_is_system(mode: &ProxyMode) -> bool {
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
+    /// Local refresh controls/cache age; taste and feedback synchronize separately.
+    pub discovery: crate::discovery::Preferences,
     /// The Spotify Connect name other devices see.
     pub device_name: String,
     /// 96, 160, or 320 kbps.
@@ -414,6 +416,7 @@ impl std::fmt::Debug for Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            discovery: crate::discovery::Preferences::default(),
             device_name: "Spotiurge".to_string(),
             bitrate: 320,
             normalisation: false,
@@ -1458,6 +1461,23 @@ mod tests {
         );
         super::ManualProxy::parse(super::ManualKind::Http, "localhost", "8080", "", "").unwrap();
         super::ManualProxy::parse(super::ManualKind::Http, "::1", "8080", "", "").unwrap();
+    }
+
+    #[test]
+    fn discovery_preferences_default_for_old_profiles_and_round_trip() {
+        let older: Settings = serde_json::from_str("{}").unwrap();
+        assert_eq!(older.discovery, crate::discovery::Preferences::default());
+        let settings = Settings {
+            discovery: crate::discovery::Preferences {
+                automatic: false,
+                exploration: crate::discovery::Exploration::Adventurous,
+                refreshed_at: Some(100_000),
+            },
+            ..Default::default()
+        };
+        let restored: Settings =
+            serde_json::from_str(&serde_json::to_string(&settings).unwrap()).unwrap();
+        assert_eq!(restored.discovery, settings.discovery);
     }
 
     #[test]

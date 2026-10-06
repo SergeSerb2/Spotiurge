@@ -1,6 +1,9 @@
 //! Bounded, authenticated personal-cloud requests, called only on the backend.
 
-use crate::discovery::{Document, MAX_BYTES, Replica, Suggestion};
+use crate::discovery::{
+    Document, Exploration, MAX_BYTES, RecommendationError, RecommendationErrorKind, Replica,
+    Suggestion,
+};
 use keyring_core::api::CredentialStoreApi;
 use serde::Deserialize;
 
@@ -174,32 +177,96 @@ pub async fn sync(
     Err("Sync met concurrent edits. Retry to merge the latest state.".into())
 }
 
+/// The server reports why a request was refused in a bounded `code`; only
+/// known codes change the outcome, and no response text reaches logs or UI.
+fn refused(status: u16, code: Option<&str>) -> RecommendationError {
+    let (kind, message) = match (status, code) {
+        (401 | 403, _) => (
+            RecommendationErrorKind::Pairing,
+            "Pair this device again with the Spotiurge private cloud.",
+        ),
+        (429, Some("busy")) => (
+            RecommendationErrorKind::Busy,
+            "Recommendations are already being prepared. Try again in a moment.",
+        ),
+        (429, _) => (
+            RecommendationErrorKind::RateLimited,
+            "The AI is rate limited. Keep listening and try again later.",
+        ),
+        (400, _) => (
+            RecommendationErrorKind::Unavailable,
+            "Add a taste or rate a few tracks, then try again.",
+        ),
+        _ => (
+            RecommendationErrorKind::Unavailable,
+            "Private cloud or AI is unavailable. Keep listening and try again later.",
+        ),
+    };
+    RecommendationError {
+        kind,
+        message: message.into(),
+    }
+}
+
 pub async fn recommend(
     client: &reqwest::Client,
     endpoint: &str,
     document: &Document,
-) -> Result<Vec<Suggestion>, String> {
-    document.validate()?;
-    let url = validate_endpoint(endpoint)?
+    exploration: Exploration,
+) -> Result<Vec<Suggestion>, RecommendationError> {
+    let pairing = |message: String| RecommendationError {
+        kind: RecommendationErrorKind::Pairing,
+        message,
+    };
+    let invalid = |message: String| RecommendationError {
+        kind: RecommendationErrorKind::InvalidResponse,
+        message,
+    };
+    document
+        .validate()
+        .map_err(RecommendationError::unavailable)?;
+    let url = validate_endpoint(endpoint)
+        .map_err(pairing)?
         .join("v1/recommendations")
-        .map_err(|_| "Invalid cloud URL.")?;
-    let token = token(endpoint).await?;
+        .map_err(|_| pairing("Invalid cloud URL.".into()))?;
+    let token = token(endpoint).await.map_err(pairing)?;
     let response = client
         .post(url)
         .bearer_auth(token)
-        .json(&serde_json::json!({"taste": document.taste(), "feedback": document.feedback()}))
+        .json(&serde_json::json!({
+            "taste": document.taste(),
+            "feedback": document.feedback(),
+            "exploration": exploration,
+        }))
         .timeout(std::time::Duration::from_secs(85))
         .send()
         .await
-        .map_err(|_| "Recommendations are unavailable. Your previous discoveries are kept.")?;
-    status(&response)?;
+        .map_err(|_| {
+            RecommendationError::unavailable(
+                "Recommendations are unavailable. Your previous discoveries are kept.",
+            )
+        })?;
+    let status = response.status().as_u16();
+    if !(200..=299).contains(&status) {
+        #[derive(Deserialize)]
+        struct Refusal {
+            code: Option<String>,
+        }
+        let code = response_json::<Refusal>(response)
+            .await
+            .ok()
+            .and_then(|refusal| refusal.code);
+        return Err(refused(status, code.as_deref()));
+    }
     #[derive(Deserialize)]
     struct Answer {
         suggestions: Vec<Suggestion>,
     }
-    let answer: Answer = response_json(response).await?;
+    let answer: Answer = response_json(response).await.map_err(invalid)?;
     if !crate::discovery::valid_suggestions(&answer.suggestions) {
-        return Err("The AI returned invalid suggestions. Try again.".into());
+        return Err(invalid(
+            "The AI returned invalid suggestions. Try again.".into(),
+        ));
     }
     Ok(answer.suggestions)
 }
@@ -219,5 +286,27 @@ mod tests {
             assert!(validate_endpoint(bad).is_err());
         }
         assert!(validate_endpoint("https://example.com").is_ok());
+    }
+
+    #[test]
+    fn server_busy_and_model_rate_limits_are_distinct() {
+        assert_eq!(
+            refused(429, Some("busy")).kind,
+            RecommendationErrorKind::Busy
+        );
+        for code in [Some("rate_limited"), Some("unknown"), None] {
+            assert_eq!(
+                refused(429, code).kind,
+                RecommendationErrorKind::RateLimited
+            );
+        }
+        assert_eq!(
+            refused(401, Some("busy")).kind,
+            RecommendationErrorKind::Pairing
+        );
+        assert_eq!(
+            refused(503, Some("busy")).kind,
+            RecommendationErrorKind::Unavailable
+        );
     }
 }

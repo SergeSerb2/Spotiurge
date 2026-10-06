@@ -1,5 +1,14 @@
 # Desktop discovery
 
+> Historical surface record: superseded for Home on October 6, 2026 by
+> [the native personal radio desk contract](src-ui-discovery-rs.md). This file
+> describes the rejected extension delivered at `5ba0ea9`; it is not the current
+> Home direction. The replacement's source-derived tokens are in
+> [DESIGN.md](../../DESIGN.md), and its scoped finish disposition is in
+> [the current review](../../docs/reviews/spotiurge-discovery/design-review.md).
+> The sidebar, library and player keep their inherited layout. No broader visual
+> approval is implied by this supersession.
+
 Mode: Operate. Scope: an incremental Home extension of the existing native
 interface. The broader glass redesign is still future work; no approved comp or
 new visual-world seed was selected for this local extension.

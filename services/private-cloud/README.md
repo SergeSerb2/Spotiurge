@@ -7,8 +7,8 @@ No telemetry, browser, Spotify grant, audio storage or direct-provider fallback.
 
 Required Railway variables: `SPOTIURGE_CLOUD_TOKEN` (random, at least 32 bytes),
 `CLI_PROXY_BASE_URL` (existing HTTPS proxy's `/v1` URL), `CLI_PROXY_API_KEY`,
-`SPOTIURGE_DATA_DIR=/data`. `SPOTIURGE_MODELS` selects at most two proxy models.
-The first configuration uses `gpt-6.1-sol,gpt-6-luna`. Do not alter the existing
+`SPOTIURGE_DATA_DIR=/data`. Recommendations use **`gpt-6-luna` only**, with no
+model fallback. Legacy `SPOTIURGE_MODELS` values are ignored. Do not alter the existing
 CLIProxyAPI service. Deploy this directory as the Docker build root, one replica,
 with the volume mounted. The checked-in `railway.json` is supported by the
 current deployment but Railway has deprecated it for December 1, 2026; migrate
@@ -20,8 +20,13 @@ the bearer token. `GET /v1/state` returns `{revision, document}`.
 `PUT /v1/state` requires `If-Match: revision`; a conflict returns 409 for the
 client to refetch and merge. A committed write increments the revision.
 SQLite commits are durable on the volume. Recommendations use
-`POST /v1/recommendations` with taste and intentional feedback. One AI request
-runs at a time, with bounded proxy calls and one subscription fallback; a proxy
+`POST /v1/recommendations` with taste, intentional feedback and an allowlisted
+`exploration` value (`familiar`, `balanced`, or `adventurous`). Either taste or at
+least one feedback record is required. Spotify URIs are removed before prompting;
+canonical titles and primary artists are requested, and exact repeats of rated
+tracks are filtered. A 429 includes a bounded `code`: `busy` for another active
+request, `rate_limited` for the subscription provider's quota. One AI request
+runs at a time, with a bounded Luna proxy call and no model fallback; a proxy
 429 is surfaced without another model attempt.
 
 The document is versioned and limited to 1 MiB and 2000 records. Client snapshots

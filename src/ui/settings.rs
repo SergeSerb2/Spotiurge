@@ -678,28 +678,32 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 }
             });
             filtered_row(ui, &palette, &needle, &playback, &playback_rows[7], |ui| {
-                if widgets::switch(
-                    ui,
-                    &palette,
-                    &update_checks,
-                    &mut app.settings.check_for_updates,
-                )
-                .changed()
-                {
-                    changed = true;
-                }
+                ui.add_enabled_ui(crate::updates::ENABLED, |ui| {
+                    if widgets::switch(
+                        ui,
+                        &palette,
+                        &update_checks,
+                        &mut app.settings.check_for_updates,
+                    )
+                    .changed()
+                    {
+                        changed = true;
+                    }
+                });
             });
             filtered_row(ui, &palette, &needle, &playback, &playback_rows[13], |ui| {
-                if widgets::switch(
-                    ui,
-                    &palette,
-                    &download_updates,
-                    &mut app.settings.download_updates_automatically,
-                )
-                .changed()
-                {
-                    changed = true;
-                }
+                ui.add_enabled_ui(crate::updates::ENABLED, |ui| {
+                    if widgets::switch(
+                        ui,
+                        &palette,
+                        &download_updates,
+                        &mut app.settings.download_updates_automatically,
+                    )
+                    .changed()
+                    {
+                        changed = true;
+                    }
+                });
             });
             if cfg!(target_os = "linux") {
                 filtered_row(ui, &palette, &needle, &playback, &playback_rows[8], |ui| {
@@ -1894,12 +1898,19 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 } else {
                     &check_for_updates
                 };
-                if theme::soft_button(ui, &palette, Some(Icon::Refresh), check_label, false)
-                    .clicked()
-                    && !app.update_checking
-                {
-                    app.actions.push(Action::CheckForUpdates);
-                }
+                ui.add_enabled_ui(crate::updates::ENABLED, |ui| {
+                    if theme::soft_button(ui, &palette, Some(Icon::Refresh), check_label, false)
+                        .clicked()
+                        && !app.update_checking
+                    {
+                        app.actions.push(Action::CheckForUpdates);
+                    }
+                })
+                .response
+                .on_disabled_hover_text(gettext(
+                    locale,
+                    "Spotiurge updates are disabled until fork packages are ready.",
+                ));
                 if theme::soft_button(ui, &palette, Some(Icon::Info), &keyboard_shortcuts, false)
                     .clicked()
                 {

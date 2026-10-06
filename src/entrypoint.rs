@@ -47,8 +47,11 @@ struct Cli {
     /// `windows-taskbar`, `german`, `lyrics`, `lyrics-fullscreen`, `collection-loading`,
     /// `shuffle-selected`, `shuffle-started`, `undated-mix`, `signed-out`, `connecting`, `library-list`,
     /// `library-list-narrow`, `library-list-wide`, `library-grid`, `library-grid-narrow`,
-    /// `library-grid-wide`, `discovery-empty`, `discovery-loading`,
-    /// `discovery-error`, `discovery-feedback`, or `discovery-focus`.
+    /// `library-grid-wide`, `discovery-empty`, `discovery-onboarding`, `discovery-matched`,
+    /// `discovery-partial`, `discovery-not-found`, `discovery-busy` (or `discovery-loading`),
+    /// `discovery-offline` (or `discovery-error`), `discovery-pairing`, `discovery-taste`,
+    /// `discovery-history`, `discovery-feedback`, `discovery-focus`, `discovery-menu`,
+    /// `discovery-unmatched`, or `discovery-remote`.
     #[cfg(feature = "demo")]
     #[arg(long)]
     demo_show: Option<String>,
@@ -351,7 +354,7 @@ pub(crate) fn run() -> eframe::Result<()> {
     // First of all: `--apply-update <job>` makes this process the update
     // helper, which installs and exits; otherwise the receipt and error an
     // update relaunch carries are taken out of the arguments.
-    let launch = fastframe_update::intercept(&spotifast::updates::CONFIG);
+    let launch = spotifast::updates::launch();
     // A MilkDrop child launch is a bare visualiser window, not the app: it has
     // its own event loop and OpenGL context, reads the sound from a shared
     // buffer, and never touches the app's state. Handle it before anything

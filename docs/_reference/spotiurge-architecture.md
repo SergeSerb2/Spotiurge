@@ -16,9 +16,10 @@ are already separated from immediate-mode drawing. Linux, macOS and Windows
 have build/test CI; no iOS project, Rust bridge or TestFlight pipeline exists.
 Reuse these boundaries and dependencies rather than replacing the desktop.
 
-Inherited updater configuration targets `crmne/spotifast`. Packaging identities,
-website, package links and release metadata still use upstream names. Isolate
-the updater now; audit and rename remaining destinations before a fork release.
+The updater repository targets `SergeSerb2/Spotiurge`, but inherited packaging
+identities, website, package links and release metadata still use upstream names.
+Automatic checks, manual checks and the startup update helper are disabled. Audit
+and rename every artifact and installer destination before enabling fork updates.
 Do not tag or publish this development slice as a release.
 
 Serge deferred iOS work on October 6, 2026 because he is remote. The current
@@ -29,7 +30,9 @@ implementation and acceptance focus on macOS; iOS remains a later gated mileston
 1. **Desktop discovery slice:** personal taste prompt, bounded recommendation
    requests through existing CLIProxyAPI subscriptions, catalogue validation,
    playable results and explicit listening feedback. Catalogue matching has one
-   twenty-second deadline; slow searches retain unverified suggestions. Cache prior results and
+   twenty-second deadline; slow searches retain unchecked suggestions. Strict
+   matching parses actual credited collaborators and preserves recording versions.
+   A catalogue-only retry preserves matched tracks and never asks AI again. Cache prior results and
    leave the existing player and Connect controls responsive during failures.
 2. **Private synchronization:** a single authenticated Railway service with a
    persistent SQLite volume. Sync preferences, feedback, custom mix references
@@ -49,9 +52,19 @@ implementation and acceptance focus on macOS; iOS remains a later gated mileston
 
 ## AI boundary
 
-All models and fallbacks use Serge's existing CLIProxyAPI subscriptions. The
+Recommendations use GPT-6 Luna only through Serge's existing CLIProxyAPI subscriptions, with no model fallback. The
 cloud service owns the proxy credential; devices never receive that credential
 or upstream subscription grants. No direct-model-provider fallback.
+
+Home automatically refreshes an empty or twelve-hour-old cache from saved taste
+and/or intentional feedback. Exploration changes debounce for 1.5 seconds;
+feedback debounces for 45 seconds and refreshes at most every ten minutes. AI
+failures back off from ten minutes to six hours; pairing failures suspend automatic
+requests until an explicit recovery action. Nothing runs automatically in demo
+mode, without inputs, while busy or signed out. The scheduler requests a future
+repaint instead of polling. Network outages keep prior picks and the local player
+usable. Local settings hold exploration, automatic refresh and cache age; synced
+taste and feedback remain in the backward-compatible version-one document.
 
 [Spotify's policy](https://developer.spotify.com/policy) prohibits ingestion of
 Spotify content into AI models. Serge reports permission for broader use in this
@@ -65,11 +78,14 @@ the restricted Spotify recommendations, related-artists or audio-features APIs.
 
 ## Sync and offline behavior
 
-Keep a device-local, atomically replaced JSON snapshot and a random installation
+Keep a device-local, atomically replaced JSON snapshot and a random writer
 ID. Secrets and the local cloud endpoint are excluded from the synced document.
-Use per-record Lamport counters with installation-ID tie breaking, not wall
+Rotate the writer ID on every profile load, preserving historical stamps and
+advancing counters from the existing document. This makes restored or copied
+profiles independent writers without a portable secret or hardware identifier.
+Use per-record Lamport counters with writer-ID tie breaking, not wall
 clocks. Unrelated records merge; concurrent edits of the same record choose the
-larger `(counter, installation ID)` pair. Preserve deletions as tombstones so
+larger `(counter, writer ID)` pair. Preserve deletions as tombstones so
 offline devices cannot resurrect deleted mixes. A playlist/mix is one record:
 simultaneous edits choose one complete version, rather than interleaving songs.
 

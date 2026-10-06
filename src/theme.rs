@@ -463,6 +463,8 @@ fastframe_icons::icons! {
         SquarePen => lucide "square-pen",
         Sun => lucide "sun",
         Tablet => "tablet",
+        ThumbsDown => "thumbs-down",
+        ThumbsUp => "thumbs-up",
         Trash => lucide "trash-2",
         TrendingUp => "trending-up",
         Tv => "tv",

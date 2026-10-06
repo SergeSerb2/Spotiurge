@@ -46,13 +46,26 @@ namespace and Connect device name.
 
 ## Personal discovery
 
-Home opens with a taste prompt, AI discoveries, intentional feedback and saved
-Spotiurge mixes. **Save taste** works locally. **Find music for me** requests
-recommendations through the private cloud's existing CLIProxyAPI subscriptions,
-then validates title/artist pairs with Spotify catalogue search. Matching has a
-shared twenty-second deadline; unverified suggestions stay visible and cached. Only matched
-Spotify tracks can play, using the existing local engine or Connect device.
-**More like this** and **Less like this** affect the next recommendation request.
+Home opens on a compact **For you** queue, intentional feedback and saved
+Spotiurge mixes. **Tune taste** opens an optional editor; saving works locally.
+Saved taste or feedback generates picks automatically on Home when the cache is
+empty or twelve hours old. Choose **Familiar**, **Balanced** or **Adventurous**, or
+use the **Find new picks** refresh control for a manual refresh. The menu can disable automatic picks.
+Recommendations use **GPT-6 Luna only** through the private cloud's existing
+CLIProxyAPI subscriptions, with no heavier-model fallback,
+then validate title/credited-artist pairs with Spotify catalogue search. Matching
+has a shared twenty-second deadline. One status distinguishes missing tracks,
+unchecked suggestions, rate limits and interrupted searches. **Check again**
+checks only unresolved suggestions without another AI request. Only matched
+Spotify tracks can play through the existing local engine. Discovery URI-list
+playback on remote Connect devices is disabled until a supported handoff is verified.
+Existing Spotify playlist/album context handoff remains available.
+**More like this** and **Less like this** affect the next recommendation request;
+click a selected rating again to clear it. Feedback triggers a debounced refresh
+after 45 seconds, at most once per ten minutes. AI failures retry after 10, 20,
+40 minutes, up to six hours; pairing failures wait for a user action. Cached
+music and playback stay available. Exploration and automatic-pick controls are
+saved per device; taste and feedback synchronize through the private store.
 **Save this mix** keeps an ordered Spotiurge mix without creating a Spotify
 playlist. **Sync my devices** exchanges taste preferences, feedback, mixes and AI
 history. Previous discoveries remain cached when AI is unavailable.
@@ -74,10 +87,14 @@ requests do not follow redirects. All integrations are bounded and off the UI
 and playback threads.
 
 Offline edits remain local until a manual sync. Same-record conflicts use a
-logical counter and installation ID; separate records merge. Offline music
+logical counter and writer ID; separate records merge. Writer IDs rotate when
+a profile is loaded, so copied profiles cannot share a live clock. Offline music
 downloads are not supported. See the [architecture and delivery plan](docs/_reference/spotiurge-architecture.md)
 and [private service operations](services/private-cloud/README.md) for limits,
 credential rotation, export and the iOS playback proof criteria.
+
+Automatic and manual updates are disabled in this preview, including the update
+helper, until fork package identities and installer destinations are migrated.
 
 ## Contributing
 

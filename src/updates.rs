@@ -1,16 +1,27 @@
-//! Self-update from GitHub releases, through fastframe-update.
-//!
-//! The previous release's helper installs the first release built on the
-//! crate, so what it relies on stays the same: `--version` prints
-//! `<command> <version>`, the new app accepts `--update-receipt` and
-//! `--update-error` (stripped by [`fastframe_update::intercept`] before the
-//! argument parser), and the handoff and receipt files keep their format.
+//! Fork updates are disabled until every artifact identity and installation
+//! destination is migrated and verified. This includes startup helper flags.
 
 pub use fastframe_update::{
     CHECK_INTERVAL, DownloadState, Installation, Kind, Prepared, Release, Source, Unsupported,
     Updater,
 };
 use fastframe_update::{MacConfig, ReqwestTransport, UpdateConfig};
+
+/// Release workflows still carry upstream package identities. Fail closed
+/// until every fork artifact and installer destination has been migrated.
+pub const ENABLED: bool = false;
+
+pub fn launch() -> fastframe_update::Launch {
+    if ENABLED {
+        fastframe_update::intercept(&CONFIG)
+    } else {
+        fastframe_update::Launch {
+            arguments: std::env::args_os().collect(),
+            receipt: None,
+            error: None,
+        }
+    }
+}
 
 pub const CONFIG: UpdateConfig = UpdateConfig {
     macos: MacConfig {
@@ -30,8 +41,12 @@ pub const CONFIG: UpdateConfig = UpdateConfig {
     )
 };
 
-/// An updater on Spotifast's HTTP client, through the configured proxy.
+/// Reject updates before creating a transport while the release gate is closed.
 pub fn updater(proxy: &crate::settings::ProxyConfig) -> anyhow::Result<Updater> {
+    anyhow::ensure!(
+        ENABLED,
+        "Spotiurge updates are disabled until fork packages are ready."
+    );
     let builder = crate::http::blocking_builder(proxy).map_err(anyhow::Error::msg)?;
     Ok(Updater::new(CONFIG, ReqwestTransport::new(builder)?))
 }
@@ -45,5 +60,10 @@ mod tests {
         CONFIG.validate().unwrap();
         assert_eq!(CONFIG.current_version, env!("CARGO_PKG_VERSION"));
         assert_eq!(CONFIG.repository, "SergeSerb2/Spotiurge");
+    }
+
+    #[test]
+    fn fork_updates_are_disabled_before_creating_a_transport() {
+        assert!(updater(&crate::settings::ProxyConfig::default()).is_err());
     }
 }

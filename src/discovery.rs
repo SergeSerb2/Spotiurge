@@ -1,7 +1,7 @@
 //! Personal discovery state. No Spotify grants or audio enter this document.
 //!
 //! Per-record logical clocks make offline edits merge independently of wall
-//! clocks. The cloud stores only the document; installation identity stays local.
+//! clocks. The cloud stores only the document; writer identity stays local.
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -9,6 +9,18 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 
 pub const MAX_BYTES: usize = 1_048_576;
+pub const MAX_PROMPT_BYTES: usize = 4000;
+
+/// Keep editor input within the wire/storage limit without splitting UTF-8.
+pub fn limit_prompt(text: &mut String) {
+    if text.len() > MAX_PROMPT_BYTES {
+        let mut end = MAX_PROMPT_BYTES;
+        while !text.is_char_boundary(end) {
+            end -= 1;
+        }
+        text.truncate(end);
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -52,6 +64,164 @@ pub enum Value {
 pub enum Rating {
     Love,
     Less,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Exploration {
+    Familiar,
+    #[default]
+    Balanced,
+    Adventurous,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Preferences {
+    pub automatic: bool,
+    pub exploration: Exploration,
+    pub refreshed_at: Option<u64>,
+}
+
+impl Default for Preferences {
+    fn default() -> Self {
+        Self {
+            automatic: true,
+            exploration: Exploration::Balanced,
+            refreshed_at: None,
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct AutoRecommendations {
+    pub failures: u32,
+    pub suspended: bool,
+    retry_at: Option<std::time::Instant>,
+    changed_at: Option<std::time::Instant>,
+    last_attempt: Option<std::time::Instant>,
+}
+
+impl AutoRecommendations {
+    pub fn changed(&mut self, now: std::time::Instant, exploration: bool) {
+        let delay = std::time::Duration::from_millis(if exploration { 1500 } else { 45_000 });
+        let mut due = now + delay;
+        if !exploration && let Some(last) = self.last_attempt {
+            due = due.max(last + std::time::Duration::from_secs(600));
+        }
+        self.changed_at = Some(due);
+    }
+
+    pub fn due(
+        &self,
+        now: std::time::Instant,
+        wall_now: u64,
+        preferences: &Preferences,
+        enabled: bool,
+        has_inputs: bool,
+        empty: bool,
+    ) -> Option<std::time::Duration> {
+        if !enabled || !has_inputs || !preferences.automatic || self.suspended {
+            return None;
+        }
+        if let Some(retry) = self.retry_at {
+            return Some(retry.saturating_duration_since(now));
+        }
+        if let Some(changed) = self.changed_at {
+            return Some(changed.saturating_duration_since(now));
+        }
+        if empty && self.last_attempt.is_none() {
+            return Some(std::time::Duration::ZERO);
+        }
+        let refreshed = preferences
+            .refreshed_at
+            .filter(|time| *time <= wall_now.saturating_add(43_200))
+            .unwrap_or(0);
+        Some(std::time::Duration::from_secs(
+            refreshed.saturating_add(43_200).saturating_sub(wall_now),
+        ))
+    }
+
+    pub fn attempted(&mut self, now: std::time::Instant) {
+        self.last_attempt = Some(now);
+        self.changed_at = None;
+        self.retry_at = None;
+    }
+
+    pub fn failed(&mut self, kind: RecommendationErrorKind, now: std::time::Instant) {
+        if kind == RecommendationErrorKind::Pairing {
+            self.suspended = true;
+            return;
+        }
+        self.failures = self.failures.saturating_add(1).min(10);
+        let seconds = (600_u64 << (self.failures - 1)).min(21_600);
+        self.retry_at = Some(now + std::time::Duration::from_secs(seconds));
+    }
+
+    pub fn rearm(&mut self) {
+        self.failures = 0;
+        self.suspended = false;
+        self.retry_at = None;
+    }
+}
+
+pub fn unix_now() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |time| time.as_secs())
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum CatalogueOutcome {
+    #[default]
+    Complete,
+    TimedOut,
+    RateLimited,
+    QuotaExhausted,
+    Unavailable,
+    SignInNeeded,
+}
+
+#[derive(Clone, Debug)]
+pub struct ResolvedDiscovery {
+    pub picks: Vec<Pick>,
+    pub outcome: CatalogueOutcome,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RecommendationErrorKind {
+    Pairing,
+    Busy,
+    RateLimited,
+    Unavailable,
+    InvalidResponse,
+}
+
+#[derive(Clone, Debug)]
+pub struct RecommendationError {
+    pub kind: RecommendationErrorKind,
+    pub message: String,
+}
+
+impl RecommendationError {
+    pub fn unavailable(message: impl Into<String>) -> Self {
+        Self {
+            kind: RecommendationErrorKind::Unavailable,
+            message: message.into(),
+        }
+    }
+}
+
+impl From<String> for RecommendationError {
+    fn from(message: String) -> Self {
+        Self::unavailable(message)
+    }
+}
+
+impl From<&str> for RecommendationError {
+    fn from(message: &str) -> Self {
+        Self::unavailable(message)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -99,7 +269,7 @@ impl Document {
                 return Err("Invalid discovery record.".into());
             }
             let valid = match &record.value {
-                Some(Value::Taste { text }) => key == "taste" && text.len() <= 4000,
+                Some(Value::Taste { text }) => key == "taste" && text.len() <= MAX_PROMPT_BYTES,
                 Some(Value::Feedback {
                     uri, title, artist, ..
                 }) => {
@@ -119,7 +289,7 @@ impl Document {
                     suggestions,
                 }) => {
                     key.starts_with("history:")
-                        && prompt.len() <= 4000
+                        && prompt.len() <= MAX_PROMPT_BYTES
                         && valid_suggestions(suggestions)
                 }
                 None => {
@@ -172,6 +342,14 @@ impl Document {
         }
     }
 
+    pub fn has_inputs(&self) -> bool {
+        !self.taste().trim().is_empty()
+            || self
+                .records
+                .values()
+                .any(|record| matches!(record.value, Some(Value::Feedback { .. })))
+    }
+
     pub fn rating(&self, uri: &str) -> Option<Rating> {
         match self
             .records
@@ -195,6 +373,24 @@ impl Document {
             .take(100)
             .filter_map(|r| r.value.as_ref())
             .collect()
+    }
+
+    /// Only the newest ten references, without cloning stored prompts/results.
+    pub fn recent_history(&self) -> Vec<(&str, &Record)> {
+        let mut newest: Vec<(&str, &Record)> = Vec::with_capacity(11);
+        for (key, record) in &self.records {
+            if !matches!(record.value, Some(Value::History { .. })) {
+                continue;
+            }
+            let position = newest.partition_point(|(held_key, held)| {
+                (&held.stamp, *held_key) > (&record.stamp, key.as_str())
+            });
+            if position < 10 {
+                newest.insert(position, (key, record));
+                newest.truncate(10);
+            }
+        }
+        newest
     }
 }
 
@@ -258,7 +454,7 @@ impl Replica {
         if bytes.len() > MAX_BYTES * 2 {
             return Err("Discovery state is too large.".into());
         }
-        let replica: Self = serde_json::from_slice(&bytes)
+        let mut replica: Self = serde_json::from_slice(&bytes)
             .map_err(|_| "Cannot read discovery state. The original file is preserved.")?;
         replica.document.validate()?;
         if replica.cached_picks.len() > 12 {
@@ -272,6 +468,10 @@ impl Replica {
         {
             return Err("Invalid discovery installation identity.".into());
         }
+        // Backups/profile copies must not keep a live writer's identity. Old
+        // record stamps remain intact; the next edit uses a fresh writer and
+        // advances past the largest persisted logical counter.
+        replica.device = format!("{:032x}", rand::random::<u128>());
         Ok(replica)
     }
 
@@ -313,6 +513,8 @@ pub fn valid_suggestions(suggestions: &[Suggestion]) -> bool {
 pub struct Pick {
     pub suggestion: Suggestion,
     pub track: Option<crate::api::models::Track>,
+    #[serde(default)]
+    pub checked: bool,
 }
 
 /// UI state is separate from the synchronized document and secrets.
@@ -327,11 +529,137 @@ pub struct Discovery {
     pub request: u64,
     pub status: String,
     pub dirty: bool,
+    pub catalogue: CatalogueOutcome,
+    pub retry_after: Option<std::time::Instant>,
+    pub editing_taste: bool,
+    pub show_history: bool,
+    pub automatic: AutoRecommendations,
+    pub last_error: Option<RecommendationErrorKind>,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn automatic_recommendations_use_freshness_and_never_run_without_inputs() {
+        use std::time::{Duration, Instant};
+        let now = Instant::now();
+        let scheduler = AutoRecommendations::default();
+        let preferences = Preferences {
+            refreshed_at: Some(100_000),
+            ..Default::default()
+        };
+        assert_eq!(
+            scheduler.due(now, 100_001, &preferences, true, true, false),
+            Some(Duration::from_secs(43_199))
+        );
+        assert_eq!(
+            scheduler.due(now, 143_200, &preferences, true, true, false),
+            Some(Duration::ZERO)
+        );
+        assert_eq!(
+            scheduler.due(now, 100_001, &preferences, true, true, true),
+            Some(Duration::ZERO)
+        );
+        assert_eq!(
+            scheduler.due(now, 143_200, &preferences, false, true, true),
+            None
+        );
+        assert_eq!(
+            scheduler.due(now, 143_200, &preferences, true, false, true),
+            None
+        );
+        let disabled = Preferences {
+            automatic: false,
+            ..preferences
+        };
+        assert_eq!(
+            scheduler.due(now, 143_200, &disabled, true, true, true),
+            None
+        );
+    }
+
+    #[test]
+    fn automatic_recommendations_debounce_feedback_and_respect_backoff() {
+        use std::time::{Duration, Instant};
+        let now = Instant::now();
+        let preferences = Preferences::default();
+        let mut scheduler = AutoRecommendations::default();
+        scheduler.attempted(now);
+        scheduler.changed(now + Duration::from_secs(10), false);
+        scheduler.changed(now + Duration::from_secs(20), false);
+        scheduler.changed(now + Duration::from_secs(30), false);
+        assert_eq!(
+            scheduler.due(now, 100_000, &preferences, true, true, false),
+            Some(Duration::from_secs(600))
+        );
+        scheduler.changed(now, true);
+        assert_eq!(
+            scheduler.due(now, 100_000, &preferences, true, true, false),
+            Some(Duration::from_millis(1500))
+        );
+        for seconds in [600, 1200, 2400, 4800, 9600, 19_200, 21_600, 21_600] {
+            scheduler.failed(RecommendationErrorKind::RateLimited, now);
+            // New feedback cannot override an AI cooldown.
+            scheduler.changed(now, true);
+            assert_eq!(
+                scheduler.due(now, 100_000, &preferences, true, true, false),
+                Some(Duration::from_secs(seconds))
+            );
+            scheduler.attempted(now + Duration::from_secs(seconds));
+        }
+        scheduler.failed(RecommendationErrorKind::Pairing, now);
+        assert_eq!(
+            scheduler.due(now, 100_000, &preferences, true, true, false),
+            None
+        );
+        scheduler.rearm();
+        assert_eq!(scheduler.failures, 0);
+        assert!(!scheduler.suspended);
+    }
+
+    #[test]
+    fn old_pick_caches_and_partial_preferences_remain_readable() {
+        let pick: Pick = serde_json::from_str(
+            r#"{"suggestion":{"title":"Song","artist":"Artist","reason":""},"track":null}"#,
+        )
+        .unwrap();
+        assert!(!pick.checked);
+        let preferences: Preferences = serde_json::from_str("{}").unwrap();
+        assert_eq!(preferences, Preferences::default());
+        let preferences: Preferences =
+            serde_json::from_str(r#"{"exploration":"adventurous"}"#).unwrap();
+        assert!(preferences.automatic);
+        assert_eq!(preferences.exploration, Exploration::Adventurous);
+    }
+
+    #[test]
+    fn clearing_feedback_converges_and_retains_a_tombstone() {
+        let mut a = device('a');
+        let mut b = device('b');
+        let uri = "spotify:track:0123456789ABCDEFGHIJKL";
+        a.edit(
+            format!("feedback:{uri}"),
+            Some(Value::Feedback {
+                uri: uri.into(),
+                title: "Song".into(),
+                artist: "Artist".into(),
+                rating: Rating::Love,
+            }),
+        )
+        .unwrap();
+        b.document.merge(&a.document).unwrap();
+        b.edit(format!("feedback:{uri}"), None).unwrap();
+        a.document.merge(&b.document).unwrap();
+        assert_eq!(a.document.rating(uri), None);
+        assert!(
+            a.document.records[&format!("feedback:{uri}")]
+                .value
+                .is_none()
+        );
+        assert_eq!(a.document, b.document);
+    }
 
     fn device(id: char) -> Replica {
         Replica {
@@ -404,5 +732,92 @@ mod tests {
         assert!(!spotify_track("https://example.com/music"));
         assert!(spotify_track("spotify:track:0123456789ABCDEFGHIJKL"));
         assert!(!valid_suggestions(&[]));
+    }
+
+    #[test]
+    fn multibyte_prompts_fit_taste_and_history_storage() {
+        for input in [
+            "a".repeat(4001),
+            "音".repeat(1334),
+            "🎵".repeat(1001),
+            format!("{}🎵", "a".repeat(3999)),
+        ] {
+            let mut text = input.clone();
+            limit_prompt(&mut text);
+            assert!(text.len() <= MAX_PROMPT_BYTES);
+            assert!(input.starts_with(&text));
+            let mut replica = device('a');
+            replica.edit("taste".into(), taste(&text)).unwrap();
+            replica
+                .edit(
+                    "history:test".into(),
+                    Some(Value::History {
+                        prompt: text,
+                        suggestions: vec![Suggestion {
+                            title: "Song".into(),
+                            artist: "Artist".into(),
+                            reason: String::new(),
+                        }],
+                    }),
+                )
+                .unwrap();
+        }
+    }
+
+    #[test]
+    fn copied_profiles_preserve_history_but_get_independent_writers() {
+        let path = Path::new("target").join(format!(
+            "discovery-copy-{:032x}.json",
+            rand::random::<u128>()
+        ));
+        let mut original = device('a');
+        original.edit("taste".into(), taste("original")).unwrap();
+        original.save(&path).unwrap();
+        let mut a = Replica::load(&path).unwrap();
+        let mut b = Replica::load(&path).unwrap();
+        std::fs::remove_file(path).unwrap();
+        assert_eq!(a.document, original.document);
+        assert_eq!(b.document, original.document);
+        assert_ne!(a.device, original.device);
+        assert_ne!(a.device, b.device);
+        a.edit("taste".into(), taste("first copy")).unwrap();
+        b.edit("taste".into(), taste("second copy")).unwrap();
+        assert_eq!(a.document.records["taste"].stamp.counter, 2);
+        assert_eq!(b.document.records["taste"].stamp.counter, 2);
+        let old_a = a.document.clone();
+        a.document.merge(&b.document).unwrap();
+        b.document.merge(&old_a).unwrap();
+        assert_eq!(a.document, b.document);
+    }
+
+    #[test]
+    fn history_selects_only_ten_newest_live_records_by_reference() {
+        let mut replica = device('a');
+        for number in 0..25 {
+            replica
+                .edit(
+                    format!("history:{number:02}"),
+                    Some(Value::History {
+                        prompt: format!("Prompt {number}"),
+                        suggestions: vec![Suggestion {
+                            title: "Song".into(),
+                            artist: "Artist".into(),
+                            reason: String::new(),
+                        }],
+                    }),
+                )
+                .unwrap();
+        }
+        replica.edit("history:24".into(), None).unwrap();
+        replica
+            .edit("taste".into(), taste("latest non-history record"))
+            .unwrap();
+        let history = replica.document.recent_history();
+        assert_eq!(history.len(), 10);
+        assert_eq!(history[0].0, "history:23");
+        assert_eq!(history[9].0, "history:14");
+        for (key, record) in history {
+            assert!(std::ptr::eq(record, &replica.document.records[key]));
+        }
     }
 }
