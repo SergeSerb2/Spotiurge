@@ -23,13 +23,18 @@ SQLite commits are durable on the volume. Recommendations use
 `POST /v1/recommendations` with taste, intentional feedback and an allowlisted
 `exploration` value (`familiar`, `balanced`, or `adventurous`). Either taste or at
 least one feedback record is required. Spotify URIs are removed before prompting;
-canonical titles and primary artists are requested, and exact repeats of rated
-tracks are filtered. A 429 includes a bounded `code`: `busy` for another active
+canonical titles and primary artists are requested. Repeat filtering recognizes
+primary and guest credits within Spotify's comma-separated feedback credits;
+distinct versions and different credited artists remain distinct.
+A 429 includes a bounded `code`: `busy` for another active
 request, `rate_limited` for the subscription provider's quota. One AI request
 runs at a time, with a bounded Luna proxy call and no model fallback; a proxy
 429 is surfaced without another model attempt.
 
-The document is versioned and limited to 1 MiB and 2000 records. Client snapshots
+The document is versioned and limited to 1 MiB of compact UTF-8 JSON and 2000
+records. Validation, persistence and state responses use this same encoding,
+so whitespace or Unicode escaping cannot make a valid client document fail.
+Client snapshots
 also carry up to 12 local catalogue matches and are limited to 2 MiB. Unknown
 document schemas and malformed clocks fail closed. Record deletions are retained
 as tombstones. There is no automatic history purge or tombstone compaction yet;

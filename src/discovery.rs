@@ -415,6 +415,35 @@ impl Default for Replica {
 }
 
 impl Replica {
+    /// Merge an acknowledged sync without undoing edits made after its snapshot.
+    pub fn merge_synced(
+        &mut self,
+        remote: &Document,
+        snapshot: Option<&Document>,
+    ) -> Result<(), String> {
+        let changed = snapshot
+            .map(|snapshot| {
+                self.document
+                    .records
+                    .iter()
+                    .filter(|(key, record)| snapshot.records.get(*key) != Some(*record))
+                    .map(|(key, record)| (key.clone(), record.clone()))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let mut merged = self.clone();
+        merged.document.merge(remote)?;
+        for (key, local) in changed {
+            if merged.document.records.get(&key) != Some(&local) {
+                // Incorporate the remote clock first, then express the newer
+                // local intent above it. Tombstones are edits as well.
+                merged.edit(key, local.value)?;
+            }
+        }
+        self.document = merged.document;
+        Ok(())
+    }
+
     pub fn edit(&mut self, key: String, value: Option<Value>) -> Result<(), String> {
         let counter = self
             .document
@@ -526,6 +555,7 @@ pub struct Discovery {
     pub picks: Vec<Pick>,
     pub busy: bool,
     pub syncing: bool,
+    pub sync_snapshot: Option<Document>,
     pub request: u64,
     pub status: String,
     pub dirty: bool,
@@ -666,6 +696,72 @@ mod tests {
             device: id.to_string().repeat(32),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn sync_acknowledgment_preserves_later_local_taste_above_the_remote_clock() {
+        let mut local = device('a');
+        local.edit("taste".into(), taste("before sync")).unwrap();
+        let snapshot = local.document.clone();
+        let mut remote = device('b');
+        for _ in 0..10 {
+            remote.edit("taste".into(), taste("remote taste")).unwrap();
+        }
+        local
+            .edit("taste".into(), taste("just saved here"))
+            .unwrap();
+        local
+            .merge_synced(&remote.document, Some(&snapshot))
+            .unwrap();
+        assert_eq!(local.document.taste(), "just saved here");
+        assert!(local.document.records["taste"].stamp.counter > 10);
+        remote.document.merge(&local.document).unwrap();
+        assert_eq!(remote.document, local.document);
+    }
+
+    #[test]
+    fn sync_preserves_in_flight_tombstones_and_imports_unrelated_remote_edits() {
+        let mut local = device('a');
+        local
+            .edit(
+                "mix:removed".into(),
+                Some(Value::Mix {
+                    title: "old mix".into(),
+                    uris: vec![],
+                }),
+            )
+            .unwrap();
+        let snapshot = local.document.clone();
+        local.edit("mix:removed".into(), None).unwrap();
+        let mut remote = device('b');
+        for _ in 0..10 {
+            remote
+                .edit(
+                    "mix:removed".into(),
+                    Some(Value::Mix {
+                        title: "remote mix".into(),
+                        uris: vec![],
+                    }),
+                )
+                .unwrap();
+        }
+        remote
+            .edit("taste".into(), taste("remote preference"))
+            .unwrap();
+        local
+            .merge_synced(&remote.document, Some(&snapshot))
+            .unwrap();
+        assert_eq!(local.document.taste(), "remote preference");
+        assert!(local.document.records["mix:removed"].value.is_none());
+        assert!(local.document.records["mix:removed"].stamp.counter > 11);
+        remote.document.merge(&local.document).unwrap();
+        assert_eq!(remote.document, local.document);
+
+        let saved = local.document.clone();
+        let mut invalid = remote.document;
+        invalid.records.get_mut("taste").unwrap().stamp.counter = u64::MAX;
+        assert!(local.merge_synced(&invalid, Some(&snapshot)).is_err());
+        assert_eq!(local.document, saved, "invalid replies cannot partly apply");
     }
     fn taste(text: &str) -> Option<Value> {
         Some(Value::Taste { text: text.into() })

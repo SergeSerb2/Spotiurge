@@ -91,8 +91,11 @@ simultaneous edits choose one complete version, rather than interleaving songs.
 
 The service exposes a revisioned document. A client fetches, merges and writes
 with compare-and-swap; a conflict refetches and retries within a bounded deadline.
-Local edits made while sync is in flight merge with the response and remain
-pending. Persist locally before cloud writes. Failures keep the local snapshot,
+The UI keeps the dispatched snapshot. Records edited after it are preserved
+over an acknowledgment with a higher remote clock, including tombstones. If
+necessary they are re-stamped above that clock and remain pending for the next
+sync. Validation or clock exhaustion leaves the original local document intact.
+Persist locally before cloud writes. Failures keep the local snapshot,
 cached recommendations and playback usable. Offline metadata access is allowed;
 offline Spotify audio downloads are not a supported feature.
 

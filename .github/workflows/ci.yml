@@ -109,6 +109,10 @@ jobs:
         run: mbx test --locked --lib credentials::tests::native_store_round_trip -- --ignored --exact
       - name: Documentation tests
         run: mbx test --locked --all-features --doc
+      - name: Cloud token bootstrap isolation
+        env:
+          SPOTIURGE_CLOUD_TOKEN: spotiurge-dummy-bootstrap-token-for-regression-only
+        run: mbx run --locked --example cloud-bootstrap-check
       # A build can pass while importing Microsoft's C++ runtime, then fail on
       # a clean user's machine. Inspect the executable CI actually produced.
       - name: Standalone Windows runtime

@@ -1844,22 +1844,28 @@ impl App {
                 },
                 Event::DiscoverySynced(result) => {
                     self.discovery.syncing = false;
+                    let snapshot = self.discovery.sync_snapshot.take();
                     match result {
                         Ok(document) => {
-                            let inputs_changed = document.records.iter().any(|(key, remote)| {
-                                (key == "taste" || key.starts_with("feedback:"))
-                                    && self.discovery.replica.document.records.get(key).is_none_or(
-                                        |local| {
-                                            remote.stamp > local.stamp
-                                                && remote.value != local.value
-                                        },
-                                    )
-                            });
+                            let before = self.discovery.replica.document.clone();
                             let draft_unchanged =
                                 self.discovery.draft == self.discovery.replica.document.taste();
-                            let had_new_edits = self.discovery.replica.document != document;
-                            match self.discovery.replica.document.merge(&document) {
+                            match self
+                                .discovery
+                                .replica
+                                .merge_synced(&document, snapshot.as_ref())
+                            {
                                 Ok(()) => {
+                                    let inputs_changed =
+                                        self.discovery.replica.document.records.iter().any(
+                                            |(key, record)| {
+                                                (key == "taste" || key.starts_with("feedback:"))
+                                                    && before
+                                                        .records
+                                                        .get(key)
+                                                        .is_none_or(|old| old.value != record.value)
+                                            },
+                                        );
                                     if self.discovery.last_error
                                         == Some(crate::discovery::RecommendationErrorKind::Pairing)
                                     {
@@ -1869,8 +1875,8 @@ impl App {
                                     if inputs_changed {
                                         self.discovery.automatic.changed(Instant::now(), true);
                                     }
-                                    self.discovery.dirty = had_new_edits
-                                        && self.discovery.replica.document != document;
+                                    self.discovery.dirty =
+                                        self.discovery.replica.document != document;
                                     if draft_unchanged {
                                         self.discovery.draft =
                                             self.discovery.replica.document.taste().into();
@@ -8502,6 +8508,7 @@ impl App {
                     return;
                 }
                 self.discovery.syncing = true;
+                self.discovery.sync_snapshot = Some(self.discovery.replica.document.clone());
                 self.discovery.status = gettext(
                     self.locale,
                     "Syncing preferences, feedback, mixes and AI history…",
@@ -15498,6 +15505,7 @@ mod tests {
             )
             .unwrap();
         let remote = app.discovery.replica.document.clone();
+        app.discovery.sync_snapshot = Some(remote.clone());
         app.discovery
             .replica
             .edit(
@@ -15519,6 +15527,54 @@ mod tests {
                 .contains_key("mix:new")
         );
         assert!(app.discovery.dirty);
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn discovery_sync_cannot_undo_taste_saved_while_remote_response_is_pending() {
+        let mut app = test_app("discovery-sync-saved-taste");
+        app.backend.set_offline(true);
+        app.discovery.ready = true;
+        app.discovery
+            .replica
+            .edit(
+                "taste".into(),
+                Some(crate::discovery::Value::Taste {
+                    text: "before sync".into(),
+                }),
+            )
+            .unwrap();
+        app.discovery.draft = "before sync".into();
+        let ctx = egui::Context::default();
+        app.apply(Action::DiscoverySync, &ctx);
+        assert!(app.discovery.syncing);
+        let mut remote = app.discovery.sync_snapshot.clone().unwrap();
+        let record = remote.records.get_mut("taste").unwrap();
+        record.stamp.counter = 50;
+        record.stamp.device = "b".repeat(32);
+        record.value = Some(crate::discovery::Value::Taste {
+            text: "remote taste".into(),
+        });
+        app.discovery.draft = "just saved here".into();
+        app.apply(Action::DiscoverySaveTaste, &ctx);
+        app.discovery.draft = "unfinished draft".into();
+        app.handle_backend_events(vec![Event::DiscoverySynced(Ok(remote.clone()))]);
+        assert_eq!(app.discovery.replica.document.taste(), "just saved here");
+        assert_eq!(app.discovery.draft, "unfinished draft");
+        assert!(
+            app.discovery.replica.document.records["taste"]
+                .stamp
+                .counter
+                > 50
+        );
+        assert!(
+            app.discovery.dirty,
+            "the preserved edit still needs synchronization"
+        );
+        assert!(app.discovery.sync_snapshot.is_none());
+        assert!(!app.discovery.syncing);
+        remote.merge(&app.discovery.replica.document).unwrap();
+        assert_eq!(remote, app.discovery.replica.document);
         app.backend.shutdown();
     }
 

@@ -74,6 +74,8 @@ Pair each desktop once by launching with `SPOTIURGE_CLOUD_TOKEN` in its process
 environment. Obtain it from the private Railway service through a protected
 channel; never paste it into a shell command or commit it. The app stores it in
 Keychain, Credential Manager or Secret Service, bound to the HTTPS origin.
+Startup consumes the pairing input and removes it from the process environment
+before browser or visualizer helpers can inherit it.
 `SPOTIURGE_CLOUD_URL` overrides the configured private service origin. The
 CLIProxyAPI credential stays server-side. There are no direct-provider fallbacks.
 
@@ -88,8 +90,10 @@ and playback threads.
 
 Offline edits remain local until a manual sync. Same-record conflicts use a
 logical counter and writer ID; separate records merge. Writer IDs rotate when
-a profile is loaded, so copied profiles cannot share a live clock. Offline music
-downloads are not supported. See the [architecture and delivery plan](docs/_reference/spotiurge-architecture.md)
+a profile is loaded, so copied profiles cannot share a live clock.
+Edits made while synchronization is in flight stay local and are stamped above
+the returned remote clock; they remain pending until the next sync.
+Offline music downloads are not supported. See the [architecture and delivery plan](docs/_reference/spotiurge-architecture.md)
 and [private service operations](services/private-cloud/README.md) for limits,
 credential rotation, export and the iOS playback proof criteria.
 

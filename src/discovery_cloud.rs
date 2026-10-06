@@ -40,6 +40,23 @@ type TokenJob = (
 );
 static TOKEN_JOBS: std::sync::OnceLock<std::sync::mpsc::SyncSender<TokenJob>> =
     std::sync::OnceLock::new();
+static BOOTSTRAP_TOKEN: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
+
+/// Consume pairing input before any helper can inherit it. Native persistence
+/// still runs on the credential worker, away from the UI and playback threads.
+///
+/// # Safety
+/// Call at single-threaded process startup, before libraries or workers can
+/// access the process environment. Removing environment variables on Unix is
+/// unsafe once other threads may be reading them.
+pub unsafe fn capture_bootstrap() {
+    BOOTSTRAP_TOKEN.get_or_init(|| {
+        let token = std::env::var("SPOTIURGE_CLOUD_TOKEN").ok();
+        // SAFETY: the caller guarantees single-threaded process startup.
+        unsafe { std::env::remove_var("SPOTIURGE_CLOUD_TOKEN") };
+        token
+    });
+}
 
 fn protected_token(endpoint: String, bootstrap: Option<String>) -> Result<String, String> {
     #[cfg(target_os = "macos")]
@@ -81,7 +98,7 @@ fn protected_token(endpoint: String, bootstrap: Option<String>) -> Result<String
 
 async fn token(endpoint: &str) -> Result<String, String> {
     let endpoint = validate_endpoint(endpoint)?.origin().ascii_serialization();
-    let bootstrap = std::env::var("SPOTIURGE_CLOUD_TOKEN").ok();
+    let bootstrap = BOOTSTRAP_TOKEN.get().cloned().flatten();
     let jobs = TOKEN_JOBS.get_or_init(|| {
         let (sender, receiver) = std::sync::mpsc::sync_channel::<TokenJob>(4);
         let _ = std::thread::Builder::new()

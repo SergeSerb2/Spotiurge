@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from http.server import ThreadingHTTPServer
 
 from unittest.mock import patch
-from server import Store, make_handler, recommend, RateLimited, BoundedServer
+from server import Store, make_handler, recommend, RateLimited, BoundedServer, MAX_BYTES
 
 
 class PrivateCloudTests(unittest.TestCase):
@@ -31,7 +31,7 @@ class PrivateCloudTests(unittest.TestCase):
         headers = {"Authorization": "Bearer " + token}
         if revision is not None:
             headers["If-Match"] = str(revision)
-        data = None if document is None else json.dumps(document).encode()
+        data = None if document is None else json.dumps(document, ensure_ascii=False, separators=(",", ":")).encode()
         request = urllib.request.Request(self.url + "/v1/state", data=data, headers=headers, method=method)
         try:
             with urllib.request.urlopen(request) as response:
@@ -64,6 +64,34 @@ class PrivateCloudTests(unittest.TestCase):
         self.assertEqual(self.request("PUT", document, 0)[0], 400)
         self.assertEqual(self.request("PUT", {"version": 1, "records": {}}, 2**100)[0], 400)
         self.assertEqual(self.store.read()["revision"], 0)
+
+    def test_near_limit_compact_utf8_document_round_trips_without_expansion(self):
+        record = {"stamp": {"counter": 1, "device": "a" * 32}, "value": {
+            "kind": "history", "prompt": "é" * 2000,
+            "suggestions": [{"title": "é" * 150, "artist": "界" * 100,
+                "reason": "é" * 300} for _ in range(12)]}}
+        document = {"version": 1, "records": {f"history:{i}": record for i in range(55)}}
+        compact = json.dumps(document, ensure_ascii=False, separators=(",", ":")).encode()
+        self.assertLessEqual(len(compact), MAX_BYTES)
+        self.assertGreater(len(json.dumps(document).encode()), MAX_BYTES)
+        self.assertEqual(self.request("PUT", document, 0)[0], 200)
+        self.assertEqual(self.request()[1]["document"], document)
+        self.assertEqual(Store(self.path).read()["document"], document)
+        with urllib.request.urlopen(urllib.request.Request(self.url + "/v1/state",
+                headers={"Authorization": "Bearer dummy-private-test-token"})) as response:
+            self.assertLessEqual(len(response.read()), MAX_BYTES + 200)
+        oversized = {"version": 1, "records": {f"history:{i}": record for i in range(56)}}
+        self.assertGreater(len(json.dumps(oversized, ensure_ascii=False, separators=(",", ":")).encode()), MAX_BYTES)
+        with self.assertRaises(ValueError):
+            self.store.write(1, oversized)
+        request = urllib.request.Request(self.url + "/v1/state", data=b"{}", method="PUT",
+            headers={"Authorization": "Bearer dummy-private-test-token", "If-Match": "1",
+                "Content-Length": str(MAX_BYTES + 1)})
+        with self.assertRaises(urllib.error.HTTPError) as error:
+            urllib.request.urlopen(request)
+        self.assertEqual(error.exception.code, 400)
+        error.exception.close()
+        self.assertEqual(self.store.read()["revision"], 1)
 
     def test_proxy_rate_limit_does_not_attempt_another_subscription_model(self):
         error = urllib.error.HTTPError("https://proxy.invalid/v1/chat/completions", 429, "rate limited", {}, None)
@@ -114,6 +142,27 @@ class PrivateCloudTests(unittest.TestCase):
         captured = []
         self.recommend_with({"taste": "jazz"}, {"suggestions": [{"title": "So What", "artist": "Miles Davis", "reason": "modal"}]}, captured)
         self.assertIn("about half close matches", captured[0]["messages"][0]["content"])
+
+    def test_primary_or_guest_credits_cannot_repeat_rated_collaborations(self):
+        feedback = [
+            {"title": "Butterflies", "artist": "Skrillex, Starrah, Four Tet", "rating": "less"},
+            {"title": "See You Again", "artist": "Tyler, The Creator, Kali Uchis", "rating": "love"},
+        ]
+        suggestions = [
+            {"title": "  BUTTERFLIES ", "artist": "Skrillex", "reason": "primary repeat"},
+            {"title": "Butterflies", "artist": "Four Tet", "reason": "guest repeat"},
+            {"title": "See You Again", "artist": "Tyler, The Creator", "reason": "comma name repeat"},
+            {"title": "See You Again", "artist": "Kali Uchis", "reason": "guest repeat"},
+            {"title": "Butterflies", "artist": "Skrillexx", "reason": "distinct credit"},
+            {"title": "Butterflies (Remix)", "artist": "Skrillex", "reason": "distinct version"},
+            {"title": "New Song", "artist": "Artist A, Artist B", "reason": "new"},
+            {"title": "New Song", "artist": "Artist A", "reason": "same collaboration repeated"},
+        ]
+        captured = []
+        result = self.recommend_with({"feedback": feedback}, {"suggestions": suggestions}, captured)
+        self.assertEqual([(s["title"], s["artist"]) for s in result["suggestions"]], [
+            ("Butterflies", "Skrillexx"), ("Butterflies (Remix)", "Skrillex"), ("New Song", "Artist A, Artist B")])
+        self.assertEqual(captured[0]["model"], "gpt-6-luna")
 
     def test_server_busy_and_model_rate_limits_report_distinct_codes(self):
         started, release = threading.Event(), threading.Event()
