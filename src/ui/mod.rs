@@ -6,6 +6,7 @@ pub mod artist;
 pub mod collection;
 pub(crate) mod devices;
 mod dialogs;
+pub mod discovery;
 pub mod home;
 mod keys;
 pub mod library;

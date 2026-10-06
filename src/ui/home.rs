@@ -13,10 +13,15 @@ use crate::theme::{self, Icon};
 use super::widgets::{self, TrackRow};
 
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
-    let palette = app.palette;
     ui.add_space(6.0);
+    super::discovery::show(app, ui);
+    library_shelves(app, ui);
+}
+
+/// The inherited shelves remain independently testable below discovery.
+pub fn library_shelves(app: &mut App, ui: &mut egui::Ui) {
     let greeting = crate::util::greeting(app.locale);
-    theme::text(ui, greeting.as_ref(), theme::bold(30.0), palette.text);
+    theme::text(ui, greeting.as_ref(), theme::bold(24.0), app.palette.text);
     ui.add_space(12.0);
     quick_access(app, ui);
     ui.add_space(16.0);

@@ -47,7 +47,8 @@ struct Cli {
     /// `windows-taskbar`, `german`, `lyrics`, `lyrics-fullscreen`, `collection-loading`,
     /// `shuffle-selected`, `shuffle-started`, `undated-mix`, `signed-out`, `connecting`, `library-list`,
     /// `library-list-narrow`, `library-list-wide`, `library-grid`, `library-grid-narrow`,
-    /// or `library-grid-wide`.
+    /// `library-grid-wide`, `discovery-empty`, `discovery-loading`,
+    /// `discovery-error`, `discovery-feedback`, or `discovery-focus`.
     #[cfg(feature = "demo")]
     #[arg(long)]
     demo_show: Option<String>,
@@ -145,6 +146,8 @@ enum Control {
         #[arg(long)]
         raw: bool,
     },
+    /// Print the current authorization request URL, for remote sign-in.
+    SignInUrl,
     /// Bring the window of the running instance forward
     Show,
     /// Reload local palette files without starting the app or interrupting playback
@@ -208,6 +211,7 @@ fn run_control(control: Control) -> i32 {
         Control::Devices { .. } => "devices".to_owned(),
         Control::Transfer { device_id } => format!("transfer {device_id}"),
         Control::NowPlaying { .. } => "nowplaying".to_owned(),
+        Control::SignInUrl => "sign-in-url".to_owned(),
         Control::Show => "show".to_owned(),
         Control::ReloadThemes => "reload-themes".to_owned(),
     };
@@ -227,8 +231,15 @@ fn run_control(control: Control) -> i32 {
                 format_devices(&snapshot)
             }
         }
+        Ok(single_instance::Reply::SignInUrl(url)) => {
+            if url.is_empty() {
+                eprintln!("Start Spotify sign-in in Spotiurge first.");
+                return 1;
+            }
+            format!("{url}\n")
+        }
         Err(error) => {
-            eprintln!("Spotifast is not running or does not support remote control: {error}");
+            eprintln!("Spotiurge is not running or does not support remote control: {error}");
             return 1;
         }
     };
@@ -572,7 +583,7 @@ pub(crate) fn run() -> eframe::Result<()> {
             #[cfg(target_os = "linux")]
             let hide_from_taskbar = options.viewport.taskbar == Some(false);
             eframe::run_native(
-                "Spotifast",
+                "Spotiurge",
                 options,
                 Box::new(move |cc| {
                     if let Some(gl) = &cc.gl {
@@ -760,7 +771,7 @@ fn native_options(
         app_icon()
     };
     let viewport = egui::ViewportBuilder::default()
-        .with_title("Spotifast")
+        .with_title("Spotiurge")
         .with_app_id(app_id)
         .with_taskbar(true)
         .with_icon(icon);

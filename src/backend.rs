@@ -561,7 +561,54 @@ struct PlaylistCacheWrite {
     next_offset: Option<u32>,
 }
 
+/// Keep AI suggestions when Spotify is slow; only exact, available catalogue
+/// matches become playable. A single deadline bounds all catalogue searches.
+async fn resolve_discovery<F, Fut>(
+    suggestions: Vec<crate::discovery::Suggestion>,
+    budget: Duration,
+    mut search: F,
+) -> Vec<crate::discovery::Pick>
+where
+    F: FnMut(crate::discovery::Suggestion) -> Fut,
+    Fut: std::future::Future<Output = Vec<crate::api::models::Track>> + Send,
+{
+    let mut picks: Vec<_> = suggestions
+        .into_iter()
+        .map(|suggestion| crate::discovery::Pick {
+            suggestion,
+            track: None,
+        })
+        .collect();
+    let mut seen = HashSet::new();
+    let _ = tokio::time::timeout(budget, async {
+        for pick in &mut picks {
+            pick.track = search(pick.suggestion.clone())
+                .await
+                .into_iter()
+                .find(|track| {
+                    track.is_playable != Some(false)
+                        && crate::discovery::spotify_track(&track.uri)
+                        && track.name.eq_ignore_ascii_case(&pick.suggestion.title)
+                        && track
+                            .artists
+                            .iter()
+                            .any(|a| a.name.eq_ignore_ascii_case(&pick.suggestion.artist))
+                        && seen.insert(track.uri.clone())
+                });
+        }
+    })
+    .await;
+    picks
+}
+
 pub enum Command {
+    LoadDiscovery,
+    SaveDiscovery(crate::discovery::Replica),
+    SyncDiscovery(crate::discovery::Replica),
+    RecommendDiscovery {
+        request: u64,
+        document: crate::discovery::Document,
+    },
     OpenThemesFolder,
     ProxyRestored {
         lease: CredentialLease,
@@ -747,6 +794,13 @@ pub struct LyricsRequest {
 }
 
 pub enum Event {
+    DiscoveryLoaded(Result<crate::discovery::Replica, String>),
+    DiscoverySynced(Result<crate::discovery::Document, String>),
+    DiscoveryRecommended {
+        request: u64,
+        prompt: String,
+        result: Result<Vec<crate::discovery::Pick>, String>,
+    },
     ProxyRestored {
         config: ProxyConfig,
         password: Option<crate::credentials::ProxyPassword>,
@@ -856,7 +910,9 @@ pub enum LocalPlayback {
     /// Not authorized; local playback is unavailable but the app still works.
     Unavailable,
     /// The browser is open for the playback grant.
-    Authorizing,
+    Authorizing {
+        url: String,
+    },
     /// Connecting the librespot engine.
     Connecting,
     /// This computer is a ready Spotify Connect device.
@@ -1565,6 +1621,22 @@ impl Worker {
     }
 
     async fn run(&mut self, mut commands: mpsc::UnboundedReceiver<Command>) {
+        // One file writer owns discovery snapshots, preserving command order.
+        let (discovery_writes, mut discovery_reads) = mpsc::unbounded_channel::<(
+            crate::discovery::Replica,
+            tokio::sync::oneshot::Sender<Result<(), String>>,
+        )>();
+        let discovery_path = self.dirs.state.join("spotiurge-discovery.json");
+        let writer_path = discovery_path.clone();
+        let discovery_writer = tokio::spawn(async move {
+            while let Some((replica, reply)) = discovery_reads.recv().await {
+                let path = writer_path.clone();
+                let result = tokio::task::spawn_blocking(move || replica.save(&path))
+                    .await
+                    .unwrap_or_else(|_| Err("Cannot save discovery state.".into()));
+                let _ = reply.send(result);
+            }
+        });
         let (cache_writes, cache_write_receiver) = mpsc::channel(1);
         let cache_writer = tokio::spawn(store_playlist_caches(
             cache_write_receiver,
@@ -1586,7 +1658,125 @@ impl Worker {
                 self.waiting_for_proxy.push_back(command);
                 continue;
             }
+            let discovery_sync = matches!(&command, Command::SyncDiscovery(_));
             match command {
+                Command::LoadDiscovery => {
+                    let path = discovery_path.clone();
+                    let events = self.events.clone();
+                    let waker = self.waker.clone();
+                    tokio::spawn(async move {
+                        let result = tokio::task::spawn_blocking(move || {
+                            crate::discovery::Replica::load(&path)
+                        })
+                        .await
+                        .unwrap_or_else(|_| Err("Cannot load discovery state.".into()));
+                        let _ = events.send(Event::DiscoveryLoaded(result));
+                        waker.wake();
+                    });
+                }
+                Command::SaveDiscovery(replica) | Command::SyncDiscovery(replica) => {
+                    // Save before any network write. Even an AI/cloud outage
+                    // cannot discard edits queued behind another file write.
+                    let sync = discovery_sync;
+                    let (reply, saved) = tokio::sync::oneshot::channel();
+                    let _ = discovery_writes.send((replica.clone(), reply));
+                    let events = self.events.clone();
+                    let waker = self.waker.clone();
+                    let proxy = self.engine_config.proxy.clone();
+                    tokio::spawn(async move {
+                        let persisted = saved
+                            .await
+                            .unwrap_or_else(|_| Err("Discovery storage stopped.".into()));
+                        if sync {
+                            let result = async {
+                                persisted?;
+                                let client = crate::http::client_builder(&proxy)?
+                                    .redirect(reqwest::redirect::Policy::none())
+                                    .build()
+                                    .map_err(|_| "Cannot connect to the private cloud.")?;
+                                tokio::time::timeout(
+                                    Duration::from_secs(95),
+                                    crate::discovery_cloud::sync(
+                                        &client,
+                                        &crate::discovery_cloud::endpoint(),
+                                        replica,
+                                    ),
+                                )
+                                .await
+                                .map_err(|_| "Sync timed out. Local edits are kept.")?
+                            }
+                            .await;
+                            let _ = events.send(Event::DiscoverySynced(result));
+                        } else if let Err(error) = persisted {
+                            let _ = events.send(Event::Error(error));
+                        }
+                        waker.wake();
+                    });
+                }
+                Command::RecommendDiscovery { request, document } => {
+                    let prompt = document.taste().to_owned();
+                    let events = self.events.clone();
+                    let waker = self.waker.clone();
+                    let proxy = self.engine_config.proxy.clone();
+                    let api = self.api.clone();
+                    tokio::spawn(async move {
+                        let result = tokio::time::timeout(Duration::from_secs(120), async {
+                            let client = crate::http::client_builder(&proxy)?
+                                .redirect(reqwest::redirect::Policy::none())
+                                .build()
+                                .map_err(|_| "Cannot connect to the private cloud.")?;
+                            let suggestions = crate::discovery_cloud::recommend(
+                                &client,
+                                &crate::discovery_cloud::endpoint(),
+                                &document,
+                            )
+                            .await?;
+                            let catalog = tokio::time::timeout(
+                                Duration::from_secs(2),
+                                api.client_for(Operation::CatalogSearch),
+                            )
+                            .await
+                            .ok()
+                            .and_then(Result::ok);
+                            let picks = resolve_discovery(
+                                suggestions,
+                                Duration::from_secs(20),
+                                move |suggestion| {
+                                    let catalog = catalog.clone();
+                                    async move {
+                                        let Some(catalog) = catalog else {
+                                            return Vec::new();
+                                        };
+                                        let term = format!(
+                                            "track:{} artist:{}",
+                                            suggestion.title.replace('"', ""),
+                                            suggestion.artist.replace('"', "")
+                                        );
+                                        catalog
+                                            .search(&term, &["track"])
+                                            .await
+                                            .ok()
+                                            .and_then(|r| r.tracks)
+                                            .map(|p| p.items)
+                                            .unwrap_or_default()
+                                    }
+                                },
+                            )
+                            .await;
+                            Ok(picks)
+                        })
+                        .await
+                        .unwrap_or_else(|_| {
+                            Err("Recommendations timed out. Previous discoveries are kept.".into())
+                        });
+                        let _ = events.send(Event::DiscoveryRecommended {
+                            request,
+                            prompt,
+                            result,
+                        });
+                        waker.wake();
+                    });
+                }
                 Command::OpenThemesFolder => {
                     let directory = self.dirs.config.join("themes");
                     let events = self.events.clone();
@@ -2027,6 +2217,8 @@ impl Worker {
         }
         drop(cache_writes);
         let _ = cache_writer.await;
+        drop(discovery_writes);
+        let _ = discovery_writer.await;
     }
 
     // ---- Web API sign-in --------------------------------------------------
@@ -2644,7 +2836,9 @@ impl Worker {
         let flow = crate::auth::begin(grant.clone());
         let (cancel_tx, cancel_rx) = watch::channel(false);
         self.cancel_signin = Some(cancel_tx);
-        self.emit(Event::Playback(LocalPlayback::Authorizing));
+        self.emit(Event::Playback(LocalPlayback::Authorizing {
+            url: flow.url.clone(),
+        }));
         let browser_url = flow.url.clone();
         tokio::task::spawn_blocking(move || {
             if let Err(error) = crate::opener::open(&browser_url) {
@@ -6200,6 +6394,57 @@ mod cover_routing_tests {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn discovery_keeps_suggestions_when_catalogue_matching_times_out() {
+        let suggestion = crate::discovery::Suggestion {
+            title: "Trial track".into(),
+            artist: "Trial artist".into(),
+            reason: "A discovery trial.".into(),
+        };
+        let picks = resolve_discovery(vec![suggestion.clone()], Duration::from_millis(1), |_| {
+            std::future::pending()
+        })
+        .await;
+        assert_eq!(picks.len(), 1);
+        assert_eq!(picks[0].suggestion, suggestion);
+        assert!(picks[0].track.is_none());
+    }
+
+    #[tokio::test]
+    async fn discovery_only_plays_exact_available_unique_catalogue_matches() {
+        let suggestion = crate::discovery::Suggestion {
+            title: "Trial track".into(),
+            artist: "Trial artist".into(),
+            reason: "A discovery trial.".into(),
+        };
+        let valid = crate::api::models::Track {
+            name: "TRIAL TRACK".into(),
+            uri: "spotify:track:1234567890123456789012".into(),
+            artists: vec![crate::api::models::ArtistRef {
+                name: "Trial Artist".into(),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        let mut wrong_title = valid.clone();
+        wrong_title.name = "Another song".into();
+        let mut wrong_artist = valid.clone();
+        wrong_artist.artists[0].name = "Another artist".into();
+        let mut unavailable = valid.clone();
+        unavailable.is_playable = Some(false);
+        let mut invalid_uri = valid.clone();
+        invalid_uri.uri = "spotify:track:invented".into();
+        let candidates = vec![wrong_title, wrong_artist, unavailable, invalid_uri, valid];
+        let picks = resolve_discovery(
+            vec![suggestion.clone(), suggestion],
+            Duration::from_secs(1),
+            move |_| std::future::ready(candidates.clone()),
+        )
+        .await;
+        assert!(picks[0].track.is_some());
+        assert!(picks[1].track.is_none());
+    }
 
     #[test]
     fn six_session_drops_in_ten_minutes_give_up() {

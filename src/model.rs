@@ -915,6 +915,17 @@ pub struct Toast {
 /// Actions emitted while drawing and applied afterward to avoid borrow conflicts.
 #[derive(Clone, Debug)]
 pub enum Action {
+    DiscoveryDraft(String),
+    DiscoveryRecommend,
+    DiscoverySaveTaste,
+    DiscoverySync,
+    DiscoveryRate {
+        uri: String,
+        title: String,
+        artist: String,
+        rating: crate::discovery::Rating,
+    },
+    DiscoverySaveMix,
     Open(Page),
     /// Extracts a page's tint while its library row is hovered.
     PrepareTint(String),

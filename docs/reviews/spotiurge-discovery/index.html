@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spotiurge discovery: native before and after</title>
+<style>
+  :root { color-scheme: light dark; font-family: system-ui,sans-serif; }
+  body { max-width: 1440px; margin: 24px auto; padding: 0 20px; }
+  h1 { font-size: 24px; margin-bottom: 8px; }
+  p { max-width: 86ch; line-height: 1.5; }
+  nav { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0; }
+  button,select { font: inherit; padding: 8px 14px; }
+  button[aria-pressed="true"] { outline: 2px solid #348051; outline-offset: 2px; }
+  img { display: block; width: 100%; height: auto; border: 1px solid #777; }
+  figcaption { margin: 10px 0; }
+  figure { margin: 0; }
+  a { text-underline-offset: 3px; }
+</style>
+<h1>Spotiurge: a personal discovery workspace</h1>
+<p>Home now begins with a taste prompt, recommendation actions, playable catalogue
+matches, listening feedback and saved mixes. The player, Connect controls and
+library remain available. A translucent native panel provides restrained depth;
+this is the first desktop slice, not a completed platform-wide glass redesign.</p>
+<p>Actual macOS demo captures. Baseline: <code>e46f894</code> from the fork's main.
+Candidate: this PR. Both use Home, demo fixtures, 100% zoom and the selected logical
+window size and playing fixture. Playback remains animated, so its progress
+reads 1:28 in the baseline and 1:26 in the populated candidate. Cover art is fetched asynchronously from the same fixture URLs.
+Synthetic recommendations are labeled in the captured interface. These images
+do not demonstrate real Spotify playback, AI quality, Windows rendering or iPhone
+background audio. Additional states are deterministic demo fixtures; they show
+layout and affordances without making external requests.</p>
+<nav aria-label="Comparison controls">
+  <label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option></select></label>
+  <label>Size <select id="size"><option value="normal">Normal, 1440 × 900</option><option value="narrow">Narrow, 900 × 760</option></select></label>
+  <label>State <select id="state"><option value="populated">Populated comparison</option><option value="empty">Empty</option><option value="loading">Loading</option><option value="error">AI error</option><option value="feedback">Selected feedback</option><option value="focus">Keyboard focus</option></select></label>
+  <button id="before" aria-pressed="false">Before</button>
+  <button id="after" aria-pressed="true">After</button>
+</nav>
+<figure><img id="capture" src="after-dark-normal.png" alt="Spotiurge discovery in the dark theme at normal desktop size"><figcaption id="caption">After · Dark · 1440 × 900 · macOS native demo</figcaption></figure>
+<p>Remaining acceptance: custom AI-mix outbound handoff; Windows playback and
+native visual evidence; real-iPhone independent background
+playback; iOS architecture and TestFlight; three-platform application sync; real
+listening evaluation. iOS was deferred by Serge while remote; macOS is the active
+priority. Additional state captures use normal-size candidate windows only.</p>
+<p><a href="verification.md">Verification and live environment evidence</a> · <a href="design-review.md">Design review</a></p>
+<p><a href="../../_reference/spotiurge-architecture.md">Architecture and milestones</a></p>
+<script>
+  let stage = 'after';
+  const theme = document.getElementById('theme');
+  const size = document.getElementById('size');
+  const state = document.getElementById('state');
+  function update() {
+    const capture = document.getElementById('capture');
+    const extra = state.value !== 'populated';
+    document.getElementById('before').disabled = extra;
+    document.getElementById('after').disabled = extra;
+    size.disabled = extra;
+    capture.src = extra ? `state-${state.value}-${theme.value}.png` : `${stage}-${theme.value}-${size.value}.png`;
+    capture.alt = extra ? `${state.options[state.selectedIndex].text} in the ${theme.value} theme, normal desktop size` : `${stage === 'after' ? 'Spotiurge discovery' : 'Baseline Spotifast Home'} in ${theme.value} theme at ${size.value} desktop size`;
+    document.getElementById('caption').textContent = extra ? `${state.options[state.selectedIndex].text} · ${theme.value} · 1440 × 900 · macOS native demo` : `${stage === 'after' ? 'After' : 'Before'} · ${theme.value} · ${size.value === 'normal' ? '1440 × 900' : '900 × 760'} · macOS native demo`;
+    ['before','after'].forEach(value => document.getElementById(value).setAttribute('aria-pressed', String(value === stage)));
+  }
+  state.addEventListener('change',update);
+  theme.addEventListener('change',update); size.addEventListener('change',update);
+  ['before','after'].forEach(value => document.getElementById(value).addEventListener('click',()=>{stage=value;update();}));
+</script>
+</html>

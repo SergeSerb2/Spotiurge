@@ -222,6 +222,7 @@ struct Listening {
 }
 
 pub struct App {
+    pub discovery: crate::discovery::Discovery,
     pub dirs: AppDirs,
     pub settings: Settings,
     /// Proxy policy actually handed to network workers. Manual form edits are
@@ -262,6 +263,7 @@ pub struct App {
     control_now_playing: Option<std::sync::Arc<std::sync::Mutex<String>>>,
     /// The same, for its `devices` verb.
     control_devices: Option<std::sync::Arc<std::sync::Mutex<String>>>,
+    control_sign_in_url: Option<std::sync::Arc<std::sync::Mutex<String>>>,
     /// Whether that device slot still matches [`Self::devices`]. The
     /// now-playing snapshot is rebuilt every frame because its position
     /// moves every frame; a device list changes when Spotify answers, which
@@ -578,7 +580,7 @@ const RECENTS_PAGE: u32 = 50;
 /// Who the desktop's media controls belong to. Links to Spotify, as
 /// `spotify:` URIs or web addresses, are what they may ask Spotifast to open.
 fn media_app() -> fastframe_now_playing::App {
-    let mut app = fastframe_now_playing::App::new("spotifast", "Spotifast");
+    let mut app = fastframe_now_playing::App::new("spotiurge", "Spotiurge");
     app.uri_schemes = vec!["spotify".into(), "https".into(), "http".into()];
     app
 }
@@ -639,14 +641,14 @@ fn play_pause_label(playing: bool) -> &'static str {
 fn tray_config() -> fastframe_tray::Config {
     use fastframe_tray::MenuItem;
     fastframe_tray::Config {
-        id: "spotifast",
-        title: "Spotifast".into(),
+        id: "spotiurge",
+        title: "Spotiurge".into(),
         icon: util::app_icon_rgba,
         template_icon: Some(util::tray_template_rgba),
         themed_icon: true,
         menu_on_click: false,
         menu: vec![
-            MenuItem::action(TRAY_SHOW, "Show or hide Spotifast"),
+            MenuItem::action(TRAY_SHOW, "Show or hide Spotiurge"),
             MenuItem::Separator,
             MenuItem::action(TRAY_PLAY_PAUSE, play_pause_label(false)),
             MenuItem::action(TRAY_NEXT, "Next"),
@@ -735,6 +737,7 @@ impl App {
 
         let palette = settings.cached_palette().unwrap_or_else(Palette::dark);
         let mut app = Self {
+            discovery: crate::discovery::Discovery::default(),
             custom_themes: theme::Catalog::default(),
             dirs,
             settings,
@@ -760,6 +763,7 @@ impl App {
             control_commands: None,
             control_now_playing: None,
             control_devices: None,
+            control_sign_in_url: None,
             control_devices_stale: true,
             offline: false,
             palette,
@@ -962,6 +966,7 @@ impl App {
         self.control_commands = Some(guard.commands());
         self.control_now_playing = Some(guard.now_playing_slot());
         self.control_devices = Some(guard.devices_slot());
+        self.control_sign_in_url = Some(guard.sign_in_url_slot());
     }
 
     /// Per-window setup: fonts, icons, loaders, theme. Called every time a
@@ -1823,6 +1828,80 @@ impl App {
                 continue;
             }
             match event {
+                Event::DiscoveryLoaded(result) => match result {
+                    Ok(replica) => {
+                        self.discovery.draft = replica.document.taste().into();
+                        self.discovery.picks = replica.cached_picks.clone();
+                        self.discovery.replica = replica;
+                        self.discovery.ready = true;
+                        self.discovery.status =
+                            "Ready. Your taste and feedback stay available offline.".into();
+                    }
+                    Err(error) => self.discovery.status = error,
+                },
+                Event::DiscoverySynced(result) => {
+                    self.discovery.syncing = false;
+                    match result {
+                        Ok(document) => {
+                            let draft_unchanged =
+                                self.discovery.draft == self.discovery.replica.document.taste();
+                            let had_new_edits = self.discovery.replica.document != document;
+                            match self.discovery.replica.document.merge(&document) {
+                                Ok(()) => {
+                                    self.discovery.dirty = had_new_edits
+                                        && self.discovery.replica.document != document;
+                                    if draft_unchanged {
+                                        self.discovery.draft =
+                                            self.discovery.replica.document.taste().into();
+                                    }
+                                    self.discovery.status = if self.discovery.dirty {
+                                        "Synced. New local edits are saved; sync again to send them."
+                                    } else { "Synced with your private cloud." }.into();
+                                    self.backend.send(Command::SaveDiscovery(
+                                        self.discovery.replica.clone(),
+                                    ));
+                                }
+                                Err(error) => self.discovery.status = error,
+                            }
+                        }
+                        Err(error) => self.discovery.status = error,
+                    }
+                }
+                Event::DiscoveryRecommended {
+                    request,
+                    prompt,
+                    result,
+                } => {
+                    if request != self.discovery.request {
+                        continue;
+                    }
+                    self.discovery.busy = false;
+                    match result {
+                        Ok(picks) => {
+                            self.discovery.replica.cached_picks = picks.clone();
+                            let suggestions = picks.iter().map(|p| p.suggestion.clone()).collect();
+                            let history = crate::discovery::Value::History {
+                                prompt,
+                                suggestions,
+                            };
+                            let key = format!("history:{:032x}", rand::random::<u128>());
+                            if let Err(error) = self.discovery.replica.edit(key, Some(history)) {
+                                self.discovery.status = error;
+                            } else {
+                                self.discovery.dirty = true;
+                                self.backend
+                                    .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+                                self.discovery.status = if picks.iter().any(|p| p.track.is_none()) {
+                                    "AI suggestions saved. Some catalogue matches are unavailable; try again later or connect your personal Spotify app."
+                                } else {
+                                    "Fresh discoveries. Tell me which ones fit."
+                                }.into();
+                            }
+                            self.discovery.picks = picks;
+                        }
+                        Err(error) => self.discovery.status = error,
+                    }
+                }
                 Event::PlaylistCoverChecked {
                     id,
                     request,
@@ -2098,7 +2177,7 @@ impl App {
                     gettext(self.locale, "Local playback: {error}").replace("{error}", message),
                 );
             }
-            LocalPlayback::Authorizing | LocalPlayback::Connecting => {}
+            LocalPlayback::Authorizing { .. } | LocalPlayback::Connecting => {}
         }
         self.local_playback = status;
     }
@@ -2721,6 +2800,10 @@ impl App {
     }
 
     fn tick(&mut self, ctx: &egui::Context) {
+        if self.discovery.request == 0 && !self.offline {
+            self.discovery.request = 1;
+            self.backend.send(Command::LoadDiscovery);
+        }
         self.poll_custom_themes(ctx);
         let now = Instant::now();
         if self.winamp_level_reassert > 0 {
@@ -3454,6 +3537,14 @@ impl App {
     }
 
     fn sync_media_controls(&mut self, ctx: &egui::Context) {
+        if let Some(slot) = &self.control_sign_in_url {
+            let mut published = slot.lock().unwrap_or_else(|p| p.into_inner());
+            match (&self.auth, &self.local_playback) {
+                (AuthStatus::WaitingForBrowser { url }, _)
+                | (_, LocalPlayback::Authorizing { url }) => published.clone_from(url),
+                _ => published.clear(),
+            }
+        }
         let art_file = self
             .now_playing()
             .and_then(|now| now.art_url)
@@ -6831,7 +6922,7 @@ impl App {
                 // wait for the connecting engine or ask for a device.
                 if matches!(
                     self.local_playback,
-                    LocalPlayback::Connecting | LocalPlayback::Authorizing
+                    LocalPlayback::Connecting | LocalPlayback::Authorizing { .. }
                 ) || (self.settings.playback_authorized
                     && matches!(self.auth, AuthStatus::Starting | AuthStatus::Connecting))
                 {
@@ -8235,6 +8326,131 @@ impl App {
             self.leave_lyrics_fullscreen(ctx);
         }
         match action {
+            Action::DiscoveryDraft(text) => {
+                self.discovery.draft = text;
+            }
+            Action::DiscoverySaveTaste => {
+                if !self.discovery.ready {
+                    return;
+                }
+                let value = crate::discovery::Value::Taste {
+                    text: self.discovery.draft.clone(),
+                };
+                match self.discovery.replica.edit("taste".into(), Some(value)) {
+                    Ok(()) => {
+                        self.discovery.dirty = true;
+                        self.backend
+                            .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+                        self.discovery.status =
+                            "Taste saved locally. Sync when you are connected.".into();
+                    }
+                    Err(error) => self.discovery.status = error,
+                }
+            }
+            Action::DiscoveryRecommend => {
+                if self.offline
+                    || !self.discovery.ready
+                    || self.discovery.busy
+                    || self.discovery.draft.trim().is_empty()
+                {
+                    return;
+                }
+                let value = crate::discovery::Value::Taste {
+                    text: self.discovery.draft.clone(),
+                };
+                if let Err(error) = self.discovery.replica.edit("taste".into(), Some(value)) {
+                    self.discovery.status = error;
+                    return;
+                }
+                self.discovery.dirty = true;
+                self.backend
+                    .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+                self.discovery.request += 1;
+                self.discovery.busy = true;
+                self.discovery.status =
+                    "Finding your next discoveries. Playback stays available.".into();
+                self.backend.send(Command::RecommendDiscovery {
+                    request: self.discovery.request,
+                    document: self.discovery.replica.document.clone(),
+                });
+            }
+            Action::DiscoverySync => {
+                if !self.discovery.ready || self.discovery.syncing || self.offline {
+                    return;
+                }
+                // Save a changed prompt even if no AI request is made.
+                if self.discovery.draft != self.discovery.replica.document.taste() {
+                    let value = crate::discovery::Value::Taste {
+                        text: self.discovery.draft.clone(),
+                    };
+                    if let Err(error) = self.discovery.replica.edit("taste".into(), Some(value)) {
+                        self.discovery.status = error;
+                        return;
+                    }
+                    self.discovery.dirty = true;
+                }
+                self.discovery.syncing = true;
+                self.discovery.status =
+                    "Syncing preferences, feedback, mixes and AI history…".into();
+                self.backend
+                    .send(Command::SyncDiscovery(self.discovery.replica.clone()));
+            }
+            Action::DiscoveryRate {
+                uri,
+                title,
+                artist,
+                rating,
+            } => {
+                if !self.discovery.ready {
+                    return;
+                }
+                let key = format!("feedback:{uri}");
+                let value = crate::discovery::Value::Feedback {
+                    uri,
+                    title,
+                    artist,
+                    rating,
+                };
+                match self.discovery.replica.edit(key, Some(value)) {
+                    Ok(()) => {
+                        self.discovery.dirty = true;
+                        self.backend
+                            .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+                        self.discovery.status =
+                            "Feedback saved. It will shape your next discoveries.".into();
+                    }
+                    Err(error) => self.discovery.status = error,
+                }
+            }
+            Action::DiscoverySaveMix => {
+                if !self.discovery.ready {
+                    return;
+                }
+                let uris = self
+                    .discovery
+                    .picks
+                    .iter()
+                    .filter_map(|p| p.track.as_ref().map(|t| t.uri.clone()))
+                    .collect::<Vec<_>>();
+                if uris.is_empty() {
+                    return;
+                }
+                let value = crate::discovery::Value::Mix {
+                    title: "My discovery mix".into(),
+                    uris,
+                };
+                let key = format!("mix:{:032x}", rand::random::<u128>());
+                match self.discovery.replica.edit(key, Some(value)) {
+                    Ok(()) => {
+                        self.discovery.dirty = true;
+                        self.backend
+                            .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+                        self.discovery.status =
+                            "Mix saved to Spotiurge. Sync to share it across your devices.".into();
+                    }
+                    Err(error) => self.discovery.status = error,
+                }
+            }
             Action::Open(page) => self.open(page),
             Action::PrepareTint(url) => {
                 if self.settings.accent_from_art {
@@ -9159,7 +9375,7 @@ impl App {
                 } else if !self.local_ready
                     && !matches!(
                         self.local_playback,
-                        LocalPlayback::Authorizing | LocalPlayback::Connecting
+                        LocalPlayback::Authorizing { .. } | LocalPlayback::Connecting
                     )
                 {
                     self.settings.playback_authorized = true;
@@ -9812,9 +10028,9 @@ impl App {
     /// Keeps the current track in the window and taskbar title (#94).
     fn sync_window_title(&mut self, ctx: &egui::Context) {
         let title = match self.now_playing().filter(|now| now.playing) {
-            Some(now) if now.subtitle.is_empty() => format!("{} - Spotifast", now.title),
+            Some(now) if now.subtitle.is_empty() => format!("{} - Spotiurge", now.title),
             Some(now) => format!("{} - {}", now.subtitle, now.title),
-            None => "Spotifast".to_string(),
+            None => "Spotiurge".to_string(),
         };
         if title != self.window_title {
             ctx.send_viewport_cmd(egui::ViewportCommand::Title(title.clone()));
@@ -15104,6 +15320,103 @@ mod tests {
         );
         app.reveal_theme_changes = false;
         app
+    }
+
+    #[test]
+    fn discovery_sync_preserves_new_local_records_and_unsaved_drafts() {
+        let mut app = test_app("discovery-sync-race");
+        app.discovery.ready = true;
+        app.discovery
+            .replica
+            .edit(
+                "taste".into(),
+                Some(crate::discovery::Value::Taste { text: "old".into() }),
+            )
+            .unwrap();
+        let remote = app.discovery.replica.document.clone();
+        app.discovery
+            .replica
+            .edit(
+                "mix:new".into(),
+                Some(crate::discovery::Value::Mix {
+                    title: "new mix".into(),
+                    uris: vec![],
+                }),
+            )
+            .unwrap();
+        app.discovery.draft = "still typing".into();
+        app.handle_backend_events(vec![Event::DiscoverySynced(Ok(remote))]);
+        assert_eq!(app.discovery.draft, "still typing");
+        assert!(
+            app.discovery
+                .replica
+                .document
+                .records
+                .contains_key("mix:new")
+        );
+        assert!(app.discovery.dirty);
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn remote_sign_in_link_is_only_published_while_waiting_for_browser() {
+        let mut app = test_app("remote-sign-in-link");
+        let slot = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+        app.control_sign_in_url = Some(slot.clone());
+        let ctx = egui::Context::default();
+        let url = "https://accounts.spotify.com/authorize?state=dummy";
+        app.auth = AuthStatus::WaitingForBrowser { url: url.into() };
+        app.sync_media_controls(&ctx);
+        assert_eq!(*slot.lock().unwrap(), url);
+        app.apply(Action::CancelSignIn, &ctx);
+        app.sync_media_controls(&ctx);
+        assert!(slot.lock().unwrap().is_empty());
+        app.auth = AuthStatus::Connecting;
+        app.sync_media_controls(&ctx);
+        assert!(slot.lock().unwrap().is_empty());
+        app.local_playback = LocalPlayback::Authorizing { url: url.into() };
+        app.sync_media_controls(&ctx);
+        assert_eq!(*slot.lock().unwrap(), url);
+        app.local_playback = LocalPlayback::Connecting;
+        app.sync_media_controls(&ctx);
+        assert!(slot.lock().unwrap().is_empty());
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn demo_cannot_start_a_discovery_network_request() {
+        let mut app = test_app("discovery-demo-request");
+        app.offline = true;
+        app.discovery.ready = true;
+        app.discovery.draft = "jazz".into();
+        let request = app.discovery.request;
+        app.apply(Action::DiscoveryRecommend, &egui::Context::default());
+        assert!(!app.discovery.busy);
+        assert_eq!(app.discovery.request, request);
+        assert!(app.discovery.replica.document.records.is_empty());
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn late_discovery_requests_cannot_replace_the_current_results() {
+        let mut app = test_app("discovery-request-race");
+        app.discovery.request = 2;
+        app.discovery.busy = true;
+        app.handle_backend_events(vec![Event::DiscoveryRecommended {
+            request: 1,
+            prompt: "old".into(),
+            result: Ok(vec![]),
+        }]);
+        assert!(app.discovery.busy);
+        assert!(app.discovery.replica.document.records.is_empty());
+        app.handle_backend_events(vec![Event::DiscoveryRecommended {
+            request: 2,
+            prompt: "new".into(),
+            result: Err("offline".into()),
+        }]);
+        assert!(!app.discovery.busy);
+        assert_eq!(app.discovery.status, "offline");
+        app.backend.shutdown();
     }
 
     /// With Random on, each switch to the mini player shows a skin other
@@ -22177,7 +22490,7 @@ mod tests {
                 "unknown",
                 // Local playback is this computer, which Spotify has not
                 // named because it is not a remote device.
-                "Spotifast",
+                "Spotiurge",
             ]
         );
         // No devices seen yet is an empty array, not an empty string, so a

@@ -79,7 +79,7 @@ pub fn build_blocking(
         .map_err(|error| error.without_url().to_string())
 }
 
-fn client_builder(proxy: &ProxyConfig) -> Result<reqwest::ClientBuilder, String> {
+pub(crate) fn client_builder(proxy: &ProxyConfig) -> Result<reqwest::ClientBuilder, String> {
     apply_proxy(reqwest::Client::builder().user_agent(user_agent()), proxy)
 }
 

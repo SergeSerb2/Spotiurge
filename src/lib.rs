@@ -11,6 +11,8 @@ pub mod bidi;
 pub mod credentials;
 #[cfg(any(test, feature = "demo"))]
 pub mod demo;
+pub mod discovery;
+pub mod discovery_cloud;
 pub mod emoji;
 pub mod eq;
 pub mod history;

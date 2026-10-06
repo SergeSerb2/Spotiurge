@@ -522,6 +522,14 @@ pub fn populate(app: &mut App) {
     app.home.top_songs = Loadable::Loaded(tracks.iter().skip(10).cloned().collect());
     app.home.top_songs_complete = true;
     app.home.recommendations = Loadable::Loaded(tracks.iter().skip(20).take(10).cloned().collect());
+    app.discovery.ready = true;
+    app.discovery.draft = "Warm textures, spacious electronics, a few surprises. Give me something for a late-night walk.".into();
+    app.discovery.picks = tracks.iter().skip(3).take(4).map(|track| crate::discovery::Pick {
+        suggestion: crate::discovery::Suggestion {
+            title: track.name.clone(), artist: track.artist_names(),
+            reason: "A patient groove with room to breathe. Sample recommendation for visual review.".into(),
+        }, track: Some(track.clone()),
+    }).collect();
     for term in DISCOVER_TERMS {
         let matching: Vec<Playlist> = playlists
             .iter()
@@ -772,6 +780,40 @@ pub fn apply_flags(app: &mut App, page: Option<&str>, show: Option<&str>) {
                 } else {
                     380.0
                 };
+            }
+            "discovery-empty" => {
+                app.discovery.picks.clear();
+                app.discovery.draft.clear();
+            }
+            "discovery-loading" => {
+                app.discovery.busy = true;
+                app.discovery.status = "Demo: finding music. Playback stays available.".into();
+            }
+            "discovery-error" => {
+                app.discovery.status =
+                    "Demo: recommendations are unavailable. Your previous discoveries are kept."
+                        .into();
+            }
+            "discovery-feedback" => {
+                if let Some(track) = app.discovery.picks.first().and_then(|p| p.track.as_ref()) {
+                    // Valid Spotify-shaped fixture URI, never sent to a service.
+                    let mut track = track.clone();
+                    track.uri = "spotify:track:0123456789012345678901".into();
+                    let value = crate::discovery::Value::Feedback {
+                        uri: track.uri.clone(),
+                        title: track.name.clone(),
+                        artist: track.artist_names(),
+                        rating: crate::discovery::Rating::Love,
+                    };
+                    let _ = app
+                        .discovery
+                        .replica
+                        .edit(format!("feedback:{}", track.uri), Some(value));
+                    app.discovery.picks[0].track = Some(track);
+                }
+            }
+            "discovery-focus" => {
+                app.discovery.status = "DEMO_FOCUS".into();
             }
             "queue" => app.show_queue_panel = true,
             "playing-next" => {
@@ -5369,7 +5411,7 @@ mod tests {
     #[test]
     fn home_json_hides_only_the_chosen_recommendation_shelves() {
         let (ctx, mut app) = accessible_app("home-json-visibility");
-        let view = crate::ui::home::show;
+        let view = crate::ui::home::library_shelves;
         for (made_for_you, recommendations) in
             [(true, true), (false, true), (true, false), (false, false)]
         {
@@ -5434,7 +5476,7 @@ mod tests {
             check_card_menu(
                 &mut app,
                 &ctx,
-                crate::ui::home::show,
+                crate::ui::home::library_shelves,
                 &section,
                 &title,
                 &uri,
