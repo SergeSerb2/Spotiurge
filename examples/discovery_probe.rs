@@ -3,8 +3,15 @@
 
 use spotifast::discovery::{Replica, Value};
 
-#[tokio::main]
-async fn main() -> Result<(), String> {
+fn main() -> Result<(), String> {
+    // SAFETY: consume pairing input before the runtime starts any worker.
+    unsafe { spotifast::discovery_cloud::capture_bootstrap() };
+    tokio::runtime::Runtime::new()
+        .map_err(|_| "Cannot start diagnostic runtime.")?
+        .block_on(run())
+}
+
+async fn run() -> Result<(), String> {
     let args: Vec<String> = std::env::args().collect();
     let path = std::path::PathBuf::from(args.get(1).ok_or("Supply a private replica JSON path.")?);
     let mut replica = Replica::load(&path)?;
