@@ -22,8 +22,10 @@ Automatic checks, manual checks and the startup update helper are disabled. Audi
 and rename every artifact and installer destination before enabling fork updates.
 Do not tag or publish this development slice as a release.
 
-Serge deferred iOS work on October 6, 2026 because he is remote. The current
-implementation and acceptance focus on macOS; iOS remains a later gated milestone.
+Serge resumed iOS work on October 6, 2026 after connecting his real iPhone.
+Desktop delivery continues while an isolated iPhone playback probe establishes
+whether the independent-player requirement can be met. The production iOS
+architecture remains gated on that proof.
 
 ## Milestones and acceptance
 
@@ -124,15 +126,18 @@ playback. libspotify is not a maintained option. The existing librespot engine
 is a candidate for a separate feasibility probe, not evidence of iOS support
 or permission to distribute it through TestFlight.
 
-The local device inventory currently reports Serge's physical iPhone as
-`unavailable`; the connected device is a simulator. The installed signing
-identity is Apple Development; the certificate's organizational unit identifies
-team `78A5P57U23` (`336W29P997` is the certificate label, not the team ID).
-This is not proof of an App
-Store Connect app record, distribution profile or upload authorization.
+CoreDevice now reports Serge's physical iPhone 17 Pro Max as connected over USB,
+paired and booted, with Developer Mode enabled. It runs iOS 27.2; the Mac has
+Xcode 27.0. The older Instruments device list still reports it offline, so an
+actual signed installation and launch must establish runtime readiness.
+An Apple Development identity is available for team `78A5P57U23`
+(`336W29P997` is the certificate label, not the team ID). Existing development
+profiles for other apps include this phone, but cannot be reused for Spotiurge.
+No Spotiurge provisioning profile, App Store Connect record, distribution
+identity or upload authorization has yet been verified.
 
 The gate requires a minimal independently signed probe with an iOS-capable audio
-sink, AVAudioSession playback category and background-audio entitlement. No
+sink, AVAudioSession playback category and `UIBackgroundModes=audio`. No
 production UI/framework choice is made by that probe. On a real Premium account:
 start Spotify music with the Spotify app terminated, verify Spotiurge/probe owns
 the audio session, lock the phone for at least ten minutes and multiple track

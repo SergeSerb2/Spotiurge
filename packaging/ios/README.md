@@ -1,16 +1,26 @@
 # iPhone playback gate and TestFlight preparation
 
-Serge deferred iOS while remote on October 6, 2026; macOS is the current priority.
-There is no production iOS target yet. Choosing one before real independent
+Serge resumed iOS on October 6, 2026 after connecting his real iPhone; desktop
+delivery continues in parallel. There is no production iOS target yet. Choosing
+one before real independent
 background playback is proven would violate the product brief. The official
 Spotify iOS SDK controls the Spotify app and cannot satisfy that requirement.
 See the [probe acceptance plan](../../docs/_reference/spotiurge-architecture.md#ios-architecture-gate-and-signing-preparation).
 
-Local Xcode and an Apple Development identity are available. Its certificate
-OU is team `78A5P57U23`. Only a development identity was found; distribution
-signing, a Spotiurge App Store Connect record and upload access are unverified.
-The real iPhone is currently unavailable to `devicectl`. A simulator does not
-satisfy the gate.
+Xcode 27.0 and an Apple Development identity are available for team `78A5P57U23`.
+CoreDevice reports the physical iPhone 17 Pro Max on iOS 27.2 as wired, paired,
+booted and Developer Mode enabled. Instruments still reports it offline; a
+signed installation and launch will verify actual runtime readiness. Existing
+development profiles for other apps include this phone, but no Spotiurge
+profile exists yet. Distribution signing, a Spotiurge App Store Connect record
+and upload access are unverified. A simulator does not satisfy the gate.
+
+Opus 5.5 leads an isolated playback probe before the production architecture
+decision. Its mobile design brief follows the desktop's smoked glass, amber
+Surge mark, cover-lit surfaces and finite selection motion. A controller or
+synthetic tone can diagnose a component, but cannot pass independent Spotify
+background playback. The probe must not replace unrelated installed apps or
+reuse their provisioning identities.
 
 `ExportOptions.plist.example` prepares automatic App Store Connect upload for
 that team. Confirm team membership and reserve the fork-owned bundle ID before
