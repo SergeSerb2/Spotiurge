@@ -140,13 +140,15 @@ jobs:
           bash packaging/macos/bundle.sh target/debug/spotifast "$app" "$version"
           executable=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")
           "$app/Contents/MacOS/$executable" --version
-          # A missing job must reach our error handler, not die during launch.
+          # Fork updates are disabled. Reject the helper flag at the parser
+          # before reading a job or loading installation code.
           set +e
           "$app/Contents/MacOS/$executable" --apply-update "$RUNNER_TEMP/spotifast-missing-job.json" 2> "$RUNNER_TEMP/spotifast-helper-check.log"
           status=$?
           set -e
-          test "$status" -eq 1
+          test "$status" -eq 2
           test -s "$RUNNER_TEMP/spotifast-helper-check.log"
+          grep -F "unexpected argument '--apply-update'" "$RUNNER_TEMP/spotifast-helper-check.log"
 
   nix:
     name: Nix package
