@@ -118,7 +118,34 @@ Where inherited Spotifast policy conflicts with this guide, follow this guide.
 - Keep public issue and PR replies short, direct, and useful. Do not post two
   maintainer comments in a row; edit the last one if nobody has replied.
   Never use em dashes.
-- For releases, follow the applicable version, lockfile, vendor-hash, artifact,
-  checksum, and written-note checks in `CONTRIBUTING.md` and `PACKAGING.md`.
-  Verify fork destinations first, wait for required checks, and publish real
-  artifacts before pointing Spotiurge download links at them.
+
+## Releases
+
+Verify Spotiurge's release and package destinations first. Follow the build and
+native package checks in `CONTRIBUTING.md` and `PACKAGING.md`, in this order:
+
+1. Before tagging, change the `Cargo.toml` version, add the matching release to
+   the Flatpak metainfo (`packaging/flatpak/rocks.spotifast.Spotifast.metainfo.xml`
+   until renamed), and update `Cargo.lock` with a build. Refresh the `flake.nix`
+   vendor hash whenever the lockfile changes, including version-only changes,
+   and verify `nix build .#default` locally or in CI. Commit written notes at
+   `packaging/release-notes/vVERSION.md`, push the release commit, and wait for
+   every required CI job before tagging.
+2. Push the `v*` tag. Wait for every required artifact and `checksums.txt`, then
+   verify the published written notes, screenshot, and download links. Never
+   publish generated placeholder notes or links to files that do not exist.
+3. A prerelease stops here. Keep the website and package channels on the latest
+   stable release; the prerelease remains on Spotiurge's GitHub releases page.
+4. For a stable release, only after the GitHub release exists, update the fork's
+   `docs/_config.yml` version key (currently `spotifast_version`) and
+   `docs/_data/versions.yml`. Replace the selector's old version entry with the
+   latest stable version, make it `current`, and point it at `/download/`.
+   Keep only the latest stable version entry; older releases use the Changelog
+   link, which must target Spotiurge's releases.
+5. Update any configured Spotiurge Homebrew/AUR channels from the release's
+   `checksums.txt`, following `PACKAGING.md` and native package validation.
+   Unconfigured channels need no publication. Never publish to upstream channels.
+
+Match the previous two stable releases when writing notes: a short summary,
+`New`/`Fixed` sections with bold user-facing results and contributor/report credits,
+a `Thanks` section, and a full changelog link targeting Spotiurge.
