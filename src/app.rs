@@ -1228,7 +1228,12 @@ impl App {
     }
 
     pub fn discovery_playback_available(&self) -> bool {
-        self.target() == Target::Local
+        // An explicit remote selection takes effect before Connect has stopped
+        // the old local track. URI-list discovery must stay gated in that gap.
+        self.selected_device
+            .as_deref()
+            .is_none_or(|selected| Some(selected) == self.local_device_id.as_deref())
+            && self.target() == Target::Local
     }
 
     /// Context shown as playing, including pending local play requests.
@@ -1873,6 +1878,7 @@ impl App {
                                         self.discovery.last_error = None;
                                     }
                                     if inputs_changed {
+                                        self.invalidate_discovery_request();
                                         self.discovery.automatic.changed(Instant::now(), true);
                                     }
                                     self.discovery.dirty =
@@ -1895,6 +1901,7 @@ impl App {
                     }
                 }
                 Event::DiscoveryResolved { request, result } => {
+                    self.finish_discovery_request(request);
                     if request != self.discovery.request {
                         continue;
                     }
@@ -1916,6 +1923,7 @@ impl App {
                     prompt,
                     result,
                 } => {
+                    self.finish_discovery_request(request);
                     if request != self.discovery.request {
                         continue;
                     }
@@ -8419,6 +8427,7 @@ impl App {
                     Ok(()) => {
                         self.discovery.dirty = true;
                         self.discovery.editing_taste = false;
+                        self.invalidate_discovery_request();
                         self.discovery.automatic.changed(Instant::now(), true);
                         self.backend
                             .send(Command::SaveDiscovery(self.discovery.replica.clone()));
@@ -8446,6 +8455,7 @@ impl App {
                 }
                 self.discovery.request += 1;
                 self.discovery.busy = true;
+                self.discovery.in_flight_request = Some(self.discovery.request);
                 self.backend.send(Command::ResolveDiscovery {
                     request: self.discovery.request,
                     picks: self.discovery.picks.clone(),
@@ -8455,6 +8465,7 @@ impl App {
                 if self.settings.discovery.exploration != exploration {
                     self.settings.discovery.exploration = exploration;
                     self.settings_dirty = true;
+                    self.invalidate_discovery_request();
                     self.discovery.automatic.changed(Instant::now(), true);
                 }
             }
@@ -8536,6 +8547,7 @@ impl App {
                 match self.discovery.replica.edit(key, value) {
                     Ok(()) => {
                         self.discovery.dirty = true;
+                        self.invalidate_discovery_request();
                         self.discovery.automatic.changed(Instant::now(), false);
                         self.backend
                             .send(Command::SaveDiscovery(self.discovery.replica.clone()));
@@ -9841,6 +9853,21 @@ impl App {
         self.toast_error(error);
     }
 
+    fn invalidate_discovery_request(&mut self) {
+        if self.discovery.busy {
+            // Keep the worker occupied until completion, but never apply a
+            // response generated from taste, feedback or exploration we changed.
+            self.discovery.request += 1;
+        }
+    }
+
+    fn finish_discovery_request(&mut self, request: u64) {
+        if self.discovery.in_flight_request == Some(request) {
+            self.discovery.in_flight_request = None;
+            self.discovery.busy = false;
+        }
+    }
+
     fn request_discovery(&mut self, automatic: bool) {
         if self.offline || !self.discovery.ready || self.discovery.busy || !self.is_connected() {
             return;
@@ -9868,6 +9895,7 @@ impl App {
         self.discovery.last_error = None;
         self.discovery.request += 1;
         self.discovery.busy = true;
+        self.discovery.in_flight_request = Some(self.discovery.request);
         self.backend.send(Command::RecommendDiscovery {
             request: self.discovery.request,
             document: self.discovery.replica.document.clone(),
@@ -15620,8 +15648,15 @@ mod tests {
     #[test]
     fn discovery_uri_lists_never_issue_a_remote_play_request() {
         let mut app = test_app("discovery-playback-target");
+        app.backend.set_offline(true);
         app.local_ready = true;
-        app.selected_device = Some("remote-device".into());
+        app.local_device_id = Some("local-device".into());
+        app.local.playback = Playback::Playing;
+        app.local.track = Some(crate::player::LocalTrack {
+            uri: "spotify:track:0123456789ABCDEFGHIJKL".into(),
+            ..Default::default()
+        });
+        app.transfer("remote-device".into());
         let ctx = egui::Context::default();
         let action = Action::PlayFromRow {
             context: RowContext::Discovery(
@@ -15671,6 +15706,166 @@ mod tests {
             Some("spotify:track:0123456789ABCDEFGHIJKL")
         );
         app.backend.shutdown();
+    }
+
+    #[test]
+    fn discovery_stays_blocked_while_an_active_local_player_transfers_remotely() {
+        for playback in [Playback::Loading, Playback::Playing, Playback::Paused] {
+            let mut app = test_app("discovery-active-local-transfer");
+            app.backend.set_offline(true);
+            app.local_ready = true;
+            app.local_device_id = Some("local-device".into());
+            app.local.playback = playback;
+            app.local.track = Some(crate::player::LocalTrack {
+                uri: "spotify:track:0123456789ABCDEFGHIJKL".into(),
+                ..Default::default()
+            });
+            assert!(app.discovery_playback_available());
+            app.transfer("remote-device".into());
+            assert_eq!(
+                app.target(),
+                Target::Local,
+                "the old player is still active"
+            );
+            assert!(!app.discovery_playback_available());
+            let ctx = egui::Context::default();
+            app.apply(
+                Action::PlayFromRow {
+                    context: RowContext::Discovery(
+                        vec!["spotify:track:0123456789ABCDEFGHIJKL".into()].into(),
+                    ),
+                    uri: "spotify:track:0123456789ABCDEFGHIJKL".into(),
+                    index: 0,
+                },
+                &ctx,
+            );
+            app.apply(Action::DiscoveryPlayAll { shuffle: false }, &ctx);
+            app.apply(Action::DiscoveryPlayMix("mix:fixture".into()), &ctx);
+            assert!(app.intent_track.is_none());
+            assert!(app.queued_play.is_none());
+            assert!(app.backend.take_remote_play_requests().is_empty());
+            app.transfer("local-device".into());
+            assert!(app.discovery_playback_available());
+            app.backend.shutdown();
+        }
+    }
+
+    #[test]
+    fn changed_discovery_inputs_discard_in_flight_results_without_overlapping_work() {
+        for mutation in 0..4 {
+            for success in [true, false] {
+                let mut app = test_app("discovery-changed-inputs");
+                app.backend.set_offline(true);
+                app.auth = AuthStatus::Connected {
+                    username: "fixture".into(),
+                };
+                app.discovery.ready = true;
+                app.settings.discovery.automatic = false;
+                app.discovery
+                    .replica
+                    .edit(
+                        "taste".into(),
+                        Some(crate::discovery::Value::Taste {
+                            text: "original taste".into(),
+                        }),
+                    )
+                    .unwrap();
+                app.discovery.draft = "original taste".into();
+                let cached = crate::discovery::Pick {
+                    suggestion: crate::discovery::Suggestion {
+                        title: "Kept cached pick".into(),
+                        artist: "Fixture artist".into(),
+                        reason: String::new(),
+                    },
+                    track: None,
+                    checked: false,
+                };
+                app.discovery.picks = vec![cached.clone()];
+                app.discovery.replica.cached_picks = vec![cached.clone()];
+                let ctx = egui::Context::default();
+                app.apply(Action::DiscoveryRecommend, &ctx);
+                let request = app.discovery.request;
+                app.apply(Action::DiscoveryDraft("unfinished draft".into()), &ctx);
+                assert_eq!(app.discovery.request, request);
+                app.apply(Action::DiscoveryDraft("original taste".into()), &ctx);
+                match mutation {
+                    0 => {
+                        app.apply(Action::DiscoveryDraft("changed taste".into()), &ctx);
+                        app.apply(Action::DiscoverySaveTaste, &ctx);
+                    }
+                    1 => app.apply(
+                        Action::DiscoveryRate {
+                            uri: "spotify:track:0123456789ABCDEFGHIJKL".into(),
+                            title: "Fixture".into(),
+                            artist: "Fixture artist".into(),
+                            rating: Some(crate::discovery::Rating::Less),
+                        },
+                        &ctx,
+                    ),
+                    2 => app.apply(
+                        Action::DiscoveryExploration(crate::discovery::Exploration::Adventurous),
+                        &ctx,
+                    ),
+                    _ => {
+                        let mut remote = app.discovery.replica.document.clone();
+                        let taste = remote.records.get_mut("taste").unwrap();
+                        taste.stamp.counter = 10;
+                        taste.stamp.device = "b".repeat(32);
+                        taste.value = Some(crate::discovery::Value::Taste {
+                            text: "imported taste".into(),
+                        });
+                        app.handle_backend_events(vec![Event::DiscoverySynced(Ok(remote))]);
+                    }
+                }
+                assert!(app.discovery.request > request);
+                assert!(
+                    app.discovery.busy,
+                    "superseded work still occupies the worker"
+                );
+                let generation = app.discovery.request;
+                let status = app.discovery.status.clone();
+                app.apply(Action::DiscoveryRecommend, &ctx);
+                assert_eq!(app.discovery.request, generation);
+                let result = if success {
+                    Ok(crate::discovery::ResolvedDiscovery {
+                        picks: vec![],
+                        outcome: crate::discovery::CatalogueOutcome::Unavailable,
+                    })
+                } else {
+                    Err("stale error".into())
+                };
+                app.handle_backend_events(vec![Event::DiscoveryRecommended {
+                    request,
+                    prompt: "original taste".into(),
+                    result,
+                }]);
+                assert!(!app.discovery.busy);
+                assert_eq!(app.discovery.picks, vec![cached.clone()]);
+                assert_eq!(app.discovery.replica.cached_picks, vec![cached]);
+                assert_eq!(app.discovery.status, status);
+                assert!(app.discovery.replica.document.recent_history().is_empty());
+                assert!(app.settings.discovery.refreshed_at.is_none());
+                assert!(app.discovery.last_error.is_none());
+
+                app.apply(Action::DiscoveryRecommend, &ctx);
+                assert!(app.discovery.busy);
+                let current = app.discovery.request;
+                app.handle_backend_events(vec![Event::DiscoveryRecommended {
+                    request,
+                    prompt: "duplicate old completion".into(),
+                    result: Err("stale error".into()),
+                }]);
+                assert!(app.discovery.busy, "old completions cannot clear new work");
+                app.handle_backend_events(vec![Event::DiscoveryRecommended {
+                    request: current,
+                    prompt: "current taste".into(),
+                    result: Err("current error".into()),
+                }]);
+                assert!(!app.discovery.busy);
+                assert_eq!(app.discovery.status, "current error");
+                app.backend.shutdown();
+            }
+        }
     }
 
     #[test]

@@ -557,6 +557,8 @@ pub struct Discovery {
     pub syncing: bool,
     pub sync_snapshot: Option<Document>,
     pub request: u64,
+    /// A superseded request still occupies the worker until its result arrives.
+    pub in_flight_request: Option<u64>,
     pub status: String,
     pub dirty: bool,
     pub catalogue: CatalogueOutcome,

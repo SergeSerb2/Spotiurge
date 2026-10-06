@@ -99,6 +99,13 @@ Persist locally before cloud writes. Failures keep the local snapshot,
 cached recommendations and playback usable. Offline metadata access is allowed;
 offline Spotify audio downloads are not a supported feature.
 
+Recommendation generations are invalidated by saved taste, feedback, exploration
+changes or imported taste/feedback. The superseded request retains its worker
+slot until completion, then its results and errors are discarded without
+replacing cached picks, refresh time or AI history. An old completion cannot
+release a newer request's slot. Unfinished taste-editor drafts do not change the
+saved recommendation inputs.
+
 Single-user bearer authentication over HTTPS is sufficient initially. Store the
 device token in Keychain/Credential Manager/Secret Service, with a short native
 store deadline. Server secrets belong in Railway variables. Disable redirects

@@ -97,6 +97,10 @@ Offline music downloads are not supported. See the [architecture and delivery pl
 and [private service operations](services/private-cloud/README.md) for limits,
 credential rotation, export and the iOS playback proof criteria.
 
+Changing saved taste, listening feedback or exploration discards an in-flight
+recommendation made from the previous inputs. Cached picks stay usable until a
+fresh request completes; superseded work finishes before another request starts.
+
 Automatic and manual updates are disabled in this preview, including the update
 helper, until fork package identities and installer destinations are migrated.
 
