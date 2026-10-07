@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Spotifast\n"
 "Report-Msgid-Bugs-To: https://github.com/crmne/spotifast/issues/new?"
 "template=translation.yml\n"
-"POT-Creation-Date: 2026-10-06 22:49-0700\n"
+"POT-Creation-Date: 2026-10-07 01:01-0700\n"
 "PO-Revision-Date: 2026-10-02 20:30+0300\n"
 "Last-Translator: Barış Berke Çetin <brsberkectn@gmail.com>\n"
 "Language-Team: Turkish\n"
@@ -28,12 +28,12 @@ msgstr "{name} duraklat"
 msgid "Play {name}"
 msgstr "{name} çal"
 
-#: src/ui/sidebar.rs:300 src/app.rs:2545 src/app.rs:17287
+#: src/ui/sidebar.rs:300 src/app.rs:2545 src/app.rs:17379
 #: src/ui/collection.rs:1780 src/ui/collection.rs:1957
 msgid "Playlist"
 msgstr "Çalma Listesi"
 
-#: src/ui/sidebar.rs:310 src/app.rs:2519 src/app.rs:17292
+#: src/ui/sidebar.rs:310 src/app.rs:2519 src/app.rs:17384
 #: src/ui/collection.rs:1950 src/ui/home.rs:55 src/ui/keys.rs:258
 #: src/ui/winamp/playlist.rs:653
 msgid "Liked Songs"
@@ -739,7 +739,7 @@ msgid "Queue cleared"
 msgstr "Sıra temizlendi"
 
 #. Translators: Keep {date} unchanged. It is a date in YYYY-MM-DD form.
-#: src/app.rs:4587 src/app.rs:17277
+#: src/app.rs:4587 src/app.rs:17369
 #, rust-format
 msgid "Queue {date}"
 msgstr "Sıra {date}"
@@ -1109,7 +1109,7 @@ msgstr "Kapak yüklenemedi: {error}. Yeniden deneyin."
 
 #. Translators: Keep {track} unchanged. It is the name of the song,
 #. playlist, album, or artist the radio is based on, not translated.
-#: src/app.rs:17297 src/app/radio.rs:38
+#: src/app.rs:17389 src/app/radio.rs:38
 #, rust-format
 msgid "{track} Radio"
 msgstr "{track} Radyosu"
@@ -2046,11 +2046,11 @@ msgstr ""
 msgid "Popular"
 msgstr "Popüler"
 
-#: src/ui/artist.rs:74 src/ui/discovery.rs:1074
+#: src/ui/artist.rs:74 src/ui/discovery.rs:1096
 msgid "Show less"
 msgstr "Daha az göster"
 
-#: src/ui/artist.rs:76 src/ui/discovery.rs:1068
+#: src/ui/artist.rs:76 src/ui/discovery.rs:1090
 msgid "See more"
 msgstr "Daha fazla gör"
 
@@ -2273,7 +2273,7 @@ msgid "“{name}” will no longer appear in Your Library."
 msgstr "“{name}” artık Kitaplığınızda görünmeyecek."
 
 #: src/ui/dialogs.rs:96 src/ui/dialogs.rs:139 src/ui/dialogs.rs:415
-#: src/ui/dialogs.rs:590 src/ui/login.rs:91 src/ui/discovery.rs:468
+#: src/ui/dialogs.rs:590 src/ui/login.rs:91 src/ui/discovery.rs:472
 msgid "Cancel"
 msgstr "İptal"
 
@@ -2738,7 +2738,7 @@ msgstr "“{query}” için sonuç bulunamadı"
 msgid "Check the spelling, or try fewer words."
 msgstr "Yazımı kontrol edin veya daha az kelime deneyin."
 
-#: src/ui/search.rs:91 src/ui/winamp/playlist.rs:647 src/ui/discovery.rs:947
+#: src/ui/search.rs:91 src/ui/winamp/playlist.rs:647 src/ui/discovery.rs:969
 msgid "Search Spotify"
 msgstr "Spotify'da Ara"
 
@@ -3242,7 +3242,7 @@ msgstr "Kaydedilen öneriler"
 msgid "Find new picks"
 msgstr "Yeni öneriler bul"
 
-#: src/ui/discovery.rs:200 src/ui/discovery.rs:693
+#: src/ui/discovery.rs:200 src/ui/discovery.rs:715
 msgid "Finding music…"
 msgstr "Müzik aranıyor…"
 
@@ -3254,101 +3254,101 @@ msgstr "Tümünü çal"
 msgid "No playable picks yet."
 msgstr "Henüz çalınabilir öneri yok."
 
-#: src/ui/discovery.rs:273 src/ui/discovery.rs:628
+#: src/ui/discovery.rs:273 src/ui/discovery.rs:650
 msgid "Choose this computer to play discovery tracks and mixes."
 msgstr "Keşif şarkılarını ve mikslerini çalmak için bu bilgisayarı seç."
 
-#: src/ui/discovery.rs:283 src/ui/discovery.rs:656
+#: src/ui/discovery.rs:283 src/ui/discovery.rs:678
 msgid ""
 "Demo discoveries. Feedback, recommendations and cloud requests are disabled."
 msgstr ""
 "Demo keşifleri. Geri bildirimler, öneriler ve bulut istekleri devre dışı."
 
-#: src/ui/discovery.rs:287 src/ui/discovery.rs:524
+#: src/ui/discovery.rs:288 src/ui/discovery.rs:529
 msgid "Opening your personal discovery workspace…"
 msgstr "Kişisel keşif alanın açılıyor…"
 
-#: src/ui/discovery.rs:289
+#: src/ui/discovery.rs:293
 msgid "Sign in to Spotify to find new picks."
 msgstr "Yeni öneriler bulmak için Spotify'a giriş yap."
 
-#: src/ui/discovery.rs:302
+#: src/ui/discovery.rs:306
 msgid "More discovery options"
 msgstr "Daha fazla keşif seçeneği"
 
-#: src/ui/discovery.rs:321
+#: src/ui/discovery.rs:325
 msgid "Save this mix"
 msgstr "Bu miksi kaydet"
 
-#: src/ui/discovery.rs:327
+#: src/ui/discovery.rs:331
 msgid "Syncing…"
 msgstr "Eşitleniyor…"
 
-#: src/ui/discovery.rs:329
+#: src/ui/discovery.rs:333
 msgid "Sync my devices"
 msgstr "Cihazlarımı eşitle"
 
-#: src/ui/discovery.rs:345
+#: src/ui/discovery.rs:349
 msgid "Tune taste"
 msgstr "Müzik zevkini ayarla"
 
-#: src/ui/discovery.rs:351
+#: src/ui/discovery.rs:355
 msgid "Hide AI history"
 msgstr "Yapay zekâ geçmişini gizle"
 
-#: src/ui/discovery.rs:353
+#: src/ui/discovery.rs:357
 msgid "Show AI history"
 msgstr "Yapay zekâ geçmişini göster"
 
-#: src/ui/discovery.rs:360
+#: src/ui/discovery.rs:364
 msgid "Turn off automatic picks"
 msgstr "Otomatik önerileri kapat"
 
-#: src/ui/discovery.rs:362
+#: src/ui/discovery.rs:366
 msgid "Turn on automatic picks"
 msgstr "Otomatik önerileri aç"
 
-#: src/ui/discovery.rs:377
+#: src/ui/discovery.rs:381
 msgid "Familiar"
 msgstr "Tanıdık"
 
-#: src/ui/discovery.rs:378
+#: src/ui/discovery.rs:382
 msgid "Stay close to what you already love"
 msgstr "Sevdiğin müziklere yakın kal"
 
-#: src/ui/discovery.rs:382
+#: src/ui/discovery.rs:386
 msgid "Balanced"
 msgstr "Dengeli"
 
-#: src/ui/discovery.rs:383
+#: src/ui/discovery.rs:387
 msgid "Mix favourites with new finds"
 msgstr "Favorilerini yeni keşiflerle karıştır"
 
-#: src/ui/discovery.rs:387
+#: src/ui/discovery.rs:391
 msgid "Adventurous"
 msgstr "Maceracı"
 
-#: src/ui/discovery.rs:388
+#: src/ui/discovery.rs:392
 msgid "Reach further from your usual music"
 msgstr "Alıştığın müziklerin ötesine geç"
 
-#: src/ui/discovery.rs:419
+#: src/ui/discovery.rs:423
 msgid "Tell Spotiurge what you like"
 msgstr "Spotiurge'e neleri sevdiğini söyle"
 
-#: src/ui/discovery.rs:421
+#: src/ui/discovery.rs:425
 msgid "Your taste"
 msgstr "Müzik zevkin"
 
-#: src/ui/discovery.rs:439
+#: src/ui/discovery.rs:443
 msgid "Warm jazz, spacious electronics, a few surprises…"
 msgstr "Sıcak caz, ferah elektronik müzik, birkaç sürpriz…"
 
-#: src/ui/discovery.rs:460
+#: src/ui/discovery.rs:464
 msgid "Save taste"
 msgstr "Müzik zevkini kaydet"
 
-#: src/ui/discovery.rs:485
+#: src/ui/discovery.rs:489
 #, rust-format
 msgid ""
 "This computer is not paired with your private cloud. Quit Spotiurge, set "
@@ -3357,113 +3357,113 @@ msgstr ""
 "Bu bilgisayar özel bulutunla eşleştirilmemiş. Spotiurge'ü kapat, başlatma "
 "ortamında {variable} değişkenini ayarla ve uygulamayı yeniden aç."
 
-#: src/ui/discovery.rs:490
+#: src/ui/discovery.rs:494
 msgid "Your picks are already being prepared. Try again in a moment."
 msgstr "Önerilerin zaten hazırlanıyor. Birazdan tekrar dene."
 
-#: src/ui/discovery.rs:495
+#: src/ui/discovery.rs:499
 msgid "The AI is rate limited. Your picks are kept; try again later."
 msgstr ""
 "Yapay zekâ istek sınırına ulaştı. Önerilerin korunuyor; daha sonra tekrar "
 "dene."
 
-#: src/ui/discovery.rs:500
+#: src/ui/discovery.rs:504
 msgid "Recommendations are unavailable right now. Your picks are kept."
 msgstr "Öneriler şu anda kullanılamıyor. Mevcut önerilerin korunuyor."
 
-#: src/ui/discovery.rs:505
+#: src/ui/discovery.rs:509
 msgid "The AI sent an answer Spotiurge could not use. Your picks are kept."
 msgstr ""
 "Yapay zekâ, Spotiurge'ün kullanamadığı bir yanıt gönderdi. Önerilerin "
 "korunuyor."
 
-#: src/ui/discovery.rs:538
+#: src/ui/discovery.rs:560
 msgid "No picks yet. Refresh to find music for your taste."
 msgstr "Henüz öneri yok. Zevkine uygun müzik bulmak için yenile."
 
-#: src/ui/discovery.rs:547
+#: src/ui/discovery.rs:569
 #, rust-format
 msgid "{count} ready to play"
 msgid_plural "{count} ready to play"
 msgstr[0] "{count} öneri çalmaya hazır"
 msgstr[1] "{count} öneri çalmaya hazır"
 
-#: src/ui/discovery.rs:558
+#: src/ui/discovery.rs:580
 #, rust-format
 msgid "{count} not found on Spotify"
 msgid_plural "{count} not found on Spotify"
 msgstr[0] "{count} öneri Spotify'da bulunamadı"
 msgstr[1] "{count} öneri Spotify'da bulunamadı"
 
-#: src/ui/discovery.rs:570
+#: src/ui/discovery.rs:592
 #, rust-format
 msgid "{count} not checked yet"
 msgid_plural "{count} not checked yet"
 msgstr[0] "{count} öneri henüz kontrol edilmedi"
 msgstr[1] "{count} öneri henüz kontrol edilmedi"
 
-#: src/ui/discovery.rs:582
+#: src/ui/discovery.rs:604
 msgid "Spotify took too long to answer."
 msgstr "Spotify'ın yanıt vermesi çok uzun sürdü."
 
-#: src/ui/discovery.rs:585
+#: src/ui/discovery.rs:607
 msgid "Spotify asked Spotiurge to slow down."
 msgstr "Spotify, Spotiurge'ün yavaşlamasını istedi."
 
-#: src/ui/discovery.rs:589
+#: src/ui/discovery.rs:611
 msgid "Spotiurge has used its Spotify search allowance for now."
 msgstr "Spotiurge şimdilik Spotify arama kotasını doldurdu."
 
-#: src/ui/discovery.rs:592
+#: src/ui/discovery.rs:614
 msgid "Spotify search is unavailable right now."
 msgstr "Spotify araması şu anda kullanılamıyor."
 
-#: src/ui/discovery.rs:595
+#: src/ui/discovery.rs:617
 msgid "Sign in to Spotify to check the rest."
 msgstr "Kalanları kontrol etmek için Spotify'a giriş yap."
 
-#: src/ui/discovery.rs:691
+#: src/ui/discovery.rs:713
 msgid "Spotify asked to wait. Retry in a moment."
 msgstr "Spotify beklememizi istedi. Birazdan tekrar dene."
 
-#: src/ui/discovery.rs:701
+#: src/ui/discovery.rs:723
 msgid "Check again"
 msgstr "Tekrar kontrol et"
 
-#: src/ui/discovery.rs:737
+#: src/ui/discovery.rs:759
 msgid "More like this"
 msgstr "Bunun gibi daha fazla"
 
-#: src/ui/discovery.rs:738
+#: src/ui/discovery.rs:760
 msgid "Less like this"
 msgstr "Bunun gibi daha az"
 
 #. Translators: {count} is a number of AI suggestions that cannot play.
-#: src/ui/discovery.rs:923
+#: src/ui/discovery.rs:945
 #, rust-format
 msgid "Couldn't play ({count})"
 msgstr "Çalınamadı ({count})"
 
-#: src/ui/discovery.rs:945
+#: src/ui/discovery.rs:967
 msgid "Not checked on Spotify yet"
 msgstr "Henüz Spotify'da kontrol edilmedi"
 
-#: src/ui/discovery.rs:946
+#: src/ui/discovery.rs:968
 msgid "Not found on Spotify"
 msgstr "Spotify'da bulunamadı"
 
-#: src/ui/discovery.rs:1033
+#: src/ui/discovery.rs:1055
 msgid "Your saved mixes"
 msgstr "Kaydettiğin miksler"
 
-#: src/ui/discovery.rs:1046
+#: src/ui/discovery.rs:1068
 msgid "Play mix"
 msgstr "Miksi çal"
 
-#: src/ui/discovery.rs:1091
+#: src/ui/discovery.rs:1113
 msgid "Your AI history"
 msgstr "AI geçmişin"
 
-#: src/ui/discovery.rs:1096
+#: src/ui/discovery.rs:1118
 msgid "No AI requests yet."
 msgstr "Henüz yapay zekâ isteği yok."

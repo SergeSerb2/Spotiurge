@@ -855,6 +855,16 @@ pub fn apply_flags(app: &mut App, page: Option<&str>, show: Option<&str>) {
             }
             "discovery-not-found" => app.discovery.picks = demo_discovery_picks(8, 3, 0),
             "discovery-loading" | "discovery-busy" => app.discovery.busy = true,
+            "discovery-opening" | "discovery-load-error" => {
+                app.discovery.ready = false;
+                app.discovery.picks.clear();
+                app.discovery.replica = Default::default();
+                app.discovery.status = if surface == "discovery-load-error" {
+                    "Cannot read discovery state. Fix its file permissions and restart.".into()
+                } else {
+                    String::new()
+                };
+            }
             "discovery-error" | "discovery-offline" => {
                 app.discovery.last_error =
                     Some(crate::discovery::RecommendationErrorKind::Unavailable);

@@ -51,7 +51,7 @@ struct Cli {
     /// `discovery-partial`, `discovery-not-found`, `discovery-busy` (or `discovery-loading`),
     /// `discovery-offline` (or `discovery-error`), `discovery-pairing`, `discovery-taste`,
     /// `discovery-history`, `discovery-feedback`, `discovery-focus`, `discovery-menu`,
-    /// `discovery-unmatched`, or `discovery-remote`.
+    /// `discovery-unmatched`, `discovery-opening`, `discovery-load-error`, or `discovery-remote`.
     #[cfg(feature = "demo")]
     #[arg(long)]
     demo_show: Option<String>,

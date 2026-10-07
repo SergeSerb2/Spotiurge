@@ -284,7 +284,11 @@ fn demo_disabled(app: &App) -> String {
         )
         .into_owned()
     } else if !app.discovery.ready {
-        gettext(app.locale, "Opening your personal discovery workspace…").into_owned()
+        if app.discovery.status.is_empty() {
+            gettext(app.locale, "Opening your personal discovery workspace…").into_owned()
+        } else {
+            app.discovery.status.clone()
+        }
     } else {
         gettext(app.locale, "Sign in to Spotify to find new picks.").into_owned()
     }
@@ -516,13 +520,31 @@ fn summary(app: &mut App, ui: &mut egui::Ui, counts: &Counts) {
     }
 
     if !app.discovery.ready {
-        notice(
-            ui,
-            &palette,
-            Icon::Loader,
-            palette.secondary,
-            &gettext(locale, "Opening your personal discovery workspace…"),
-        );
+        if app.discovery.status.is_empty() {
+            notice(
+                ui,
+                &palette,
+                Icon::Loader,
+                palette.secondary,
+                &gettext(locale, "Opening your personal discovery workspace…"),
+            );
+        } else {
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 6.0;
+                theme::icon(ui, Icon::CircleAlert, 14.0, palette.text);
+                // Keep the complete recovery advice visible in narrow windows.
+                let galley = crate::bidi::layout(
+                    ui.painter(),
+                    &app.discovery.status,
+                    theme::regular(13.0),
+                    palette.secondary,
+                    ui.available_width(),
+                    usize::MAX,
+                    None,
+                );
+                ui.add(egui::Label::new(galley).selectable(false));
+            });
+        }
         return;
     }
 

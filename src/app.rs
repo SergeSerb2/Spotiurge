@@ -15535,6 +15535,98 @@ mod tests {
     }
 
     #[test]
+    fn discovery_load_failures_replace_the_loading_notice_without_resetting_state() {
+        let mut app = test_app("discovery-load-failures");
+        app.backend.set_offline(true);
+        app.auth = AuthStatus::Connected {
+            username: "fixture".into(),
+        };
+        let ctx = egui::Context::default();
+        theme::install(&ctx);
+        ctx.enable_accesskit();
+        let draw = |app: &mut App, size: egui::Vec2| {
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, size)),
+                    ..Default::default()
+                },
+                |ui| crate::ui::discovery::show(app, ui),
+            );
+            output.textures_delta.clear();
+            output.platform_output.accesskit_update.unwrap()
+        };
+        let contains = |tree: &egui::accesskit::TreeUpdate, text: &str| {
+            tree.nodes
+                .iter()
+                .any(|(_, node)| node.label() == Some(text) || node.value() == Some(text))
+        };
+        const OPENING: &str = "Opening your personal discovery workspace…";
+        draw(&mut app, egui::vec2(600.0, 800.0));
+        assert!(contains(&draw(&mut app, egui::vec2(600.0, 800.0)), OPENING));
+
+        std::fs::create_dir_all(&app.dirs.state).unwrap();
+        let corrupt = app.dirs.state.join("corrupt.json");
+        let oversized = app.dirs.state.join("oversized.json");
+        let unreadable = app.dirs.state.join("directory.json");
+        std::fs::write(&corrupt, b"not json").unwrap();
+        std::fs::write(&oversized, vec![b' '; crate::discovery::MAX_BYTES * 2 + 1]).unwrap();
+        std::fs::create_dir(&unreadable).unwrap();
+        for path in [&corrupt, &oversized, &unreadable] {
+            let error = crate::discovery::Replica::load(path).unwrap_err();
+            app.handle_backend_events(vec![Event::DiscoveryLoaded(Err(error.clone()))]);
+            assert!(!app.discovery.ready, "failed storage cannot enable edits");
+            for dark in [true, false] {
+                app.palette = if dark {
+                    Palette::dark()
+                } else {
+                    Palette::light()
+                };
+                for width in [360.0, 960.0] {
+                    draw(&mut app, egui::vec2(width, 800.0));
+                    let tree = draw(&mut app, egui::vec2(width, 800.0));
+                    assert!(contains(&tree, &error), "the complete failure is drawn");
+                    assert!(!contains(&tree, OPENING), "a failure is not still opening");
+                    assert!(
+                        tree.nodes.iter().any(|(_, node)| {
+                            node.label() == Some("Find new picks") && node.is_disabled()
+                        }),
+                        "failed storage keeps recommendations disabled"
+                    );
+                }
+            }
+        }
+        assert_eq!(std::fs::read(&corrupt).unwrap(), b"not json");
+        assert_eq!(
+            std::fs::metadata(&oversized).unwrap().len(),
+            (crate::discovery::MAX_BYTES * 2 + 1) as u64
+        );
+        assert!(unreadable.is_dir());
+        assert!(
+            app.actions.is_empty(),
+            "drawing a failure cannot replace the file"
+        );
+
+        app.handle_backend_events(vec![Event::DiscoveryLoaded(Ok(Default::default()))]);
+        assert!(app.discovery.ready);
+        assert!(app.discovery.status.is_empty());
+        draw(&mut app, egui::vec2(600.0, 800.0));
+        let tree = draw(&mut app, egui::vec2(600.0, 800.0));
+        assert!(!contains(&tree, OPENING));
+        assert!(!contains(
+            &tree,
+            "Cannot read discovery state. Fix its file permissions and restart."
+        ));
+        assert!(
+            tree.nodes
+                .iter()
+                .any(|(_, node)| { node.label() == Some("Find new picks") && !node.is_disabled() }),
+            "a successful load restores recommendations"
+        );
+        app.backend.shutdown();
+        std::fs::remove_dir_all(app.dirs.state.parent().unwrap()).unwrap();
+    }
+
+    #[test]
     fn discovery_sync_preserves_new_local_records_and_unsaved_drafts() {
         let mut app = test_app("discovery-sync-race");
         app.discovery.ready = true;
