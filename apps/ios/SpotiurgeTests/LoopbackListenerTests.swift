@@ -1,6 +1,7 @@
 import Foundation
 import Network
 import Testing
+import Darwin
 @testable import Spotiurge
 
 struct LoopbackListenerTests {
@@ -42,6 +43,37 @@ struct LoopbackListenerTests {
         try await Task.sleep(for: .milliseconds(100))
         #expect(stale == 0 && replacementOpened == 1 && replacementFailed == 0)
         #expect(opened == 1 && secondFailed == 1)
+    }
+
+    @Test @MainActor
+    func reusableCallbackPortCannotBeShared() async throws {
+        // Another process may opt into SO_REUSEADDR/SO_REUSEPORT. OAuth must
+        // fail before opening authentication rather than share that socket.
+        let socket = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+        try #require(socket >= 0)
+        defer { Darwin.close(socket) }
+        var reuse: Int32 = 1
+        try #require(setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &reuse, socklen_t(MemoryLayout.size(ofValue: reuse))) == 0)
+        try #require(setsockopt(socket, SOL_SOCKET, SO_REUSEPORT, &reuse, socklen_t(MemoryLayout.size(ofValue: reuse))) == 0)
+        var address = sockaddr_in()
+        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        address.sin_family = sa_family_t(AF_INET)
+        address.sin_addr.s_addr = inet_addr("127.0.0.1")
+        var length = socklen_t(MemoryLayout.size(ofValue: address))
+        let boundSocket = withUnsafeMutablePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.bind(socket, $0, length) }
+        }
+        try #require(boundSocket == 0 && Darwin.listen(socket, 1) == 0)
+        try #require(withUnsafeMutablePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { getsockname(socket, $0, &length) }
+        } == 0)
+        let exclusive = LoopbackSignInListener()
+        defer { exclusive.cancel() }
+        var opened = 0, failed = 0
+        exclusive.start(port: UInt16(bigEndian: address.sin_port), onReady: { opened += 1 },
+                        onConnection: { $0.cancel() }, onFailure: { failed += 1 })
+        try await waitUntil { opened + failed > 0 }
+        #expect(opened == 0 && failed == 1 && exclusive.port == nil)
     }
 
     @MainActor

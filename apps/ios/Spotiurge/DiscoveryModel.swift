@@ -366,8 +366,7 @@ final class DiscoveryModel {
         if completedActive { inFlight = nil }
         defer { schedule() }
         guard id == request else {
-            if completedActive, case .failure(let failure) = result,
-               [.busy, .rateLimited, .pairing].contains(failure.kind) {
+            if completedActive, case .failure(let failure) = result {
                 recommendationFailed(failure)
             }
             return

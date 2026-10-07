@@ -475,6 +475,8 @@ struct ModelLifecycle {
             (.busy, .init(status: 429, body: Data(#"{"code":"busy"}"#.utf8))),
             (.rateLimited, .init(status: 429)),
             (.pairing, .init(status: 401)),
+            (.unavailable, .init(status: 503)),
+            (.invalidResponse, json("{}")),
         ]
         for exploration in [false, true] {
             for (kind, reply) in refusals {

@@ -118,15 +118,17 @@ read. Sync imports the remote clock and re-expresses pending records that would
 otherwise lose, including feedback pruned by its cutoff, before uploading.
 Acknowledgments clear only dispatched stamps; edits made during sync remain
 pending. An import without a dispatched snapshot acknowledges nothing. Removed
-inputs invalidate AI content while request-wide busy/rate-limit/pairing states
-still apply. The journal never reaches the cloud or AI.
+inputs invalidate successful AI content while every completed active failure
+still applies its normal backoff, including unavailable and malformed responses.
+The journal never reaches the cloud or AI.
 
 ## Safeguards (beyond the probe scaffold)
 
 - **Listener startup.** The system sign-in sheet opens only after its loopback
   listener is ready. An asynchronous bind failure or waiting state ends the
-  attempt with a retryable port error. Canceled listener, browser and request
-  callbacks cannot affect a replacement sign-in. The ten-minute deadline also
+  attempt with a retryable port error. Endpoint reuse is disabled so a competing
+  reusable socket cannot share the OAuth callback bind. Canceled listener,
+  browser and request callbacks cannot affect a replacement sign-in. The ten-minute deadline also
   covers listener startup.
 - **Connection rejection.** A synchronous playback-credential rejection revokes
   pending callbacks, pauses live status and shows how to sign in, Forget or

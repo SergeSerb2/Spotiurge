@@ -17,7 +17,8 @@ final class LoopbackSignInListener {
         do {
             let parameters = NWParameters.tcp
             parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: port)!)
-            parameters.allowLocalEndpointReuse = true
+            // One sign-in attempt must exclusively own the OAuth callback port.
+            parameters.allowLocalEndpointReuse = false
             let listener = try NWListener(using: parameters)
             self.listener = listener
             listener.stateUpdateHandler = { [weak self, weak listener] state in

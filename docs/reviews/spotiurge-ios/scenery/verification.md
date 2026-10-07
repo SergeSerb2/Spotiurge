@@ -156,3 +156,19 @@ The result bundle reports 21 passed, zero failed or skipped. Unsigned no-engine
 generic iPhoneOS compilation and engine-enabled source typechecking pass.
 No physical phone access, browser OAuth, live AI/cloud round, audio or TestFlight
 upload occurred. The approved scenery appearance is preserved.
+
+The following correction applies the existing failure backoff to every completed
+active recommendation failure after an input change, including service
+unavailability and malformed AI output. Successful obsolete content and duplicate
+old completions remain excluded. The held-request regression now covers all five
+failure kinds for both taste and exploration changes, including a 503 and an
+invalid successful-response body, and checks persisted retry eligibility.
+
+The OAuth listener explicitly disables endpoint reuse. A new Simulator acceptance
+test binds a real loopback TCP socket with both `SO_REUSEADDR` and `SO_REUSEPORT`,
+then verifies the app listener fails without opening authentication. The existing
+readiness, occupied-port and canceled-replacement cases still pass. All 47 core
+tests and 22 hosted Simulator tests pass, with zero hosted failures or skips.
+Unsigned no-engine generic iPhoneOS compilation and engine-enabled Swift source
+typechecking pass. These are local socket/model checks, not browser OAuth or
+physical-phone operations; the approved scenery appearance is unchanged.
