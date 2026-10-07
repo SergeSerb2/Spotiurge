@@ -14,8 +14,11 @@ controls use the shared forest/mist tokens.
 **Status: developmental, not for distribution.** The production iOS
 architecture is still gated by `docs/reviews/spotiurge-ios/playback-gate.md`.
 This app does not use the official Spotify iOS SDK and is not a remote control
-for the Spotify app. It has not been installed on a physical iPhone. No
-TestFlight build or App Store Connect record exists.
+for the Spotify app. A signed private preview was installed on Serge's iPhone
+on October 7 using the existing successful playback experiment's engine artifact.
+The phone was locked, so remote launch was denied. No new phone playback or sync
+tests were run. No TestFlight build or App Store Connect record exists. See the
+[installation receipt](../../docs/reviews/spotiurge-ios/installation-20261007.md).
 
 ## What works
 
@@ -77,6 +80,11 @@ Limits:
   `config::OS = "macos"` experiment in an ignored local copy. That change
   needs a maintainer-owned librespot fork pinned to a commit and an upstream
   proposal. This tree does not reference any ignored path.
+  The October 7 private installation explicitly links the previously built
+  successful experiment artifact and defines
+  `SPOTIURGE_EXPERIMENTAL_IOS_IDENTITY` so Settings describes it accurately.
+  Default source builds still use the pinned stock engine. This private receipt
+  does not make the dependency fix maintained or the app distribution-ready.
 - **One track or context per load.** The probe ABI loads one context URI.
   Albums and playlists play as contexts. A list of picks or a saved mix starts
   with its first track, and the app says so. Track-list loading, queueing and
@@ -233,8 +241,8 @@ The earlier amber interface's results remain in
 [`interface-verification.md`](../../docs/reviews/spotiurge-ios/interface-verification.md).
 
 A signed device build needs `DEVELOPMENT_TEAM=78A5P57U23` and a registered
-development bundle ID (`com.sergeserbinenko.spotiurge.dev`). This tree has not
-performed one.
+development bundle ID (`com.sergeserbinenko.spotiurge.dev`). The private install
+used this identity and team with an automatically managed development profile.
 
 ## Before this could ship
 

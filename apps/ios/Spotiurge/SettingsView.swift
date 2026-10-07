@@ -81,10 +81,15 @@ struct SettingsView: View {
                 } header: {
                     Text("Playback on this iPhone").foregroundStyle(Palette.secondary)
                 } footer: {
+                    #if SPOTIURGE_EXPERIMENTAL_IOS_IDENTITY
+                    Text("Development engine: the playback probe's experimental desktop identity on iOS, playing through this app's own audio session. A maintained dependency fix and distribution approval are still pending. Spotify Premium is required.")
+                        .foregroundStyle(Palette.secondary)
+                    #else
                     Text(Player.includesEngine
                          ? "Development engine: Spotiurge's own librespot build from the playback probe, playing through this app's audio session. It still announces the stock librespot iPhone identity, which Spotify refuses, until the identity fix ships in a pinned fork. Spotify Premium is required. Spotiurge never controls the Spotify app instead."
                          : "This build has no playback engine, so nothing plays here. Spotiurge never controls the Spotify app instead.")
                         .foregroundStyle(Palette.secondary)
+                    #endif
                 }
                 .listRowBackground(Palette.grouped)
 
