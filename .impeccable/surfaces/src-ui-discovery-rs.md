@@ -17,8 +17,8 @@ He selected a working native interface first on October 6, 2026.
 THESIS: open on playable personal music, with curation and feedback one gesture
 away; the prompt and unresolved suggestions no longer dominate Home.
 
-OWN-WORLD: a native personal radio desk, cool cover-derived light through a
-restrained frosted pane, clear neutral text, compact 56-point rows and one green
+OWN-WORLD: a native personal radio desk, quiet mountain scenery beneath a
+flat forest/mist chrome plate, clear neutral text, compact 56-point rows and one moss
 play action. Light/dark follow the desktop setting; no continuous blur or shimmer.
 
 STORY: listen immediately, select Familiar/Balanced/Adventurous, signal more/less,

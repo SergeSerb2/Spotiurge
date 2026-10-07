@@ -113,7 +113,7 @@ fn quick_access(app: &mut App, ui: &mut egui::Ui) {
                     );
                     let cover = Rect::from_min_size(rect.min, Vec2::splat(60.0));
                     if *liked {
-                        super::sidebar::liked_cover(ui, cover, 10.0);
+                        super::sidebar::liked_cover(ui, cover, 10.0, &palette);
                     } else {
                         widgets::paint_cover(
                             ui,

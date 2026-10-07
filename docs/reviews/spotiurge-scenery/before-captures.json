@@ -1,0 +1,609 @@
+{
+  "phase": "before",
+  "source_commit": "e2a68a8d20bb5284e608b2faea44aff505c3b72c",
+  "binary_sha256": "7b393ac9841a5e6764587ee5683bd1b14961e89e44f13a03aef7f47b1ed36820",
+  "platform": "macOS arm64",
+  "captures": [
+    {
+      "surface": "home",
+      "page": "home",
+      "flags": "discovery-matched",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-dark-normal.jpg",
+      "sha256": "de7f9d2d78e36052ea4f71a36752feebf7a65972920f1eb1876f171007b1e4a1",
+      "native_capture_sha256": "a8f6e55ad72541faa6ca94d4dd28e88330e3e88ba6060c53f2d3bf55bb722dc8",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home",
+      "page": "home",
+      "flags": "discovery-matched",
+      "theme": "dark",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-home-dark-narrow.jpg",
+      "sha256": "15d25c48a3dd5e7a8eba16afed9d5ecfd2f5970effe4555196fab30a7ab329ca",
+      "native_capture_sha256": "d34535458d890e2e7f15cd70e34410e807d5003f57db9b2f34a99519acab6a3a",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ]
+    },
+    {
+      "surface": "home-onboarding",
+      "page": "home",
+      "flags": "discovery-onboarding",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-onboarding-dark-normal.jpg",
+      "sha256": "ccf627de3978100de55686aa2aab629f1189d9a50c05492ba8c79319e372483c",
+      "native_capture_sha256": "0e20a3f93bbfe892f89a086306c096df3602121b9cd93b67a22955d1c3e6d7da",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-error",
+      "page": "home",
+      "flags": "discovery-error",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-error-dark-normal.jpg",
+      "sha256": "63564df6ba6e16362d5a8dc7049a5a194b02d39dc8370606b2b9165fd5ad02e0",
+      "native_capture_sha256": "af5227cb0cd174809ed9f3beddb49d7b435778664c683b8329d815723844510d",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-unmatched",
+      "page": "home",
+      "flags": "discovery-unmatched",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-unmatched-dark-normal.jpg",
+      "sha256": "3e8ef50087558f382b40f2ac9b4d367b4e22f3faa11016a9229c2882bd5276a2",
+      "native_capture_sha256": "d18a10b9d5fa93c658cb8eb0aa32a19239a80faca0f4b5a7ffda46d5a3d4ea92",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-menu",
+      "page": "home",
+      "flags": "discovery-menu",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-menu-dark-normal.jpg",
+      "sha256": "9eb8ec07895cd6a883f2a3ff20fcf0b08e8c03f450a0c0ab775b8cf098dce38a",
+      "native_capture_sha256": "0cb2fbc41caefd066c3062cac909a3f2fb9ef7654c752fb24734d51d2c0891af",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-load-error",
+      "page": "home",
+      "flags": "discovery-load-error",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-load-error-dark-normal.jpg",
+      "sha256": "0d154ce32323963a61e2ccd93de46dca8145d15ccaee250c3ae29d78dd4c69bd",
+      "native_capture_sha256": "b84927f3c962cfea869f2423922e363a5ef4719a2b3e031348a36f9a84d4fa2b",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-taste",
+      "page": "home",
+      "flags": "discovery-taste",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-taste-dark-normal.jpg",
+      "sha256": "45e0c74469f0610a366b1064ed6b1d6e6302250b76945f40d52a6b282cec6995",
+      "native_capture_sha256": "7923df85467cc66071c78f7467dc2506fd607a65a074697df8bbd4b770edde89",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "search",
+      "page": "search",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-search-dark-normal.jpg",
+      "sha256": "7afef01f9f7d50a7405cc38147d7f50732f2fc725ae9dc3281aee9b25b667e58",
+      "native_capture_sha256": "222bab66cea8832f9a2d23ecde0fd2f127f3ce136d0ccbe6022a65a4ea299068",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "search",
+      "page": "search",
+      "flags": "",
+      "theme": "dark",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-search-dark-narrow.jpg",
+      "sha256": "2a308b7b5d76bbaef812840898b1534d6c31a74b5d6c5b9058387ff86e5ea07b",
+      "native_capture_sha256": "b978a1d79a50f8e50f6bd1f092b560bc1618d9aae8aa1402d9fccad38325012d",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ]
+    },
+    {
+      "surface": "liked",
+      "page": "liked",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-liked-dark-normal.jpg",
+      "sha256": "ccbffb0cc675a1a08d807a41a81dbfd2c4005fbed138e7269ee245bd50cf108b",
+      "native_capture_sha256": "e311695b2a246a85954b23dcf48f351281863203c10cb9cebb740a02b3884033",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "playlist",
+      "page": "playlist:pl1",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-playlist-dark-normal.jpg",
+      "sha256": "beee605c1a1b5e135827314daa64d7a75ac8aa0f139a5dec501687aa9d76f8ca",
+      "native_capture_sha256": "2c2d82465f9070b290a48e7e9adae9f78758e66c265dab17b652a79080aaab68",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "album",
+      "page": "album:alb0",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-album-dark-normal.jpg",
+      "sha256": "e80c40af26a13f427d8fe12d16063a843de2a2c8510aa5086d11ceeb7913626b",
+      "native_capture_sha256": "8538b3960419b246d03146e4b714c50a6a18a2e10101968e17456b4262e52095",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "artist",
+      "page": "artist:art0",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-artist-dark-normal.jpg",
+      "sha256": "58f3b2863a940b1b243f8fb5e1c03ec9f5b9c825c957058bd98cf1f3cd7b19c7",
+      "native_capture_sha256": "d89a35730c6a57e10c29ff6ef7a2d2ad95a652a9bd4915d2cf9b4277c4279e5e",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "queue",
+      "page": "queue",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-queue-dark-normal.jpg",
+      "sha256": "a2c88b0916d5cf55f098b0d30b80cb2a433b23ded76abb3461e6b6f8b861c7d2",
+      "native_capture_sha256": "412e0d50fef2469a131c18622d540494429e51cee65571f28dbe448e90821617",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "settings",
+      "page": "settings",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-settings-dark-normal.jpg",
+      "sha256": "a115107535ed6bdae0cf804af0d3a352d7b9bf670b97f2d9e0e0215425232e0d",
+      "native_capture_sha256": "8f6576a59c03a1c67627f3bec124a2880e39a7017aa3bc2173e57ecd813d9b53",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "settings",
+      "page": "settings",
+      "flags": "",
+      "theme": "dark",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-settings-dark-narrow.jpg",
+      "sha256": "47ae02a8a9ef6c262459b9e4010816677ca744a12fadc5cba0f39c03fd46fc3a",
+      "native_capture_sha256": "887f790e3cf6323c5ec314cb51cf08bd7dea1e9b9fddc31b7d505270358c372a",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ]
+    },
+    {
+      "surface": "devices",
+      "page": "home",
+      "flags": "devices",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-devices-dark-normal.jpg",
+      "sha256": "0a64c62768eded691d1f2d9872a2b918c5dabb28688f05216592ac80b2f0d07d",
+      "native_capture_sha256": "7b8ac375002efc3799d75717fe291836cc48c99625ddd6005cf0b9e92bf6c5ce",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "login",
+      "page": "home",
+      "flags": "signed-out",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-login-dark-normal.jpg",
+      "sha256": "ec1bd18523a080d63317719734453c61a2fe1063bfd7d06753267ed920a69730",
+      "native_capture_sha256": "40b2c276cc66222546aefe41cc7ff5bc24765432970f5c71f870232c7db2b7a9",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "loading",
+      "page": "playlist:pl1",
+      "flags": "collection-loading",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-loading-dark-normal.jpg",
+      "sha256": "afd6f8ffc8aec62b297c2fa675752fcdc96649c49d40e6e10487aed147a718f4",
+      "native_capture_sha256": "4b835da715eebaa6bae7bc2a04520dea792573c136078615c82f4f82b434a61d",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home",
+      "page": "home",
+      "flags": "discovery-matched",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-light-normal.jpg",
+      "sha256": "46813923007569cd5e828fab1de2508143f3b126ff9f482ab0abaef7f58d78c9",
+      "native_capture_sha256": "dd4094b29db16d28e41c3be8cc2cae156b73a1f1aedeaa3c330074a02f83f52f",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home",
+      "page": "home",
+      "flags": "discovery-matched",
+      "theme": "light",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-home-light-narrow.jpg",
+      "sha256": "0e674bda5e5028880bb8aed23cbaea48a05e0bc2841de15f403c0da9ebe49fb3",
+      "native_capture_sha256": "504176a6e21fc0a65d5d936b1b0ee34b84889e078951f4259d4460fff3961924",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ]
+    },
+    {
+      "surface": "home-onboarding",
+      "page": "home",
+      "flags": "discovery-onboarding",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-onboarding-light-normal.jpg",
+      "sha256": "990d8e02af063a7ac500e6b7852dc2842e41b20aaf21e9090154755ba9cfedcc",
+      "native_capture_sha256": "607540b22810e7227b323297c8a0bb8cc19742d17481659fce43fc3b7a76fd82",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-error",
+      "page": "home",
+      "flags": "discovery-error",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-error-light-normal.jpg",
+      "sha256": "e46732a74cca487348ae2da047e009c407e6578c5fd0b03ff5471771a777ecb3",
+      "native_capture_sha256": "09d668005f86e05f42a68b4052d347b8172a50b640c8a5e3d91efbda28274dce",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-unmatched",
+      "page": "home",
+      "flags": "discovery-unmatched",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-unmatched-light-normal.jpg",
+      "sha256": "44d90381103116aaed18b0bbd959e5a5bb6da8fe983f69194e19c55c5cd3d350",
+      "native_capture_sha256": "8e86665bab6d3fa07facc4c2eb2b0553747e66b0c6c684bc30a2daaaf92d77b9",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-menu",
+      "page": "home",
+      "flags": "discovery-menu",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-menu-light-normal.jpg",
+      "sha256": "ccc104b58e9bc421a5f985998d8e56ba8aa1e68be3b23d16670b48051900ddae",
+      "native_capture_sha256": "177009e0a969fbbc5d9182e122b6a15ab28f77e87ec33fb428815b245c1f668a",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-load-error",
+      "page": "home",
+      "flags": "discovery-load-error",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-load-error-light-normal.jpg",
+      "sha256": "bc8e405347545d1dea90ec6d45057d979211d047acac20f75eef516aac472514",
+      "native_capture_sha256": "7e84356ce72e839631b42acb5d7454cdd6351411002840b74495c2cfbc6af914",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-taste",
+      "page": "home",
+      "flags": "discovery-taste",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-taste-light-normal.jpg",
+      "sha256": "93e79b6680f57458764113e8db9a76dedac8b5e06be86cb10ad87854a0c3e9f8",
+      "native_capture_sha256": "10d7b08d4b4a1f9032027e389546b98edd41c802588dff9da67538cecae7f975",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "search",
+      "page": "search",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-search-light-normal.jpg",
+      "sha256": "8f96ae01f56746b935f5d0457504822ea532249c1eedc90eb53e1a96d9c93e91",
+      "native_capture_sha256": "55ea23d9bb6fdcca9206f9d3de8b3873aeec336fa7d0edcf778ebb1df9d0d5c0",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "search",
+      "page": "search",
+      "flags": "",
+      "theme": "light",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-search-light-narrow.jpg",
+      "sha256": "f9777c9b7faa864818f63a1be524924e3dfd748cb727e15843fa21174b97a84b",
+      "native_capture_sha256": "4ff3c52adde1ba4c95fa9e0baf557ddbe86cde455a06691ee5b8acce3f766061",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ]
+    },
+    {
+      "surface": "liked",
+      "page": "liked",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-liked-light-normal.jpg",
+      "sha256": "c53ece56b6627a895f578ab900a658d60652bc9a790c158de3c4de127995a0b3",
+      "native_capture_sha256": "8e4c8d64e1b35b16b29389a11d674791fcadeac18bd4b96587ad23aada4f9774",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "playlist",
+      "page": "playlist:pl1",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-playlist-light-normal.jpg",
+      "sha256": "a2e3a4ef3448ad689dfb2997d730364b4c7026ca2f1c3bc88213744869d49f13",
+      "native_capture_sha256": "9a91dc9cec58c577c534da2e87031e166331bdd48b6945e11138a0a1adcd3394",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "album",
+      "page": "album:alb0",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-album-light-normal.jpg",
+      "sha256": "5eebafb72f819f808cf04ca64cca0182f3114b90ef390e6f00ceb559e27b262f",
+      "native_capture_sha256": "b5261ead05fda3b417efa72cd0ffc0058aede16b3f8ed040bc25d339be883645",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "artist",
+      "page": "artist:art0",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-artist-light-normal.jpg",
+      "sha256": "a99ee7177ae6d1f9b65f6468f9932c4e5fa3142ff659918e7c625b76926e28ac",
+      "native_capture_sha256": "7864654fd72371a651b9dac4dd60116ef17fd0f79ddc376e5ffd448ec62f801e",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "queue",
+      "page": "queue",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-queue-light-normal.jpg",
+      "sha256": "1fc2f55929ae52d358b7a6f63ca8ed21d8827b2ae9a6d62f8086e25a0084d3dd",
+      "native_capture_sha256": "6788670a2bef29a37fd1f64544cd08301ec60d3af453417b5053a9b152702dd1",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "settings",
+      "page": "settings",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-settings-light-normal.jpg",
+      "sha256": "adf100d19645cb9a38e7a3059bc37391e3a8c2a871f8899694231b873e657571",
+      "native_capture_sha256": "272dc96eee846d1c5c08e9e104ea88fe37d42aec5932068652d0e076680ee80a",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "settings",
+      "page": "settings",
+      "flags": "",
+      "theme": "light",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-settings-light-narrow.jpg",
+      "sha256": "2fa77f02b707801f1272dde6ccf88ce72b5f2bda0049294917d0fa62d74ceac6",
+      "native_capture_sha256": "5f4d0b9ae87cb20b857fc3aefc7a1513f7e229002e7054cf4f0a068c4c5760fc",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ]
+    },
+    {
+      "surface": "devices",
+      "page": "home",
+      "flags": "devices",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-devices-light-normal.jpg",
+      "sha256": "c4a66d5ae2142019381a6ac446ca78205d904a6d933ebc769021ee4d4bd6d706",
+      "native_capture_sha256": "e78d562652ae13a79d45d06fc8d22011e627820c58bccffce4315d7bf7715d13",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "login",
+      "page": "home",
+      "flags": "signed-out",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-login-light-normal.jpg",
+      "sha256": "1f2537466471a49677ad6a06040ee7f4cd99817d8a0d2088d681f63a84c89d9f",
+      "native_capture_sha256": "51350d54eb1bb85a119deb238574924c87430145d1f6c7f9fa66da12af951531",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "loading",
+      "page": "playlist:pl1",
+      "flags": "collection-loading",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-loading-light-normal.jpg",
+      "sha256": "915cbe8a4235c143244f56f427e88dc6e095eb1943ab755fb941e91626610671",
+      "native_capture_sha256": "0ae2256ad76d56228af24155a828ab19ae27dfb2df8ccc52513d329c79cc4cd9",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    }
+  ],
+  "capture_encoding": "Native-resolution JPEG quality 92 derived from native demo PNG; original PNG hashes retained."
+}

@@ -1,380 +1,175 @@
-//! Spotiurge's glass: panes of smoked glass floating over a dim room lit by
-//! the playing cover.
+//! Flat chrome glass over one locally bundled mountain scene.
 //!
-//! This is rendered frosted glass, not the system's backdrop blur. The room
-//! behind the panes is a few large, soft colour fields, already as smooth as
-//! blurred light, so a translucent pane over them reads as frosted without a
-//! blur pass. Each pane adds a sheen along its top, a rim lit above and
-//! shaded below, drawn one physical pixel wide, and a soft offset shadow.
-//! Everything is a handful of meshes per frame and nothing here animates on
-//! its own.
-
-use egui::epaint::{ColorMode, PathShape, PathStroke, Shadow};
-use egui::{Color32, CornerRadius, Painter, Pos2, Rect, Stroke, pos2, vec2};
-use std::sync::Arc;
+//! Like T3 Pretty, the scene sits beneath a black/white contrast wash. Glass
+//! belongs to navigation and controls; the main page stays clear. The scene
+//! is decoded once off the UI thread and never changes with playback.
 
 use crate::theme::Palette;
+use egui::epaint::Shadow;
+use egui::{Color32, CornerRadius, Painter, Rect, Stroke, pos2, vec2};
+use std::sync::Arc;
 
-/// The gap between floating panes and between a pane and the window edge.
 pub const GAP: f32 = 8.0;
-/// Corner radius of the shell's panes: sidebar, page, side panels.
 pub const PANE_RADIUS: f32 = 14.0;
-/// Corner radius of the floating player console.
 pub const CONSOLE_RADIUS: f32 = 18.0;
-/// Corner radius of menus, popovers, toasts and dialogs.
 pub const POPOVER_RADIUS: f32 = 12.0;
 
-/// How a piece of glass sits in the room.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
-    /// A shell pane: sidebar, page, queue, lyrics. Lets the room through.
     Pane,
-    /// The player console: a little denser, it carries the controls.
+    Content,
     Console,
-    /// Menus, popovers and dialogs over content: opaque, so the content
-    /// beneath never competes with their text. Sheen, rim and shadow keep
-    /// them glass.
     Popover,
-    /// A quiet inset well inside a pane: fields, the taste prompt, wells
-    /// holding a group of controls.
     Well,
 }
 
-/// The colours one piece of glass is drawn with.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Glass {
     pub fill: Color32,
-    pub sheen: Color32,
-    pub rim_top: Color32,
-    pub rim_bottom: Color32,
+    pub stroke: Stroke,
     pub shadow: Option<Shadow>,
 }
 
-/// The glass for `kind` in this palette. Every colour derives from the
-/// palette's roles, so custom themes keep working.
 pub fn glass(palette: &Palette, kind: Kind) -> Glass {
-    let dark = palette.dark;
-    let (opacity, sheen, rim_top, rim_bottom) = match (kind, dark) {
-        (Kind::Pane, true) => (0.72, 0.045, 0.11, 0.42),
-        (Kind::Pane, false) => (0.58, 0.55, 0.95, 0.10),
-        (Kind::Console, true) => (0.80, 0.06, 0.14, 0.45),
-        (Kind::Console, false) => (0.72, 0.60, 1.0, 0.12),
-        (Kind::Popover, true) => (1.0, 0.05, 0.13, 0.5),
-        (Kind::Popover, false) => (1.0, 0.5, 1.0, 0.14),
-        (Kind::Well, true) => (0.55, 0.0, 0.0, 0.0),
-        (Kind::Well, false) => (0.75, 0.0, 0.0, 0.0),
-    };
-    let base = match kind {
-        Kind::Popover => palette.overlay,
-        Kind::Well => palette.surface,
-        Kind::Pane | Kind::Console => palette.panel,
-    };
-    let shadow = match kind {
-        Kind::Pane => Some(Shadow {
-            offset: [0, 8],
-            blur: 28,
-            spread: 0,
-            color: palette.shadow.gamma_multiply(if dark { 0.55 } else { 0.5 }),
-        }),
-        Kind::Console => Some(Shadow {
-            offset: [0, 10],
-            blur: 32,
-            spread: 0,
-            color: palette.shadow.gamma_multiply(if dark { 0.8 } else { 0.7 }),
-        }),
-        Kind::Popover => Some(Shadow {
-            offset: [0, 12],
-            blur: 32,
-            spread: 0,
-            color: palette.shadow,
-        }),
-        Kind::Well => None,
+    let (base, opacity) = match kind {
+        Kind::Pane => (palette.panel, 0.68),
+        Kind::Content => (
+            if palette.dark {
+                palette.surface_active
+            } else {
+                palette.panel
+            },
+            if palette.dark { 0.85 } else { 0.68 },
+        ),
+        Kind::Console => (palette.panel, 0.80),
+        Kind::Popover => (palette.overlay, 1.0),
+        Kind::Well => (palette.surface, if palette.dark { 0.55 } else { 0.75 }),
     };
     Glass {
         fill: base.gamma_multiply(opacity),
-        sheen: Color32::WHITE.gamma_multiply(sheen),
-        rim_top: Color32::WHITE.gamma_multiply(rim_top),
-        rim_bottom: Color32::BLACK.gamma_multiply(rim_bottom),
-        shadow,
+        stroke: match kind {
+            Kind::Pane | Kind::Content => Stroke::NONE,
+            Kind::Well => Stroke::new(1.0, palette.outline),
+            Kind::Console | Kind::Popover => Stroke::new(1.0, rim_colour(palette)),
+        },
+        shadow: (kind == Kind::Popover).then_some(Shadow {
+            offset: [0, 8],
+            blur: 24,
+            spread: 0,
+            color: palette.shadow,
+        }),
     }
 }
 
-/// Paints a piece of glass filling `rect`. Paint it before what sits on it.
 pub fn paint(painter: &Painter, rect: Rect, radius: f32, palette: &Palette, kind: Kind) {
-    paint_glass(painter, rect, radius, &glass(palette, kind), palette);
+    paint_glass(painter, rect, radius, &glass(palette, kind));
 }
 
-/// Paints `glass` filling `rect`.
-pub fn paint_glass(painter: &Painter, rect: Rect, radius: f32, glass: &Glass, palette: &Palette) {
-    if !painter.is_visible() || rect.width() <= 0.0 || rect.height() <= 0.0 {
+pub fn paint_glass(painter: &Painter, rect: Rect, radius: f32, glass: &Glass) {
+    if !painter.is_visible() || !rect.is_positive() {
         return;
     }
     let corner = corner(radius);
     if let Some(shadow) = glass.shadow {
         painter.add(shadow.as_shape(rect, corner));
     }
-    painter.rect_filled(rect, corner, glass.fill);
-    if glass.sheen.a() > 0 {
-        // The sheen fades out over the top of the pane, never more than
-        // ninety points down, like light catching the upper edge.
-        let depth = (rect.height() * 0.45).min(90.0);
-        vertical_wash(
-            painter,
-            rect.shrink(0.5),
-            radius,
-            &[(0.0, glass.sheen), (depth, Color32::TRANSPARENT)],
-        );
-    }
-    if glass.rim_top.a() > 0 || glass.rim_bottom.a() > 0 {
-        rim(
-            painter,
-            rect,
-            radius,
-            glass.rim_top,
-            glass.rim_bottom,
-            palette,
-        );
-    }
-}
-
-/// A one-physical-pixel rim around `rect`, `top` along the upper edge
-/// turning to `bottom` along the lower one, over the palette's outline.
-pub fn rim(
-    painter: &Painter,
-    rect: Rect,
-    radius: f32,
-    top: Color32,
-    bottom: Color32,
-    palette: &Palette,
-) {
-    let pixel = 1.0 / painter.pixels_per_point();
-    let inset = rect.shrink(pixel / 2.0);
-    let mut points = Vec::new();
-    egui::epaint::tessellator::path::rounded_rectangle(
-        &mut points,
-        inset,
-        egui::epaint::CornerRadiusF32::same(radius - pixel / 2.0),
+    painter.rect(
+        rect,
+        corner,
+        glass.fill,
+        glass.stroke,
+        egui::StrokeKind::Inside,
     );
-    let outline = palette
-        .outline
-        .gamma_multiply(if palette.dark { 0.6 } else { 0.8 });
-    let blend = move |bounds: Rect, at: Pos2| {
-        let t = ((at.y - bounds.top()) / bounds.height().max(1.0)).clamp(0.0, 1.0);
-        // Lit along the top third, neutral down the sides, shaded below.
-        let lit = (1.0 - t / 0.35).clamp(0.0, 1.0);
-        let shade = ((t - 0.65) / 0.35).clamp(0.0, 1.0);
-        over(
-            over(outline, top.gamma_multiply(lit)),
-            bottom.gamma_multiply(shade),
-        )
-    };
-    painter.add(PathShape {
-        points,
-        closed: true,
-        fill: Color32::TRANSPARENT,
-        stroke: PathStroke {
-            width: pixel.max(0.5),
-            color: ColorMode::UV(Arc::new(blend)),
-            kind: egui::StrokeKind::Middle,
-        },
-    });
-}
-
-/// `top` composited over `bottom`, both premultiplied.
-fn over(bottom: Color32, top: Color32) -> Color32 {
-    let alpha = f32::from(top.a()) / 255.0;
-    let mix = |b: u8, t: u8| {
-        (f32::from(t) + f32::from(b) * (1.0 - alpha))
-            .round()
-            .min(255.0) as u8
-    };
-    Color32::from_rgba_premultiplied(
-        mix(bottom.r(), top.r()),
-        mix(bottom.g(), top.g()),
-        mix(bottom.b(), top.b()),
-        mix(bottom.a(), top.a()),
-    )
 }
 
 fn corner(radius: f32) -> CornerRadius {
     CornerRadius::same(radius.clamp(0.0, 255.0) as u8)
 }
 
-/// Fills a rounded rectangle with a vertical gradient through `stops`:
-/// (distance below the top in points, colour) pairs in order. Below the last
-/// stop the last colour holds. Built as horizontal strips that follow the
-/// corners, so any curve of stops keeps the rounded outline.
-pub fn vertical_wash(painter: &Painter, rect: Rect, radius: f32, stops: &[(f32, Color32)]) {
-    let Some(&(_, last)) = stops.last() else {
-        return;
-    };
-    let radius = radius
-        .min(rect.width() / 2.0)
-        .min(rect.height() / 2.0)
-        .max(0.0);
-    let colour_at = |y: f32| -> Color32 {
-        let offset = y - rect.top();
-        let mut previous = stops[0];
-        if offset <= previous.0 {
-            return previous.1;
-        }
-        for &stop in &stops[1..] {
-            if offset <= stop.0 {
-                let span = (stop.0 - previous.0).max(f32::EPSILON);
-                return lerp_colour(previous.1, stop.1, (offset - previous.0) / span);
-            }
-            previous = stop;
-        }
-        last
-    };
-    // Rows: the corners' curve, every stop, and the bottom of the wash.
-    let end = (rect.top() + stops.iter().map(|stop| stop.0).fold(0.0, f32::max)).min(rect.bottom());
-    let fill_rest = last.a() > 0;
-    let bottom = if fill_rest { rect.bottom() } else { end };
-    let mut ys: Vec<f32> = Vec::with_capacity(40);
-    const CURVE_STEPS: usize = 8;
-    for step in 0..=CURVE_STEPS {
-        let y = rect.top() + radius * step as f32 / CURVE_STEPS as f32;
-        ys.push(y);
-        ys.push(rect.bottom() - radius * step as f32 / CURVE_STEPS as f32);
-    }
-    for &(offset, _) in stops {
-        ys.push(rect.top() + offset);
-    }
-    // Long washes need rows along the way to follow their curve.
-    let mut y = rect.top();
-    while y < end {
-        ys.push(y);
-        y += 24.0;
-    }
-    ys.push(bottom);
-    ys.retain(|y| (rect.top()..=bottom).contains(y));
-    ys.sort_by(f32::total_cmp);
-    ys.dedup_by(|a, b| (*a - *b).abs() < 0.25);
-    if ys.len() < 2 {
-        return;
-    }
-    let inset_at = |y: f32| -> f32 {
-        let from_top = y - rect.top();
-        let from_bottom = rect.bottom() - y;
-        let into = if from_top < radius {
-            radius - from_top
-        } else if from_bottom < radius {
-            radius - from_bottom
-        } else {
-            return 0.0;
-        };
-        radius - (radius * radius - into * into).max(0.0).sqrt()
-    };
-    let mut mesh = egui::Mesh::default();
-    for &y in &ys {
-        let inset = inset_at(y);
-        let colour = colour_at(y);
-        mesh.colored_vertex(pos2(rect.left() + inset, y), colour);
-        mesh.colored_vertex(pos2(rect.right() - inset, y), colour);
-    }
-    for row in 0..ys.len() as u32 - 1 {
-        let i = row * 2;
-        mesh.add_triangle(i, i + 1, i + 3);
-        mesh.add_triangle(i, i + 3, i + 2);
-    }
-    painter.add(egui::Shape::mesh(mesh));
+const SCENERY: &[u8] = include_bytes!("../../assets/scenery/alpine-lake.jpg");
+
+#[derive(Clone)]
+enum Scene {
+    Pending,
+    Decoded(Arc<egui::ColorImage>),
+    Ready(egui::TextureHandle),
+    Failed,
 }
 
-fn lerp_colour(a: Color32, b: Color32, t: f32) -> Color32 {
-    let t = t.clamp(0.0, 1.0);
-    let mix = |a: u8, b: u8| (f32::from(a) + (f32::from(b) - f32::from(a)) * t).round() as u8;
-    Color32::from_rgba_premultiplied(
-        mix(a.r(), b.r()),
-        mix(a.g(), b.g()),
-        mix(a.b(), b.b()),
-        mix(a.a(), b.a()),
+fn decode_scene() -> Option<egui::ColorImage> {
+    let image = image::load_from_memory(SCENERY).ok()?.to_rgba8();
+    Some(egui::ColorImage::from_rgba_unmultiplied(
+        [image.width() as usize, image.height() as usize],
+        image.as_raw(),
+    ))
+}
+
+fn scene_texture(ctx: &egui::Context) -> Option<egui::TextureHandle> {
+    let id = egui::Id::new("spotiurge-static-scenery");
+    match ctx.data(|data| data.get_temp::<Scene>(id)) {
+        Some(Scene::Ready(texture)) => Some(texture),
+        Some(Scene::Decoded(image)) => {
+            let texture =
+                ctx.load_texture("spotiurge-scenery", image, egui::TextureOptions::LINEAR);
+            ctx.data_mut(|data| data.insert_temp(id, Scene::Ready(texture.clone())));
+            Some(texture)
+        }
+        Some(Scene::Pending | Scene::Failed) => None,
+        None => {
+            ctx.data_mut(|data| data.insert_temp(id, Scene::Pending));
+            let worker_ctx = ctx.clone();
+            if std::thread::Builder::new()
+                .name("spotiurge-scenery".into())
+                .spawn(move || {
+                    let result = decode_scene()
+                        .map_or(Scene::Failed, |image| Scene::Decoded(Arc::new(image)));
+                    worker_ctx.data_mut(|data| data.insert_temp(id, result));
+                    worker_ctx.request_repaint();
+                })
+                .is_err()
+            {
+                ctx.data_mut(|data| data.insert_temp(id, Scene::Failed));
+            }
+            None
+        }
+    }
+}
+
+/// T3 Pretty's scenery stack, with the dense-text contrast boost enabled.
+/// Image + wash cover 85% of the base, without an animated gradient or blur.
+fn scenery_layers(palette: &Palette) -> (Color32, Color32) {
+    let wash = if palette.dark { 0.612 } else { 0.68 };
+    let image = (0.85 - wash) / (1.0 - wash);
+    (
+        Color32::WHITE.gamma_multiply(image),
+        if palette.dark {
+            Color32::BLACK
+        } else {
+            Color32::WHITE
+        }
+        .gamma_multiply(wash),
     )
 }
 
-/// A soft disc of light: `colour` at the centre falling smoothly to nothing
-/// at `radius`. The falloff is eased across rings, so it has no visible edge.
-pub fn light(painter: &Painter, center: Pos2, radius: f32, colour: Color32) {
-    if colour.a() == 0 || radius <= 0.0 {
-        return;
-    }
-    const SEGMENTS: u32 = 48;
-    // Ring positions and how much light each keeps: a smooth bell.
-    const RINGS: [(f32, f32); 5] = [
-        (0.0, 1.0),
-        (0.3, 0.78),
-        (0.55, 0.45),
-        (0.8, 0.14),
-        (1.0, 0.0),
-    ];
-    let mut mesh = egui::Mesh::default();
-    mesh.colored_vertex(center, colour);
-    for &(distance, strength) in &RINGS[1..] {
-        let ring_colour = colour.gamma_multiply(strength);
-        for segment in 0..SEGMENTS {
-            let angle = std::f32::consts::TAU * segment as f32 / SEGMENTS as f32;
-            let (sin, cos) = angle.sin_cos();
-            mesh.colored_vertex(center + vec2(cos, sin) * radius * distance, ring_colour);
-        }
-    }
-    for segment in 0..SEGMENTS {
-        let next = (segment + 1) % SEGMENTS;
-        mesh.add_triangle(0, 1 + segment, 1 + next);
-        for ring in 0..RINGS.len() as u32 - 2 {
-            let inner = 1 + ring * SEGMENTS;
-            let outer = inner + SEGMENTS;
-            mesh.add_triangle(inner + segment, outer + segment, outer + next);
-            mesh.add_triangle(inner + segment, outer + next, inner + next);
-        }
-    }
-    painter.add(egui::Shape::mesh(mesh));
-}
-
-/// The room behind the panes: the window colour lit by the cover's light
-/// from the upper left and a cool counter-light from the lower right.
-pub fn paint_room(painter: &Painter, rect: Rect, palette: &Palette, light_colour: Color32) {
+pub fn paint_scenery(painter: &Painter, rect: Rect, palette: &Palette) {
     painter.rect_filled(rect, 0.0, palette.window);
-    let reach = rect.size().length();
-    let (key, fill) = if palette.dark {
-        (0.42, 0.20)
-    } else {
-        (0.40, 0.22)
-    };
-    light(
-        painter,
-        pos2(
-            rect.left() + rect.width() * 0.18,
-            rect.top() + rect.height() * 0.05,
-        ),
-        reach * 0.62,
-        light_colour.gamma_multiply(key),
-    );
-    light(
-        painter,
-        pos2(
-            rect.left() + rect.width() * 0.92,
-            rect.bottom() - rect.height() * 0.02,
-        ),
-        reach * 0.5,
-        counter_light(light_colour, palette).gamma_multiply(fill),
-    );
+    if let Some(texture) = scene_texture(painter.ctx()) {
+        let (image, wash) = scenery_layers(palette);
+        painter.image(
+            texture.id(),
+            rect,
+            cover_uv(rect.size(), texture.size_vec2()),
+            image,
+        );
+        painter.rect_filled(rect, 0.0, wash);
+    }
 }
 
-/// The colour opposite the key light: its hue turned a third of the way
-/// round, so the room never goes flat with one colour.
-pub fn counter_light(colour: Color32, palette: &Palette) -> Color32 {
-    let hsva = egui::ecolor::Hsva::from(colour);
-    let turned = egui::ecolor::Hsva::new(
-        (hsva.h + 0.33).fract(),
-        hsva.s.min(0.55),
-        if palette.dark {
-            hsva.v.min(0.7)
-        } else {
-            hsva.v.max(0.8)
-        },
-        1.0,
-    );
-    Color32::from(turned)
+/// Centred aspect fill, shared across window sizes without resizing the texture.
+fn cover_uv(view: egui::Vec2, image: egui::Vec2) -> Rect {
+    let scale = (view.x / image.x).max(view.y / image.y);
+    let visible = view / (image * scale);
+    Rect::from_center_size(pos2(0.5, 0.5), visible)
 }
 
 /// The frame of a panel holding one pane of glass: clear, leaving `gaps`
@@ -406,13 +201,11 @@ pub fn popover_frame(palette: &Palette) -> egui::Frame {
         .shadow(glass.shadow.unwrap_or_default())
 }
 
-/// The single-colour rim egui frames take where a gradient one cannot go.
+/// A quiet, single-colour hairline for controls and popovers.
 pub fn rim_colour(palette: &Palette) -> Color32 {
-    if palette.dark {
-        over(palette.outline, Color32::WHITE.gamma_multiply(0.06))
-    } else {
-        palette.outline
-    }
+    palette
+        .text
+        .gamma_multiply(if palette.dark { 0.07 } else { 0.08 })
 }
 
 /// The quiet fill under the pointer: light through dark glass, shade on
@@ -430,7 +223,7 @@ pub fn hover_fill(palette: &Palette) -> Color32 {
 /// under the pointer.
 pub fn key_fill(palette: &Palette, lift: f32) -> Color32 {
     if palette.dark {
-        Color32::WHITE.gamma_multiply(0.05 + 0.05 * lift)
+        Color32::WHITE.gamma_multiply(0.095 + 0.04 * lift)
     } else {
         Color32::BLACK.gamma_multiply(0.035 + 0.03 * lift)
     }
@@ -445,28 +238,16 @@ pub fn selected_fill(palette: &Palette) -> Color32 {
     }
 }
 
-/// The selection lamp's shapes: the selected fill and a short bar of signal
-/// colour at the leading edge, `strength` from 0 (off) to 1.
+/// The selected row's fill, with `strength` from 0 (off) to 1.
 pub fn lamp_shapes(rect: Rect, radius: f32, palette: &Palette, strength: f32) -> Vec<egui::Shape> {
     if strength <= 0.0 {
         return Vec::new();
     }
-    let bar = Rect::from_center_size(
-        pos2(rect.left() + 1.5, rect.center().y),
-        vec2(3.0, (rect.height() * 0.46).max(10.0)),
-    );
-    vec![
-        egui::Shape::rect_filled(
-            rect,
-            corner(radius),
-            selected_fill(palette).gamma_multiply(strength),
-        ),
-        egui::Shape::rect_filled(
-            bar,
-            CornerRadius::same(2),
-            palette.accent.gamma_multiply(strength),
-        ),
-    ]
+    vec![egui::Shape::rect_filled(
+        rect,
+        corner(radius),
+        selected_fill(palette).gamma_multiply(strength),
+    )]
 }
 
 /// Paints the selection lamp over `rect`.
@@ -573,8 +354,7 @@ mod tests {
     }
 
     /// Popovers stay readable over anything: opaque in both themes, and
-    /// still glass, with sheen, rim and shadow, while shell panes let the
-    /// room's light through.
+    /// with a flat hairline and offset shadow, while chrome lets the scene through.
     #[test]
     fn popovers_are_opaque_glass_over_translucent_panes() {
         for palette in [Palette::dark(), Palette::light()] {
@@ -582,20 +362,20 @@ mod tests {
             let popover = glass(&palette, Kind::Popover);
             assert_eq!(popover.fill.a(), 255, "popover alpha");
             assert_eq!(popover_frame(&palette).fill.a(), 255, "menu alpha");
-            assert!(popover.sheen.a() > 0 && popover.rim_top.a() > 0);
+            assert!(popover.stroke.width > 0.0);
+            assert!(glass(&palette, Kind::Pane).shadow.is_none());
             assert!(popover.shadow.is_some());
             assert!(pane < 255 && pane > 120, "pane alpha {pane}");
         }
     }
 
-    /// A pane is a few shapes: its shadow, fill, sheen and rim, with no
-    /// texture uploads or per-frame blur.
+    /// A chrome pane is one flat shape, with no per-frame blur or shadow.
     #[test]
     fn a_pane_is_a_few_cheap_shapes() {
         let rect = Rect::from_min_size(pos2(10.0, 10.0), vec2(300.0, 400.0));
         let painted =
             shapes(|painter| paint(painter, rect, PANE_RADIUS, &Palette::dark(), Kind::Pane));
-        assert_eq!(painted.len(), 4);
+        assert_eq!(painted.len(), 1);
         let empty = shapes(|painter| {
             paint(
                 painter,
@@ -608,34 +388,81 @@ mod tests {
         assert!(empty.is_empty());
     }
 
-    /// The wash keeps inside the rounded outline: its widest row in a
-    /// corner is narrower than the rectangle.
+    /// The real bundled photo is sampled after the same premultiplied gamma
+    /// compositing used by egui. Text remains readable both directly on the
+    /// wash and beneath translucent chrome, including hovered/selected rows.
     #[test]
-    fn the_wash_follows_the_corners() {
-        let rect = Rect::from_min_size(pos2(0.0, 0.0), vec2(200.0, 300.0));
-        let painted = shapes(|painter| {
-            vertical_wash(
-                painter,
-                rect,
-                20.0,
-                &[(0.0, Color32::WHITE), (120.0, Color32::TRANSPARENT)],
+    fn every_scene_pixel_preserves_text_contrast() {
+        let scene = decode_scene().expect("bundled JPEG");
+        assert_eq!(scene.size, [960, 540]);
+        for palette in [Palette::dark(), Palette::light()] {
+            let (image, wash) = scenery_layers(&palette);
+            let roles = [
+                palette.text,
+                palette.secondary,
+                palette.dim,
+                palette.accent_text(),
+                palette.danger,
+                palette.warning,
+            ];
+            let mut minima = [f32::MAX; 6];
+            let mut chip_minimum = f32::MAX;
+            for pixel in &scene.pixels {
+                let ground = palette
+                    .window
+                    .blend(pixel.gamma_multiply(f32::from(image.a()) / 255.0))
+                    .blend(wash);
+                for ground in [
+                    ground,
+                    ground.blend(glass(&palette, Kind::Pane).fill),
+                    ground.blend(glass(&palette, Kind::Content).fill),
+                ] {
+                    // Check option labels over the actual resting and hover
+                    // fills on each scene/chrome/card ground.
+                    for lift in [0.0, 1.0] {
+                        let fill = if palette.dark {
+                            Color32::WHITE.gamma_multiply(0.08 + 0.04 * lift)
+                        } else {
+                            palette.surface.lerp_to_gamma(palette.surface_hover, lift)
+                        };
+                        chip_minimum = chip_minimum
+                            .min(crate::theme::contrast(palette.text, ground.blend(fill)));
+                    }
+                    for ground in [
+                        ground,
+                        ground.blend(hover_fill(&palette)),
+                        ground.blend(selected_fill(&palette)),
+                    ] {
+                        for (index, role) in roles.iter().enumerate() {
+                            minima[index] =
+                                minima[index].min(crate::theme::contrast(*role, ground));
+                        }
+                    }
+                }
+            }
+            eprintln!("dark={} minima={minima:?}", palette.dark);
+            assert!(
+                chip_minimum >= 4.5,
+                "dark={} chip label: {chip_minimum:.2}:1",
+                palette.dark
             );
-        });
-        let egui::Shape::Mesh(mesh) = &painted[0].shape else {
-            panic!("a mesh");
-        };
-        let top_row: Vec<_> = mesh.vertices.iter().filter(|v| v.pos.y == 0.0).collect();
-        assert!(top_row.iter().all(|v| v.pos.x >= 19.0 && v.pos.x <= 181.0));
-        assert!(
-            mesh.vertices.iter().all(|v| v.pos.y <= 120.0 + 0.01),
-            "a transparent tail is not drawn"
-        );
-        let middle = mesh
-            .vertices
-            .iter()
-            .find(|v| v.pos.y > 30.0 && v.pos.y < 100.0)
-            .unwrap();
-        assert_eq!(middle.pos.x.min(200.0 - middle.pos.x), 0.0);
+            for (role, ratio) in roles.iter().zip(minima) {
+                assert!(
+                    ratio >= 4.5,
+                    "dark={} role={role:?}: {ratio:.2}:1",
+                    palette.dark
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn scene_crop_fills_wide_and_tall_windows_without_distortion() {
+        for view in [vec2(1440.0, 900.0), vec2(900.0, 760.0), vec2(360.0, 800.0)] {
+            let uv = cover_uv(view, vec2(960.0, 540.0));
+            assert!(uv.min.x >= 0.0 && uv.min.y >= 0.0 && uv.max.x <= 1.0 && uv.max.y <= 1.0);
+            assert!((uv.width() * 960.0 / (uv.height() * 540.0) - view.x / view.y).abs() < 0.001);
+        }
     }
 
     /// The lamp glides when the selection changes, and moves with the
@@ -677,17 +504,5 @@ mod tests {
         assert_eq!(lamp_top(2.0, (1, second)), 40.0);
         // The same selection, moved by the layout: the lamp is there at once.
         assert_eq!(lamp_top(2.1, (1, second.translate(vec2(0.0, 25.0)))), 65.0);
-    }
-
-    /// The room's counter-light differs from the key light, so a cover
-    /// with one colour still lights the room in two.
-    #[test]
-    fn the_counter_light_turns_the_hue() {
-        let key = Color32::from_rgb(220, 60, 40);
-        let counter = counter_light(key, &Palette::dark());
-        assert_ne!(
-            egui::ecolor::Hsva::from(key).h,
-            egui::ecolor::Hsva::from(counter).h
-        );
     }
 }

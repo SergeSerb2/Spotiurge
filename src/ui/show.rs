@@ -251,15 +251,6 @@ pub fn episode_row(
     } else {
         palette.text
     };
-    if is_current {
-        // The episode on the air carries the lamp at its leading edge.
-        let bar = Rect::from_center_size(
-            pos2(rect.left() + 1.5, rect.center().y),
-            vec2(3.0, (rect.height() * 0.42).max(10.0)),
-        );
-        ui.painter()
-            .rect_filled(bar, CornerRadius::same(2), palette.accent);
-    }
     crate::bidi::paint_line(
         &painter,
         text_left,

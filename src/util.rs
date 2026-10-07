@@ -196,171 +196,96 @@ pub fn open_spotify_url(uri: &str) -> Option<String> {
     Some(format!("https://open.spotify.com/{kind}/{id}"))
 }
 
-/// The menu-bar shape for macOS: the surge S alone, drawn heavier so it
-/// holds at menu-bar size. macOS template images use only the alpha
-/// channel and paint the shape themselves, black in a light menu bar and
-/// white in a dark one.
+/// The alpha-only ridge for native menu bars. The OS supplies its colour.
 pub fn tray_template_rgba(size: usize) -> Vec<u8> {
-    let mut rgba = vec![0u8; size * size * 4];
-    // The S fills the square, with a pixel of margin.
-    let unit = (size as f32 - 2.0) / 84.0;
-    let origin = (size as f32 - 128.0 * unit) / 2.0;
-    for y in 0..size {
-        for x in 0..size {
-            let u = (x as f32 + 0.5 - origin) / unit;
-            let v = (y as f32 + 0.5 - origin) / unit;
-            let coverage =
-                ((TEMPLATE_STROKE / 2.0 - surge_distance(u, v)) * unit + 0.5).clamp(0.0, 1.0);
-            rgba[(y * size + x) * 4 + 3] = (coverage * 255.0).round() as u8;
-        }
+    let mut rgba = glyph_rgba(size);
+    for pixel in rgba.as_chunks_mut::<4>().0 {
+        pixel[..3].fill(0);
     }
     rgba
 }
 
-/// The mark rasterised to pixels: the window icon, the trays and the logo
-/// drawn in the app (`theme::logo`) all use this one picture, which
-/// `assets/brand/spotiurge-mark.svg` draws as a vector.
-///
-/// A tile of smoked glass, lit along its top edge, with a VU-amber surge
-/// S glowing through it: an S for Spotiurge whose two bowls are one swell
-/// of a wave.
+/// The bare ridge in white, so UI image tint follows the current palette.
+pub fn glyph_rgba(size: usize) -> Vec<u8> {
+    ridge_raster(size, false)
+}
+
+/// One asymmetric mountain cut into three level-meter columns. Native
+/// packages and the window icon use the same flat mint mark on a forest tile.
 pub fn app_icon_rgba(size: usize) -> Vec<u8> {
-    let mut rgba = vec![0u8; size * size * 4];
-    // The tile keeps a pixel of margin, so its edge is never clipped.
-    let unit = (size as f32 - 2.0) / 120.0;
-    let origin = size as f32 / 2.0 - 64.0 * unit;
-    // A glow only where there are pixels enough to show one.
-    let glow = (size as f32 / 128.0).clamp(0.0, 1.0);
-    for y in 0..size {
-        for x in 0..size {
-            let u = (x as f32 + 0.5 - origin) / unit;
-            let v = (y as f32 + 0.5 - origin) / unit;
-            let tile = rounded_square_distance(u, v);
-            let coverage = (0.5 - tile * unit).clamp(0.0, 1.0);
-            if coverage <= 0.0 {
-                continue;
-            }
-            // Smoked glass: deep ink below, a cooler blue above.
-            let depth = (v - 4.0) / 120.0;
-            let mut colour = mix(TILE_TOP, TILE_BOTTOM, depth);
-            // The room's light behind the glass, warm around the S.
-            let warmth =
-                (1.0 - ((u - 64.0).powi(2) + (v - 70.0).powi(2)).sqrt() / 58.0).clamp(0.0, 1.0);
-            colour = mix(colour, AMBER_DEEP, 0.22 * warmth * warmth);
-            // The sheen across the upper part of the tile.
-            let sheen = (1.0 - (v - 4.0) / 50.0).clamp(0.0, 1.0);
-            colour = mix(colour, [255.0, 255.0, 255.0], 0.07 * sheen * sheen);
-            // The rim: a lit edge above, a shaded one below.
-            let rim = (1.0 - (tile + 1.2).abs() / 1.2).clamp(0.0, 1.0);
-            if depth < 0.5 {
-                colour = mix(
-                    colour,
-                    [235.0, 240.0, 255.0],
-                    rim * 0.55 * (1.0 - depth * 2.0),
-                );
-            } else {
-                colour = mix(colour, [0.0, 0.0, 0.0], rim * 0.5 * (depth - 0.5) * 2.0);
-            }
-            let surge = surge_distance(u, v);
-            let halo = ((surge - STROKE / 2.0) / 9.0).clamp(0.0, 1.0);
-            colour = mix(colour, AMBER_DEEP, glow * 0.35 * (1.0 - halo).powi(2));
-            let ink = ((STROKE / 2.0 - surge) * unit + 0.5).clamp(0.0, 1.0);
-            if ink > 0.0 {
-                // The S is lit from above like the tile, and rounded like a
-                // tube of amber glass: a highlight along the edges facing
-                // the upper left, a deeper tone along the lower right.
-                let mut amber = mix(AMBER_LIGHT, AMBER_DEEP, (v - 22.0) / 84.0);
-                let edge = |du: f32, dv: f32| {
-                    ((surge_distance(u + du, v + dv) - (STROKE / 2.0 - 3.0)) / 3.0).clamp(0.0, 1.0)
-                };
-                amber = mix(amber, [255.0, 244.0, 214.0], 0.7 * edge(-1.8, -2.4) * glow);
-                amber = mix(amber, [205.0, 92.0, 14.0], 0.4 * edge(1.8, 2.4) * glow);
-                colour = mix(colour, amber, ink);
-            }
-            let index = (y * size + x) * 4;
-            rgba[index] = colour[0].round() as u8;
-            rgba[index + 1] = colour[1].round() as u8;
-            rgba[index + 2] = colour[2].round() as u8;
-            rgba[index + 3] = (coverage * 255.0).round() as u8;
-        }
-    }
-    rgba
+    ridge_raster(size, true)
 }
 
-const TILE_TOP: [f32; 3] = [38.0, 44.0, 74.0];
-const TILE_BOTTOM: [f32; 3] = [10.0, 12.0, 22.0];
-const AMBER_LIGHT: [f32; 3] = [255.0, 214.0, 128.0];
-const AMBER_DEEP: [f32; 3] = [255.0, 146.0, 40.0];
-/// The S's stroke on the tile, and the heavier one of the menu-bar shape.
-const STROKE: f32 = 15.0;
-const TEMPLATE_STROKE: f32 = 17.0;
-
-/// Mixes two colours, `t` of the way from `a` to `b`.
-fn mix(a: [f32; 3], b: [f32; 3], t: f32) -> [f32; 3] {
-    let t = t.clamp(0.0, 1.0);
-    [
-        a[0] + (b[0] - a[0]) * t,
-        a[1] + (b[1] - a[1]) * t,
-        a[2] + (b[2] - a[2]) * t,
-    ]
-}
-
-/// Signed distance from the tile's edge, negative inside: a square of 120
-/// units centred on 64, with corners rounded by 27, the proportion of a
-/// macOS icon.
-fn rounded_square_distance(u: f32, v: f32) -> f32 {
-    const HALF: f32 = 60.0;
-    const RADIUS: f32 = 27.0;
-    let qx = (u - 64.0).abs() - (HALF - RADIUS);
-    let qy = (v - 64.0).abs() - (HALF - RADIUS);
-    let outside = (qx.max(0.0).powi(2) + qy.max(0.0).powi(2)).sqrt();
-    outside + qx.max(qy).min(0.0) - RADIUS
-}
-
-/// Distance from the centre line of the surge S, on the mark's 128-unit
-/// square: two bowls of radius 17, one above the other, joined at the
-/// centre, the upper turning back from the top right and the lower ending
-/// at the bottom left, the whole leaning forward like a rising wave.
-fn surge_distance(u: f32, v: f32) -> f32 {
-    const RADIUS: f32 = 17.0;
-    const LEAN: f32 = 0.12;
-    // Undo the lean, so the bowls are plain circles.
-    let u = u - (64.0 - v) * LEAN;
-    let upper = arc_distance(
-        u,
-        v,
-        (64.0, 47.0),
-        RADIUS,
-        330_f32.to_radians(),
-        -240_f32.to_radians(),
-    );
-    let lower = arc_distance(
-        u,
-        v,
-        (64.0, 81.0),
-        RADIUS,
-        270_f32.to_radians(),
-        240_f32.to_radians(),
-    );
-    upper.min(lower)
-}
-
-/// Distance from an arc of a circle at `centre` with `radius`, starting at
-/// angle `start` (radians, y down) and turning through `sweep`.
-fn arc_distance(u: f32, v: f32, centre: (f32, f32), radius: f32, start: f32, sweep: f32) -> f32 {
-    use std::f32::consts::TAU;
-    let (dx, dy) = (u - centre.0, v - centre.1);
-    let angle = dy.atan2(dx).rem_euclid(TAU);
-    let along = ((angle - start) * sweep.signum()).rem_euclid(TAU);
-    if along <= sweep.abs() {
-        ((dx * dx + dy * dy).sqrt() - radius).abs()
+fn ridge_raster(size: usize, tile: bool) -> Vec<u8> {
+    let size = u32::try_from(size).expect("icon size");
+    let mut pixmap = tiny_skia::Pixmap::new(size, size).expect("nonzero icon size");
+    let mut paint = tiny_skia::Paint::default();
+    let unit = size as f32 / if tile { 128.0 } else { 84.0 };
+    let origin = if tile { 0.0 } else { -22.0 * unit };
+    if tile {
+        // Four cubic corners reproduce the SVG's 120-unit plate, rx 27.
+        let mut path = tiny_skia::PathBuilder::new();
+        path.move_to(31.0, 4.0);
+        path.line_to(97.0, 4.0);
+        path.cubic_to(111.912, 4.0, 124.0, 16.088, 124.0, 31.0);
+        path.line_to(124.0, 97.0);
+        path.cubic_to(124.0, 111.912, 111.912, 124.0, 97.0, 124.0);
+        path.line_to(31.0, 124.0);
+        path.cubic_to(16.088, 124.0, 4.0, 111.912, 4.0, 97.0);
+        path.line_to(4.0, 31.0);
+        path.cubic_to(4.0, 16.088, 16.088, 4.0, 31.0, 4.0);
+        path.close();
+        paint.set_color_rgba8(0x14, 0x1a, 0x17, 255);
+        pixmap.fill_path(
+            &path.finish().unwrap(),
+            &paint,
+            tiny_skia::FillRule::Winding,
+            tiny_skia::Transform::from_scale(unit, unit),
+            None,
+        );
+        paint.set_color_rgba8(0x8f, 0xce, 0xab, 255);
     } else {
-        let end = |a: f32| {
-            let (sin, cos) = a.sin_cos();
-            ((u - centre.0 - radius * cos).powi(2) + (v - centre.1 - radius * sin).powi(2)).sqrt()
-        };
-        end(start).min(end(start + sweep))
+        paint.set_color_rgba8(255, 255, 255, 255);
     }
+    // Snap vertical edges at small sizes to keep the two gaps clear.
+    let x = |x: f32| {
+        let x = x * unit + origin;
+        if size <= 32 { x.round() } else { x }
+    };
+    let y = |y: f32| y * unit + origin;
+    let mut path = tiny_skia::PathBuilder::new();
+    for column in [
+        vec![(24.0, 98.0), (24.0, 72.0), (46.0, 47.0), (46.0, 98.0)],
+        vec![
+            (53.0, 98.0),
+            (53.0, 39.1),
+            (61.0, 30.0),
+            (75.0, 42.4),
+            (75.0, 98.0),
+        ],
+        vec![(82.0, 98.0), (82.0, 48.6), (104.0, 68.0), (104.0, 98.0)],
+    ] {
+        path.move_to(x(column[0].0), y(column[0].1));
+        for &(u, v) in &column[1..] {
+            path.line_to(x(u), y(v));
+        }
+        path.close();
+    }
+    pixmap.fill_path(
+        &path.finish().unwrap(),
+        &paint,
+        tiny_skia::FillRule::Winding,
+        tiny_skia::Transform::identity(),
+        None,
+    );
+    pixmap
+        .pixels()
+        .iter()
+        .flat_map(|pixel| {
+            let pixel = pixel.demultiply();
+            [pixel.red(), pixel.green(), pixel.blue(), pixel.alpha()]
+        })
+        .collect()
 }
 
 pub fn greeting(locale: Locale) -> Cow<'static, str> {
@@ -446,34 +371,33 @@ mod tests {
         ]
     }
 
-    /// The icon is the glass tile at every size: transparent corners, a
-    /// lit top edge, a dark glass body and the amber S at its heart.
+    /// Flat plates and one-colour peaks, with clear gaps even at Dock size.
     #[test]
-    fn the_icon_is_the_glass_tile_at_every_size() {
+    fn the_ridge_icon_stays_clean_at_every_size() {
         for size in [16, 32, 128, 512] {
             let icon = app_icon_rgba(size);
-            assert_eq!(pixel(&icon, size, 0, 0)[3], 0, "clear corner at {size}");
-            let body = pixel(&icon, size, size / 2, size * 9 / 10);
-            assert_eq!(body[3], 255, "opaque body at {size}");
-            assert!(body[2] > body[0], "smoked blue glass at {size}: {body:?}");
-            // The S crosses the middle of the tile; amber is red over blue.
-            let heart = pixel(&icon, size, size / 2, size / 2);
-            assert!(
-                heart[0] > 200 && heart[0] > heart[2] + 80,
-                "amber S at the centre at {size}: {heart:?}"
+            assert_eq!(pixel(&icon, size, 0, 0)[3], 0);
+            assert_eq!(
+                pixel(&icon, size, size / 2, size * 9 / 10),
+                [20, 26, 23, 255]
             );
+            assert_eq!(pixel(&icon, size, size / 2, size / 2), [143, 206, 171, 255]);
+            // Scan through all three columns below their sloped tops.
+            let row = size * 5 / 8;
+            let columns = (0..size)
+                .map(|x| pixel(&icon, size, x, row)[1] > 100)
+                .collect::<Vec<_>>();
+            let starts = columns
+                .iter()
+                .enumerate()
+                .filter(|(x, on)| **on && (*x == 0 || !columns[x - 1]))
+                .count();
+            assert_eq!(starts, 3, "three separated columns at {size}");
         }
-        // The glass reads as glass: lighter at the top than the bottom.
-        let large = app_icon_rgba(128);
-        let top = pixel(&large, 128, 20, 12);
-        let bottom = pixel(&large, 128, 20, 116);
-        assert!(top[2] > bottom[2], "top {top:?} bottom {bottom:?}");
     }
 
-    /// The menu-bar shape is the S alone, opaque on its stroke and clear
-    /// beside it, so macOS can paint it in the bar's own colour.
     #[test]
-    fn the_menu_bar_template_is_the_surge_s() {
+    fn the_menu_bar_template_is_a_ridge_without_a_plate() {
         let template = tray_template_rgba(44);
         assert!(
             template
@@ -482,13 +406,17 @@ mod tests {
                 .iter()
                 .all(|p| p[..3] == [0, 0, 0])
         );
-        assert_eq!(
-            pixel(&template, 44, 22, 22)[3],
-            255,
-            "the S crosses the centre"
-        );
-        assert_eq!(pixel(&template, 44, 2, 22)[3], 0, "clear beside it");
-        assert_eq!(pixel(&template, 44, 1, 1)[3], 0, "clear in the corner");
+        assert_eq!(pixel(&template, 44, 22, 22)[3], 255);
+        assert_eq!(pixel(&template, 44, 1, 1)[3], 0);
+        let white = glyph_rgba(44);
+        for (black, white) in template
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .zip(white.as_chunks::<4>().0)
+        {
+            assert_eq!(black[3], white[3]);
+        }
     }
 
     /// Writes the raster exports beside the vector mark. Run it after
@@ -521,19 +449,36 @@ mod tests {
         }
     }
 
-    /// The vector mark and the raster agree on the S's geometry.
+    /// Committed package rasters must not lag behind the runtime identity.
     #[test]
-    fn the_shipped_svg_draws_the_same_s() {
-        let svg = include_str!("../assets/brand/spotiurge-mark.svg");
-        for fragment in [
-            "M78.72 38.5",
-            "A17 17 0 1 0 64 64",
-            "A17 17 0 1 1 49.28 89.5",
-            "stroke-width=\"15\"",
-            "skewX(-6.84)",
-            "rx=\"27\"",
+    fn shipped_brand_rasters_match_the_runtime_mark() {
+        let directory = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/brand/png");
+        for size in [16, 32, 64, 128, 256, 512, 1024] {
+            let image = image::open(directory.join(format!("spotiurge-{size}.png")))
+                .unwrap()
+                .to_rgba8();
+            assert_eq!(image.dimensions(), (size as u32, size as u32));
+            assert_eq!(image.as_raw(), &app_icon_rgba(size));
+        }
+        for size in [22, 44] {
+            let image = image::open(directory.join(format!("spotiurge-glyph-template-{size}.png")))
+                .unwrap()
+                .to_rgba8();
+            assert_eq!(image.as_raw(), &tray_template_rgba(size));
+        }
+    }
+
+    /// The editable vectors retain the shared geometry and contain no gradients.
+    #[test]
+    fn the_vectors_use_the_same_flat_ridge() {
+        for svg in [
+            include_str!("../assets/brand/spotiurge-mark.svg"),
+            include_str!("../assets/brand/spotiurge-glyph.svg"),
         ] {
-            assert!(svg.contains(fragment), "{fragment}");
+            assert!(svg.contains(
+                "M24 98V72L46 47V98ZM53 98V39.1L61 30L75 42.4V98ZM82 98V48.6L104 68V98Z"
+            ));
+            assert!(!svg.contains("Gradient") && !svg.contains("filter"));
         }
     }
 

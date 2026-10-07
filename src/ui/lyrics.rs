@@ -504,10 +504,9 @@ fn background(app: &mut App, ui: &mut egui::Ui, rect: Rect) {
             Color32::from_gray(180),
         );
     } else {
-        // No cover to fill the view: the dark room, lit by the song's colour.
+        // No cover to fill the view: the flat night-forest plate.
         let dark = theme::Palette::dark();
-        let light = app.now_playing_tint().unwrap_or(dark.accent);
-        super::material::paint_room(&painter, rect, &dark, light);
+        painter.rect_filled(rect, 0.0, dark.window);
     }
     painter.rect_filled(rect, 0.0, Color32::from_black_alpha(120));
     widgets::paint_vertical_gradient(

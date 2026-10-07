@@ -12,7 +12,7 @@ use crate::util;
 use super::widgets::{SliderEvent, thin_slider};
 
 /// How much of the playing art's tint the bar's fill carries.
-const TINT_STRENGTH: f32 = 0.12;
+const TINT_STRENGTH: f32 = 0.04;
 /// How long the bar takes to cross over to a new song's tint.
 const TINT_FADE_SECONDS: f32 = 0.45;
 const TINT_SESSION_ID: &str = "player-bar-tint-session";
@@ -62,7 +62,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             let rect = ui.max_rect();
             let now = app.now_playing();
             // The console: a pane of glass floating along the bottom, a
-            // little denser than the others, carrying the cover's tint.
+            // little denser than the others, with an optional faint, flat art tint.
             let behind = rect.expand2(vec2(16.0, 0.0));
             let mut glass = super::material::glass(&palette, super::material::Kind::Console);
             glass.fill = fill.gamma_multiply(f32::from(glass.fill.a()) / 255.0);
@@ -71,7 +71,6 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 behind,
                 super::material::CONSOLE_RADIUS,
                 &glass,
-                &palette,
             );
             // The visualizer stays clear of the rounded corners.
             let stage = behind.shrink2(vec2(super::material::CONSOLE_RADIUS, 1.0));
@@ -663,24 +662,7 @@ fn transport(app: &mut App, ui: &mut egui::Ui, now: Option<&NowPlaying>, region:
     }
 
     let disc = slot(widths[2]);
-    // The play disc is the console's lamp: lit amber, glowing softly while
-    // music plays, the glow easing up and down with play and pause.
-    let lit = super::motion::toggle(
-        ui.ctx(),
-        egui::Id::new("player-lamp"),
-        playing || loading,
-        super::motion::STATE,
-    );
-    if lit > 0.0 {
-        super::material::light(
-            ui.painter(),
-            disc.center(),
-            34.0,
-            palette
-                .accent
-                .gamma_multiply(if palette.dark { 0.32 } else { 0.22 } * lit),
-        );
-    }
+    // A flat moss disc gives the primary playback control a clear target.
     if loading || app.any_play_pending() {
         ui.painter()
             .circle_filled(disc.center(), 18.0, palette.accent);

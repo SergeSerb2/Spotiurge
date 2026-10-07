@@ -1,57 +1,75 @@
 ---
 name: Spotiurge
-description: A studio control room for Spotify, smoked glass panes over a room lit by the playing cover, with one VU-amber lamp for whatever is live.
+description: A quiet listening workspace in T3 Pretty's World Scenery family. Flat forest and mist chrome over one static mountain lake, with moss reserved for whatever is live.
 colors:
-  dark-window: "#0b0d12"
-  dark-panel: "#14171f"
-  dark-surface: "#1c202a"
-  dark-surface-hover: "#252a37"
-  dark-surface-active: "#2e3444"
-  dark-outline: "#2a2f3c"
-  dark-rim: "#373b47"
-  dark-text: "#f3f2ef"
-  dark-secondary: "#a7adbb"
-  dark-dim: "#707787"
-  dark-lamp: "#ffb547"
-  dark-lamp-hover: "#ffc770"
-  dark-lamp-text: "#ffb547"
-  dark-on-lamp: "#1f1303"
-  dark-danger: "#ff6f73"
-  dark-warning: "#f6d365"
-  dark-overlay: "#1c202b"
-  dark-shadow: "rgba(0, 0, 0, 0.59)"
-  dark-pane-glass: "rgba(20, 23, 31, 0.72)"
-  dark-console-glass: "rgba(20, 23, 31, 0.80)"
-  dark-well-glass: "rgba(28, 32, 42, 0.55)"
+  dark-window: "#0e1110"
+  dark-panel: "#141a17"
+  dark-surface: "#1a221e"
+  dark-surface-hover: "#202a25"
+  dark-surface-active: "#2c3a32"
+  dark-outline: "#2e3b34"
+  dark-text: "#f3f6f3"
+  dark-secondary: "#c5cfc8"
+  dark-dim: "#b8c5bb"
+  dark-disabled: "#84988b"
+  dark-moss: "#98d2ac"
+  dark-moss-hover: "#b7e6c8"
+  dark-moss-text: "#98d2ac"
+  dark-on-moss: "#07140c"
+  dark-danger: "#ffb0b8"
+  dark-warning: "#ffb020"
+  dark-overlay: "#202a25"
+  dark-shadow: "rgba(0, 0, 0, 0.45)"
+  dark-pane-glass: "rgba(20, 26, 23, 0.68)"
+  dark-content-glass: "rgba(44, 58, 50, 0.85)"
+  dark-console-glass: "rgba(20, 26, 23, 0.80)"
+  dark-well-glass: "rgba(26, 34, 30, 0.55)"
+  dark-rim: "rgba(243, 246, 243, 0.07)"
   dark-hover-fill: "rgba(255, 255, 255, 0.06)"
+  dark-key-fill: "rgba(255, 255, 255, 0.095)"
   dark-selected-fill: "rgba(255, 255, 255, 0.095)"
-  light-window: "#e9ebf1"
-  light-panel: "#fcfcfe"
-  light-surface: "#eef0f5"
-  light-surface-hover: "#e3e6ee"
-  light-surface-active: "#d6dae4"
-  light-outline: "#d5d9e3"
-  light-text: "#15171c"
-  light-secondary: "#4d5463"
-  light-dim: "#868d9c"
-  light-lamp: "#a95c06"
-  light-lamp-hover: "#914e05"
-  light-lamp-text: "#653706"
-  light-on-lamp: "#ffffff"
-  light-danger: "#c83344"
-  light-warning: "#856400"
+  dark-chip-fill: "rgba(255, 255, 255, 0.08)"
+  dark-chip-fill-hover: "rgba(255, 255, 255, 0.12)"
+  dark-scenery-wash: "rgba(0, 0, 0, 0.612)"
+  dark-liked-cover: "#3c5d4b"
+  light-window: "#f4f6f4"
+  light-panel: "#ffffff"
+  light-surface: "#eaf0eb"
+  light-surface-hover: "#e3e9e4"
+  light-surface-active: "#c9d1ca"
+  light-outline: "#d8ded9"
+  light-text: "#161a17"
+  light-secondary: "#4b524c"
+  light-dim: "#47504a"
+  light-disabled: "#59695e"
+  light-moss: "#27633f"
+  light-moss-hover: "#225738"
+  light-moss-text: "#1a422a"
+  light-on-moss: "#ffffff"
+  light-danger: "#951524"
+  light-warning: "#7b3605"
   light-overlay: "#ffffff"
-  light-shadow: "rgba(0, 0, 0, 0.19)"
-  light-pane-glass: "rgba(252, 252, 254, 0.58)"
-  light-console-glass: "rgba(252, 252, 254, 0.72)"
-  light-well-glass: "rgba(238, 240, 245, 0.75)"
+  light-shadow: "rgba(16, 24, 18, 0.14)"
+  light-pane-glass: "rgba(255, 255, 255, 0.68)"
+  light-content-glass: "rgba(255, 255, 255, 0.68)"
+  light-console-glass: "rgba(255, 255, 255, 0.80)"
+  light-well-glass: "rgba(234, 240, 235, 0.75)"
+  light-rim: "rgba(22, 26, 23, 0.08)"
   light-hover-fill: "rgba(0, 0, 0, 0.045)"
+  light-key-fill: "rgba(0, 0, 0, 0.035)"
   light-selected-fill: "rgba(0, 0, 0, 0.07)"
-  liked-tint: "#5038c8"
+  light-scenery-wash: "rgba(255, 255, 255, 0.68)"
+  light-liked-cover: "#e3efe6"
+  brand-tile: "#141a17"
+  brand-mint: "#8fceab"
 typography:
-  display:
+  hero:
     fontFamily: "Inter"
     fontSize: "32px"
+    fontWeight: 700
+  display:
+    fontFamily: "Inter"
+    fontSize: "30px"
     fontWeight: 700
   headline:
     fontFamily: "Inter"
@@ -69,73 +87,95 @@ typography:
     fontFamily: "Inter"
     fontSize: "18px"
     fontWeight: 700
+  shelf-title:
+    fontFamily: "Inter"
+    fontSize: "17px"
+    fontWeight: 700
   wordmark:
     fontFamily: "Inter"
     fontSize: "16px"
     fontWeight: 700
-  prompt:
-    fontFamily: "Inter"
-    fontSize: "15px"
-    fontWeight: 400
-  track-title:
+  nav:
     fontFamily: "Inter"
     fontSize: "14.5px"
-    fontWeight: 500
+    fontWeight: 600
+  nav-active:
+    fontFamily: "Inter"
+    fontSize: "14.5px"
+    fontWeight: 700
+  item-title:
+    fontFamily: "Inter"
+    fontSize: "14px"
+    fontWeight: 600
   body:
     fontFamily: "Inter"
     fontSize: "14px"
     fontWeight: 400
-  secondary:
+  menu:
+    fontFamily: "Inter"
+    fontSize: "13.5px"
+    fontWeight: 400
+  button:
     fontFamily: "Inter"
     fontSize: "13px"
-    fontWeight: 400
+    fontWeight: 600
   label:
     fontFamily: "Inter"
     fontSize: "13px"
     fontWeight: 500
-  label-strong:
+  secondary:
     fontFamily: "Inter"
     fontSize: "13px"
-    fontWeight: 600
-  detail:
+    fontWeight: 400
+  item-subtitle:
     fontFamily: "Inter"
     fontSize: "12.5px"
     fontWeight: 400
-  badge:
+  meta:
     fontFamily: "Inter"
-    fontSize: "12.5px"
-    fontWeight: 500
+    fontSize: "12px"
+    fontWeight: 400
   small:
     fontFamily: "Inter"
     fontSize: "11.5px"
     fontWeight: 400
 rounded:
-  lamp-bar: "2px"
-  small: "4px"
+  focus: "4px"
   widget: "6px"
+  cover: "6px"
   row: "8px"
   field: "10px"
+  hero-cover: "10px"
   popover: "12px"
+  card-hover: "12px"
   pane: "14px"
-  login-card: "16px"
   console: "18px"
   pill: "9999px"
 spacing:
   chip-gap: "6px"
+  item-x: "8px"
+  item-y: "6px"
   gap: "8px"
-  inset: "12px"
   card-gap: "14px"
-  window: "16px"
-  desk: "20px"
-  page: "24px"
+  window-margin: "16px"
+  plate-padding: "20px"
+  page-padding: "24px"
 components:
-  pane:
+  pane-dark:
     backgroundColor: "{colors.dark-pane-glass}"
     rounded: "{rounded.pane}"
   pane-light:
     backgroundColor: "{colors.light-pane-glass}"
     rounded: "{rounded.pane}"
-  console:
+  content-plate-dark:
+    backgroundColor: "{colors.dark-content-glass}"
+    rounded: "{rounded.pane}"
+    padding: "20px"
+  content-plate-light:
+    backgroundColor: "{colors.light-content-glass}"
+    rounded: "{rounded.pane}"
+    padding: "20px"
+  console-dark:
     backgroundColor: "{colors.dark-console-glass}"
     rounded: "{rounded.console}"
     height: "88px"
@@ -143,7 +183,7 @@ components:
     backgroundColor: "{colors.light-console-glass}"
     rounded: "{rounded.console}"
     height: "88px"
-  popover:
+  popover-dark:
     backgroundColor: "{colors.dark-overlay}"
     textColor: "{colors.dark-text}"
     rounded: "{rounded.popover}"
@@ -153,328 +193,298 @@ components:
     textColor: "{colors.light-text}"
     rounded: "{rounded.popover}"
     padding: "6px"
-  discovery-desk:
-    backgroundColor: "{colors.dark-well-glass}"
-    rounded: "{rounded.pane}"
-    padding: "20px"
-  discovery-desk-light:
-    backgroundColor: "{colors.light-well-glass}"
-    rounded: "{rounded.pane}"
-    padding: "20px"
-  button-primary:
-    backgroundColor: "{colors.dark-lamp}"
-    textColor: "{colors.dark-on-lamp}"
-    typography: "{typography.label-strong}"
+  menu-item-dark:
+    textColor: "{colors.dark-text}"
+    typography: "{typography.menu}"
+    rounded: "{rounded.row}"
+    height: "28px"
+  menu-item-disabled-dark:
+    textColor: "{colors.dark-disabled}"
+    typography: "{typography.menu}"
+    height: "28px"
+  button-primary-dark:
+    backgroundColor: "{colors.dark-moss}"
+    textColor: "{colors.dark-on-moss}"
+    typography: "{typography.button}"
     rounded: "{rounded.pill}"
     padding: "8px 18px"
-  button-primary-hover:
-    backgroundColor: "{colors.dark-lamp-hover}"
+  button-primary-hover-dark:
+    backgroundColor: "{colors.dark-moss-hover}"
+    textColor: "{colors.dark-on-moss}"
+  button-primary-disabled-dark:
+    backgroundColor: "{colors.dark-chip-fill}"
+    textColor: "{colors.dark-disabled}"
   button-primary-light:
-    backgroundColor: "{colors.light-lamp}"
-    textColor: "{colors.light-on-lamp}"
-    typography: "{typography.label-strong}"
+    backgroundColor: "{colors.light-moss}"
+    textColor: "{colors.light-on-moss}"
+    typography: "{typography.button}"
     rounded: "{rounded.pill}"
     padding: "8px 18px"
-  button-primary-light-hover:
-    backgroundColor: "{colors.light-lamp-hover}"
-  play-key:
-    backgroundColor: "{colors.dark-lamp}"
-    textColor: "{colors.dark-on-lamp}"
-    rounded: "{rounded.pill}"
-    size: "36px"
-  play-key-desk:
-    backgroundColor: "{colors.dark-lamp}"
-    textColor: "{colors.dark-on-lamp}"
-    rounded: "{rounded.pill}"
-    size: "44px"
-  button-glass:
-    backgroundColor: "{colors.dark-hover-fill}"
+  button-primary-hover-light:
+    backgroundColor: "{colors.light-moss-hover}"
+    textColor: "{colors.light-on-moss}"
+  button-primary-disabled-light:
+    backgroundColor: "{colors.light-surface-active}"
+    textColor: "{colors.light-disabled}"
+  button-secondary-dark:
     textColor: "{colors.dark-text}"
-    typography: "{typography.label-strong}"
+    typography: "{typography.button}"
     rounded: "{rounded.pill}"
     padding: "8px 18px"
-  soft-button:
+  soft-button-dark:
     backgroundColor: "{colors.dark-surface}"
     textColor: "{colors.dark-text}"
     typography: "{typography.label}"
     rounded: "{rounded.pill}"
     padding: "7px 12px"
-  soft-button-hover:
-    backgroundColor: "{colors.dark-surface-hover}"
-  choice-chip:
-    backgroundColor: "{colors.dark-surface}"
-    textColor: "{colors.dark-text}"
-    typography: "{typography.label}"
-    rounded: "{rounded.pill}"
-    padding: "7px 12px"
-  choice-chip-selected:
+  soft-button-active-dark:
     backgroundColor: "{colors.dark-text}"
     textColor: "{colors.dark-window}"
+  chip-dark:
+    backgroundColor: "{colors.dark-chip-fill}"
+    textColor: "{colors.dark-text}"
     typography: "{typography.label}"
     rounded: "{rounded.pill}"
     padding: "7px 12px"
-  choice-chip-selected-light:
+  chip-hover-dark:
+    backgroundColor: "{colors.dark-chip-fill-hover}"
+  chip-selected-dark:
+    backgroundColor: "{colors.dark-text}"
+    textColor: "{colors.dark-window}"
+  chip-light:
+    backgroundColor: "{colors.light-surface}"
+    textColor: "{colors.light-text}"
+    typography: "{typography.label}"
+    rounded: "{rounded.pill}"
+    padding: "7px 12px"
+  chip-hover-light:
+    backgroundColor: "{colors.light-surface-hover}"
+  chip-selected-light:
     backgroundColor: "{colors.light-text}"
     textColor: "{colors.light-window}"
-    typography: "{typography.label}"
-    rounded: "{rounded.pill}"
-    padding: "7px 12px"
-  field-well:
+  text-well-dark:
     backgroundColor: "{colors.dark-well-glass}"
     textColor: "{colors.dark-text}"
-    typography: "{typography.secondary}"
+    typography: "{typography.body}"
     rounded: "{rounded.field}"
     padding: "8px 12px"
-  field-well-light:
-    backgroundColor: "{colors.light-well-glass}"
-    textColor: "{colors.light-text}"
-    typography: "{typography.secondary}"
-    rounded: "{rounded.field}"
-    padding: "8px 12px"
-  taste-prompt:
-    backgroundColor: "{colors.dark-well-glass}"
-    textColor: "{colors.dark-text}"
-    typography: "{typography.prompt}"
-    rounded: "{rounded.field}"
-    padding: "8px 12px"
-    width: "560px"
-  search-field:
+  search-field-dark:
     backgroundColor: "{colors.dark-well-glass}"
     textColor: "{colors.dark-text}"
     typography: "{typography.body}"
     rounded: "{rounded.pill}"
     height: "34px"
-  switch-off:
+  nav-row-dark:
+    textColor: "{colors.dark-secondary}"
+    typography: "{typography.nav}"
+    rounded: "{rounded.row}"
+    height: "38px"
+  nav-row-active-dark:
+    backgroundColor: "{colors.dark-selected-fill}"
+    textColor: "{colors.dark-text}"
+    typography: "{typography.nav-active}"
+    rounded: "{rounded.row}"
+    height: "38px"
+  track-row:
+    typography: "{typography.item-title}"
+    rounded: "{rounded.row}"
+    height: "56px"
+  track-row-compact:
+    height: "48px"
+  track-row-thin:
+    height: "36px"
+  play-key-console-dark:
+    backgroundColor: "{colors.dark-moss}"
+    textColor: "{colors.dark-on-moss}"
+    rounded: "{rounded.pill}"
+    size: "36px"
+  play-key-desk-dark:
+    backgroundColor: "{colors.dark-moss}"
+    textColor: "{colors.dark-on-moss}"
+    rounded: "{rounded.pill}"
+    size: "44px"
+  top-bar-key-dark:
+    backgroundColor: "{colors.dark-key-fill}"
+    textColor: "{colors.dark-secondary}"
+    rounded: "{rounded.pill}"
+    size: "32px"
+  switch-off-dark:
     backgroundColor: "{colors.dark-surface-active}"
     rounded: "{rounded.pill}"
     width: "40px"
     height: "22px"
-  switch-on:
-    backgroundColor: "{colors.dark-lamp}"
+  switch-on-dark:
+    backgroundColor: "{colors.dark-moss}"
     rounded: "{rounded.pill}"
     width: "40px"
     height: "22px"
-  switch-on-light:
-    backgroundColor: "{colors.light-lamp}"
-    rounded: "{rounded.pill}"
-    width: "40px"
-    height: "22px"
-  nav-row-selected:
-    backgroundColor: "{colors.dark-selected-fill}"
-    textColor: "{colors.dark-text}"
-    rounded: "{rounded.row}"
-  nav-row-selected-light:
-    backgroundColor: "{colors.light-selected-fill}"
-    textColor: "{colors.light-text}"
-    rounded: "{rounded.row}"
-  playing-title:
-    textColor: "{colors.dark-lamp-text}"
-    typography: "{typography.track-title}"
-  playing-title-light:
-    textColor: "{colors.light-lamp-text}"
-    typography: "{typography.track-title}"
-  connect-pill:
-    backgroundColor: "{colors.dark-overlay}"
-    textColor: "{colors.dark-lamp-text}"
-    typography: "{typography.badge}"
-    rounded: "{rounded.pill}"
-  connect-pill-light:
-    backgroundColor: "{colors.light-overlay}"
-    textColor: "{colors.light-lamp-text}"
-    typography: "{typography.badge}"
-    rounded: "{rounded.pill}"
-  feedback-love-selected:
-    backgroundColor: "{colors.dark-lamp}"
-    textColor: "{colors.dark-on-lamp}"
-    rounded: "{rounded.pill}"
-    size: "28px"
-  feedback-less-selected:
-    backgroundColor: "{colors.dark-text}"
-    textColor: "{colors.dark-window}"
-    rounded: "{rounded.pill}"
-    size: "28px"
+  media-card:
+    typography: "{typography.item-title}"
+    rounded: "{rounded.card-hover}"
+    width: "172px"
 ---
 
 # Design System: Spotiurge
 
 ## Overview
 
-**Creative North Star: "The Studio Control Room"**
+**Creative North Star: "The Quiet Listening Workspace"**
 
-Music lives in the lit room behind the glass; Spotiurge is the console in front of it. The whole native desktop app (sidebar, top chrome, Home and its For you discovery desk, library, search, collection pages, queue, lyrics, menus, Connect, settings, login and the player console) is built from smoked glass panes that float 8px apart over a dim room. The room is the window colour lit by two soft colour fields: the playing cover's light from the upper left and a counter-light, the same colour turned a third of the way round the hue wheel, from the lower right. With no cover tint the key light is the lamp amber, so the default room reads amber and teal. The dark theme is a blue-black room at night; the light theme is milky glass over a pale cool room that the amber key light warms toward peach.
+Spotiurge is a quiet listening workspace in T3 Pretty's World Scenery family. Music stays in the foreground, and the scenery gives the app a recognizable place. One static, locally bundled, original mountain and lake image sits beneath a flat black or white contrast wash. Over it, flat translucent forest (dark) or mist (light) chrome holds navigation and the playback console. The main page stays clear. Menus and popovers are opaque.
 
-The glass is rendered natively by the app as painted layers: a translucent fill, a top sheen that fades out within 90pt, a two-tone rim one physical pixel wide (lit along the top third, shaded along the bottom third), and a soft offset shadow. There is no OS backdrop blur, no macOS vibrancy and no per-frame blur pass; the room is already as smooth as blurred light, so translucency over it reads as frosted. Pane, console, popover and well are four glass kinds with their own opacity, sheen, rim and shadow (see Elevation & Depth).
+The native composition is unchanged from the inherited app: sidebar, top bar, page and floating console, with Inter and the existing native control vocabulary. Glass here is painted compositing in egui (a translucent fill over the image and wash). It is not OS blur or backdrop-filter, and nothing is blurred per frame. Moss (mint in dark, deep forest in light) is the only accent, and it marks what is live: the play keys, the playing title, active console toggles and the Connect state.
 
-Density is a desktop music console: 56px rows, a 56px top bar, an 88px console, and Inter ranked by weight rather than by colour. One VU-amber lamp marks whatever is live. Everything else, including every choice, is neutral. Motion is a single signature, the fader glide, finite and interruptible, and Reduce Motion (the app's own setting or the macOS system preference) makes every transition immediate. The mark is an amber surge S on a smoked glass tile (`assets/brand/spotiurge-mark.svg`), rasterised at runtime by `util::app_icon_rgba` so the in-app logo and the app icon are the same picture.
-
-The category default this world refuses: a flat black Spotify clone with green accents and card grids.
-
-**Evidence and limits.** Every token here is read from the shipped source of the frozen candidate `.qa/spotiurge-glass-final-candidate` (SHA-256 `fa1b2ab01f6e7ce36b429b17a69af0065dec21c2a6a53135cf1bbaecbdd52480`, macOS arm64, source commit `0b3e670`, all design files hash-identical to `.qa/glass-candidate-source.json`). The finish review (r1, then the r2 verdict) scored all seven r1 fixes resolved with disposition "ship", on 52 static macOS captures (`docs/reviews/spotiurge-glass/after-captures.json`). Later packaged Mac checks restored Spotify and cloud credentials, completed private sync and received twelve Luna suggestions; Spotify catalogue verification timed out. App Reduce motion control operation was exercised in native demo. See `docs/reviews/spotiurge-glass/verification.md` for those separate checks and short CPU observations. Not verified: motion smoothness and frame pacing, a controlled idle-power baseline, live macOS Reduce Motion changes, local playback/Connect in the exact glass package, and any Windows or Linux UI run. No capture represents real listening; the demo data is synthetic and labelled as demo in the UI.
+The scenery is static and never causes idle animation. Motion is finite, interruptible and short, and Reduce Motion removes it. The previous amber studio world, its cover glows, sheen, double rims and leading lamp bars are retired.
 
 **Key Characteristics:**
-- Smoked glass panes floating 8px apart over a cover-lit room, painted by the app, never OS blur.
-- One VU-amber lamp for live state; neutral inverted pills for choices.
-- Opaque overlays: menus, popovers and dialogs never let content ghost through.
-- Inter only, hierarchy by weight on a tight scale.
-- Finite exponential ease-out motion in three durations (120 / 220 / 600 ms), immediate under Reduce Motion.
+- One static photographic scene under a flat wash, covering 85% of the base together.
+- Flat translucent chrome for panes and the console; clear page content; opaque popovers.
+- Forest and mist neutrals with a single moss accent for live state.
+- Inter at four weights; dense native rows (56, 48, 36 points).
+- Finite motion: 120 ms feedback, 220 ms state and page; Reduce Motion honored.
+- A bare mint ridge mark cut into three level-meter columns, on a forest tile for the app icon.
 
 ## Colors
 
-A cool blue-black (dark) or pale cool grey (light) neutral room, glass derived from those neutrals, and a single warm amber signal.
+Cool forest-neutral greys and greens over a slate-toned photograph, with one moss voice. Every color comes from `Palette::dark()` / `Palette::light()` in `src/theme.rs` or from `src/ui/material.rs`; custom palette files may override the sixteen base roles.
 
 ### Primary
-- **VU Amber Lamp** (dark `dark-lamp`, light `light-lamp`): the live-state signal. It fills the primary play keys, the leading-edge lamp bar on the selected navigation channel and on the playing row, the EQ glyph beside a playing item, the Connect pill's icon and tint, and the room's default key light. Hover deepens or brightens it to `*-lamp-hover`.
-- **Lamp Text** (dark `dark-lamp-text`, light `light-lamp-text`): the lamp's colour for small text (playing titles, the Connect pill label, "Listening on this device", the active device). It is derived, not picked: `Palette::accent_text()` takes the ground `surface_active` mixed 20% toward black in light (10% toward white in dark), then steps the accent 5% toward black (light) or white (dark) in gamma space until WCAG contrast against that ground reaches 4.5:1. In light that takes ten steps from the amber to deep amber-brown; in dark the amber already passes, so lamp text equals the lamp. Fills keep the plain lamp.
+- **Moss** (`dark-moss`, `light-moss`): fills of the play keys, the primary pill, switches when on, the "More like this" rating and the text cursor. Hover moves to `*-moss-hover`. Ink on a moss fill is `*-on-moss`.
+- **Moss Text** (`*-moss-text`): small live text such as the playing title, the active device and the Connect pill. It is derived at runtime by `Palette::accent_text()`, which keeps the accent where it reads at 4.5:1 against a shaded `surface_active` and otherwise steps it darker (light) or brighter (dark). Dark keeps the accent as it is; the light value is the derived result.
 
 ### Neutral
-- **Control Room Window** (`dark-window`, `light-window`): the room behind the glass; also the label colour on an inverted choice pill.
-- **Smoked Pane** (`dark-panel`, `light-panel`): base of shell panes and the console before opacity.
-- **Surface steps** (`*-surface`, `*-surface-hover`, `*-surface-active`): resting, hovered and pressed fills of soft buttons, unselected chips and egui widgets; `surface-active` is also the off switch track.
-- **Outline and Rim** (`*-outline`, `dark-rim`): hairlines. Dark frames take `dark-rim` (the outline with 6% white over it); light frames use `light-outline` directly.
-- **Text ranks** (`*-text`, `*-secondary`, `*-dim`): primary text, secondary metadata, and the dimmest tier (icons at rest, hints).
-- **Overlay** (`dark-overlay`, `light-overlay`): the opaque base of every popover, menu, dialog, toast and the Connect pill.
-- **Glass fills** (`*-pane-glass`, `*-console-glass`, `*-well-glass`): the palette roles at the glass kind's opacity. The console's base is additionally eased 12% toward the playing cover's tint.
-- **Hover and Selected fills** (`*-hover-fill`, `*-selected-fill`): light through dark glass, shade on light glass. Keys (tiles and shelf entries) rest at white 5% to 10% (dark) or black 3.5% to 6.5% (light) as they lift.
-- **Danger and Warning** (`*-danger`, `*-warning`): palette roles kept for destructive and warning text. Cautions and error notices in the discovery desk use `*-text`, not amber and not warning.
-- **Liked Tint** (`liked-tint`): the fixed cover light for the Liked Songs page wash.
+- **Night Forest / Mist Window** (`*-window`): the base under the scenery, and the ink on selected chips and active soft buttons.
+- **Forest Panel / White Panel** (`*-panel`): the base of pane and console glass and of egui panels.
+- **Surface ladder** (`*-surface`, `*-surface-hover`, `*-surface-active`): egui widget fills at rest, hover and press. The dark content plate is built on `dark-surface-active`. The switch track rests on `surface-active`.
+- **Outline** (`*-outline`): the rim of text wells and egui non-interactive frames.
+- **Rim** (`*-rim`): the one quiet hairline used by the console, popovers, the sidebar divider, the top-bar keys and field wells at rest.
+- **Text, Secondary, Dim** (`*-text`, `*-secondary`, `*-dim`): primary ink, supporting lines (subtitles, notices, inactive nav) and hints. Dim still carries information.
+- **Disabled** (`*-disabled`): `Palette::disabled_text()`, the ink of disabled menu items and disabled pills. It is separate from dim so a disabled control reads as off.
+- **Danger and Warning** (`*-danger`, `*-warning`): blocking failures use danger, degraded results (model failure) use warning, on both icon and text.
+- **Overlay** (`*-overlay`): the opaque popover and menu fill.
+- **Liked cover** (`*-liked-cover`): the fill behind the moss heart on the Liked Songs cover.
+
+### Brand
+- **Brand Tile and Brand Mint** (`brand-tile`, `brand-mint`): the packaged app icon only, from `assets/brand/spotiurge-mark.svg` and `util::app_icon_rgba`. Inside the app the bare ridge glyph is tinted with the palette's moss, so it is mint in dark and deep forest in light.
 
 ### Named Rules
-**The One Lamp Rule.** Amber marks live state only: playing, primary play, the current navigation channel, Connect and the active device. Choices, cautions and errors never take it. The build also spends amber on a selected Love rating in the discovery feedback column, a slider fill while it is held, the 1px keyboard focus ring, the text caret and the text-selection tint, and the native Settings switch; those are the recorded extent, not licence for more.
+**The One Voice Rule.** Moss marks live or primary state only. Selection, hover and grouping use neutral overlays, never the accent.
 
-**The Derived Lamp Text Rule.** Never set small amber text by hand. Use the lamp-text role, which deepens until it reads at 4.5:1; light lamp text is `#653706`.
-
-**The Capped Wash Rule.** A page's cover wash pools at the top of the page pane (full strength at 0pt, 45% at 140pt, gone by 360pt). In light it is capped at 20% of the tint so live text stays legible; in dark it is 30% on Home, Search, Settings and Queue and 55% on collection pages.
+**The Measured Ink Rule.** Text, secondary, dim, moss text, danger and warning hold at least 4.5:1 over every pixel of the bundled scene after the wash, on bare ground, on pane glass and on content plates, including hover and selected fills. Option labels on chip fills are held to the same floor. A test in `material.rs` checks this; do not change a text role or wash without rerunning it.
 
 ## Typography
 
-**Display Font:** Inter (bundled at Regular 400, Medium 500, SemiBold 600 and Bold 700), with the monochrome Noto Emoji face behind it and installed system faces for scripts Inter lacks.
+**Display Font:** Inter (Bold 700)
+**Body Font:** Inter (Regular 400, Medium 500, SemiBold 600)
+**Label/Mono Font:** egui monospace at 13 px for code only; Noto Emoji follows Inter in every family.
 
-**Character:** One family, ranked by weight on a tight scale, like a timetable rack. Bold carries titles, Medium carries row titles and controls, Regular carries everything secondary. Sizes are egui logical points, written here as px.
+**Character:** One family at four real weights. Hierarchy comes from size and weight steps, not from a second face. Line heights follow Inter's font metrics in egui; no explicit line-height is set.
 
 ### Hierarchy
-- **Display** (700, 32px): collection hero titles at wide widths; the title steps down toward 28px until it fits.
-- **Headline** (700, 28px): page titles such as Library, Settings and Queue. Top songs uses 30px, and the login wordmark is 30px.
-- **Desk Title** (700, 26px): the For you desk title and the search top result.
-- **Title** (700, 20px): dialog titles and the Home greeting.
-- **Section** (700, 18px): settings and queue section heads (the shared section title is 17px).
-- **Wordmark** (700, 16px): "Spotiurge" beside the 24px mark in the sidebar.
-- **Track Title** (500, 14.5px): row titles.
-- **Body** (400, 14px): egui body and button text, the search field.
-- **Prompt** (400, 15px): the taste prompt.
-- **Secondary** (400, 13px): subtitles, discovery reasons, settings fields.
-- **Label** (500, 13px) and **Label Strong** (600, 13px): chips and soft buttons; pill buttons.
-- **Detail** (400, 12.5px) and **Badge** (500, 12.5px): row subtitles; the Connect pill.
-- **Small** (400, 11.5px): small print.
+- **Hero** (700, 32 px wide, 28 px narrow, shrinking in 2 px steps to 20 px to fit): collection, album and artist titles beside the cover.
+- **Display** (700, 30 px): the login wordmark and "Your top songs".
+- **Headline** (700, 28 px): Library, Queue and Settings page titles.
+- **Desk title** (700, 26 px): "For you" and the Search heading.
+- **Title** (700, 20 px): the Home greeting, dialog and update titles.
+- **Section** (700, 18 px): Settings sections, Queue groups and the lyrics header.
+- **Shelf title** (700, 17 px): Home shelves and `section_title`.
+- **Wordmark** (700, 16 px): "Spotiurge" beside the sidebar mark.
+- **Nav** (600, 14.5 px; 700 when active): sidebar navigation.
+- **Item title** (600, 14 px) and **Item subtitle** (400, 12.5 px): card and row titles and their artists.
+- **Body** (400, 14 px): egui body and button text, search and field input.
+- **Menu** (400, 13.5 px): popup menu items.
+- **Button** (600, 13 px): pill buttons. **Label** (500, 13 px): soft buttons and choice chips.
+- **Secondary** (400, 13 px): subtle lines, discovery reasons and notices.
+- **Meta** (400, 12 px) and **Small** (400, 11.5 px): durations, counts and egui small text.
 
 ### Named Rules
-**The Weight Ranks Rule.** Rank with weight, then size; never with a second family, colour or uppercase eyebrow. Uppercase appears only in data column headers.
-
-**The Fixed Cell Rule.** Changing state never shifts geometry: durations right-align, and the discovery reason sits in a fixed-width cell so the 28px feedback column holds one x position on every row.
+**The One Family Rule.** Inter at its four weights carries the whole hierarchy. Do not add a display face.
 
 ## Layout
 
-A floating three-pane shell. The sidebar pane (minimum 210px wide) on the left, the page pane in the centre, an optional right panel for Queue or Lyrics (minimum 280px), and the player console along the bottom, all separated from each other and from the window edge by an 8px gap. The top bar is 56px tall and sits inside the page pane; on macOS the window content runs under the titlebar and reserves 28px for the traffic lights.
+A fixed native frame: a resizable sidebar on the left (210 to 600 points, 250 by default), a 56-point top bar, the scrolling page, an optional right panel for Queue or Lyrics (at least 280 points) and an 88-point console floating along the bottom. Panes sit 8 points apart and 8 points from the window edge. On macOS the content reaches the top edge and leaves a 28-point inset for the traffic lights, except in fullscreen.
 
-Page content uses 24px side padding, 4px top and 48px bottom. Egui item spacing is 8px by 6px, button padding 12px by 6px, menus 6px inside, windows 16px inside. Rows are 56px (default), 48px (compact) or 36px (thin, no cover); sidebar library rows are 60px or 32px compact. Library cards are 172px with 14px gaps.
+Pages use 24-point side padding, 4 points on top and 48 at the bottom. Content plates use 20-point padding (Settings sections use 20 by 16 and cap at 760 points wide). Cards are 172 points wide with 14-point gaps; library grids use at least 108 points per column. egui item spacing is 8 by 6, button padding 12 by 6, menu margin 6 and window margin 16.
 
-Responsive behaviour comes from width, not breakpoints in a stylesheet. The main window's minimum is 760 by 520px, raised while side panels are open. Track tables add the album column above 560px, the date added above 760px and further columns above 920px; the discovery desk treats 920px as wide and drops the reason column to hover text below it. The search field aims for half the free top-bar width between 200px and 440px (never below 80px). When the Connect pill would squeeze the field below 200px it folds to an amber icon chip, keeping at least 8px between field and pill. The taste prompt is capped at 560px wide; the For you overflow menu is 240px to 280px wide, anchored under its button. Captures were taken at 1440 by 900 (normal) and 900 by 760 (narrow).
+Responsive changes come from available width, not breakpoints in a stylesheet. Collection heroes use a 212-point cover and 32 px title above 720 points of width, otherwise 160 points and 28 px. Discovery rows show their reason column above 920 points (30% of the width, clamped to 200 to 360). Console side regions take 30% of the width, clamped to 200 to 420. Captures cover 1440 by 900 and 900 by 760 logical points.
 
 ## Elevation & Depth
 
-Depth is glass over a lit room: translucent fills over soft colour fields, a sheen, a two-tone rim and an offset shadow. It is a hybrid of tonal layering and ambient shadow, and all of it is painted by the app (a pane is four cheap shapes: shadow, fill, sheen, rim).
-
-### Glass kinds
-- **Pane** (sidebar, page, queue, lyrics): fill at 72% (dark) or 58% (light); sheen white 4.5% (dark) or 55% (light); rim top white 11% or 95%, bottom black 42% or 10%.
-- **Console** (player): fill at 80% or 72%, tinted toward the cover; sheen 6% or 60%; rim top 14% or 100%, bottom 45% or 12%.
-- **Popover** (menus, Connect, dialogs, toasts, update window, login card, Connect pill base): fully opaque `*-overlay`; sheen 5% or 50%; rim top 13% or 100%, bottom 50% or 14%. Egui frames that cannot take a gradient rim use a single 1px `dark-rim` or `light-outline` stroke.
-- **Well** (fields, the taste prompt, the discovery desk): `*-surface` at 55% (dark) or 75% (light); no sheen, rim or shadow of its own. Text wells add their own 1px rim (see Components).
+Depth is tonal and flat. The image and wash form the ground, translucent glass sits on it and opaque popovers sit above. Panes and content plates have no shadow and no rim. The console and popovers carry one quiet hairline rim. Only popovers cast a structural shadow. Cover art casts a soft shadow in the dark scheme so it lifts off the glass.
 
 ### Shadow Vocabulary
-- **Pane shadow** (offset 0 8px, blur 28px, `*-shadow` at 55% dark or 50% light): floating shell panes.
-- **Console shadow** (offset 0 10px, blur 32px, `*-shadow` at 80% dark or 70% light): the player console.
-- **Popover shadow** (offset 0 12px, blur 32px, full `*-shadow`): menus, dialogs, popovers.
-- **Popup shadow** (offset 0 8px, blur 24px, full `*-shadow`): egui popups.
-- **Header shadow** (14px gradient, black up to alpha 110 dark or 36 light, deepening over the first 24pt of scroll): the top bar's shadow on a page scrolled beneath it.
-- **Switch knob** (offset 0 1px, blur 4px, black alpha 60): the white 16px knob.
+- **Popover** (`0 8px 24px`, `*-shadow`): menus, popovers, toasts and egui windows.
+- **Card art, dark only** (`0 10px 28px rgba(0, 0, 0, 0.47)`): card and search result covers.
+- **Hero cover** (dark `0 14px 36px` at 90% of `dark-shadow`; light `0 8px 24px` at 80% of `light-shadow`): the collection hero cover.
+- **Switch knob** (`0 1px 4px rgba(0, 0, 0, 0.24)`): the white knob of a switch.
 
 ### Named Rules
-**The Rendered Glass Rule.** Glass is painted: fill, sheen, rim and shadow over cached colour fields. Never use OS backdrop blur, vibrancy or a per-frame blur pass.
+**The Single Cue Rule.** A surface steps off its host with fill or with a hairline, never both, and never with a glow, sheen or second rim.
 
-**The Opaque Overlay Rule.** Anything that floats over content (menus, popovers, dialogs, toasts) is opaque glass. Sheen, rim and shadow keep it glass; content beneath never ghosts through its text.
-
-**The One Pixel Rim Rule.** Rims are one physical pixel, lit along the top third and shaded along the bottom third, over the outline at 60% (dark) or 80% (light).
+**The Still Scenery Rule.** The scene is decoded once off the UI thread, cached as one texture and drawn under a flat wash. It never animates, never follows playback and is never blurred per frame.
 
 ## Shapes
 
-Soft, nested rounding that grows with the size of the piece of glass: lamp bar 2px, small 4px, egui widgets 6px, rows and lamps 8px, text wells 10px, popovers 12px, panes and the discovery desk 14px, the login card 16px, the console 18px. Every button, chip, toggle, search field and the Connect pill is a full pill (radius half the height). Play keys are circles that grow 5% on hover and sink to 94% while pressed. Covers in collection heroes take 10px corners (round for artists). The mark's tile is a 120 unit square with 27 unit corners.
+Soft, consistent corners that grow with the size of the surface: 4 points for the focus ring, 6 for egui widgets and card covers, 8 for rows, nav items and menu items, 10 for text wells and hero covers, 12 for popovers and card hover plates, 14 for panes and content plates, 18 for the console. Buttons, chips, the search field, switches, badges and play keys are full pills or discs. Artist covers are circles.
+
+The mark is one asymmetric mountain cut into three level-meter columns (`assets/brand/spotiurge-glyph.svg`). The app icon places it in mint on a forest tile with a corner of 27 on a 120-unit plate. At 32 pixels and below the column edges snap to whole pixels so the two gaps stay open.
 
 ## Components
 
 ### Buttons
-- **Shape:** full pill (`rounded.pill`).
-- **Primary:** lamp fill with on-lamp label, Label Strong, 8px by 18px padding. Primary play is a lamp disc: 36px in the console, 44px on the desk.
-- **Hover / Focus:** fills ease toward `*-lamp-hover` over 120 ms; focus draws a 1px lamp ring 2px outside the control with a 4px radius.
-- **Glass (secondary):** a clear key, `*-hover-fill` at 60% rising with hover, inside a 1px rim that lights from `dim` to `text`.
-- **Soft:** `*-surface` easing to `*-surface-hover`, Label, 7px by 12px; active soft buttons invert to a text fill with a window-colour label.
-- **Icon buttons:** frameless; icon colour lifts on hover and the icon sinks to 90% while pressed.
+- **Shape:** full pill (height / 2).
+- **Primary pill:** moss fill, on-moss SemiBold 13 px label, 8 by 18 padding. Hover eases the fill to moss hover over 120 ms.
+- **Primary disabled:** dark uses a white overlay at 8% under disabled ink, so the pill keeps its shape on any host. Light uses `light-surface-active` under disabled ink.
+- **Secondary pill:** a clear key. The hover fill at 60% (to 150% under the pointer) inside a 1-point rim that moves from dim to text.
+- **Soft button:** surface fill easing to surface hover, Medium 13 px, 7 by 12 padding, optional 15-point icon. Active inverts to a text fill with window ink.
+- **Play keys:** moss discs, 36 points in the console and 44 on the For you desk. Hover grows the disc 5%; press sinks it to 94% at once and releases over 120 ms. When nothing can play, the desk key goes neutral (selected fill, secondary icon) at full opacity.
+- **Icon buttons:** frameless, icon tint lifts on hover; press sinks the icon to 90%.
+- **Focus:** a 1-point moss ring 2 points outside the control, 4-point corner.
 
-### Chips (choices and segmented controls)
-- **Style:** unselected chips are `*-surface` pills, Label, 7px by 12px, 6px apart.
-- **State:** the selected choice is a neutral inverted pill (`*-text` fill, `*-window` label) that glides from the old choice to the new one over 220 ms; labels it passes over invert as it covers them. Layout moves snap instead of gliding.
-
-**The Neutral Choice Rule.** Chips, segmented controls and settings options select with the inverted neutral pill, never amber.
-
-**The Native Switch Exception.** On/off settings rows use a native-style switch (40 by 22px pill, white 16px knob): the track eases from `*-surface-active` to the lamp over 220 ms. This is the only choice-like control that turns amber, scoped to boolean switches.
+### Chips
+- **Style:** pills in Medium 13 px with 7 by 12 padding and 6-point gaps. Dark rests at a white overlay of 8%, rising to 12% under the pointer. Light rests on surface and eases to surface hover.
+- **State:** the selected fill is solid text with window ink. It glides between choices over 220 ms, and the labels it covers turn to window ink as it passes. If the layout moves the selected chip, the fill follows at once.
 
 ### Cards / Containers
-- **Corner Style:** panes 14px, console 18px, popovers 12px, desk 14px.
-- **Background:** the glass kinds in Elevation & Depth; settings groups and the For you desk are wells inset in the page pane, not second floating panes.
-- **Shadow Strategy:** only floating glass casts shadow; wells do not.
-- **Internal Padding:** desk 20px; settings groups 20px by 16px, capped at 760px wide; page 24px.
+- **Pane:** sidebar glass, panel at 68%, 14-point corner, no rim, no shadow.
+- **Content plate:** the For you desk, Settings sections and the Search top result. Dark uses `surface-active` at 85%, light uses panel at 68%. 14-point corner, no rim.
+- **Console:** panel at 80% with a rim and an 18-point corner. With "album-art colour" on, the console blends 4% of the cover's softened tint into its fill, fading over 0.45 s. The visualizer stays clear of the rounded corners.
+- **Media card:** 172 points wide, cover with a 6-point corner (circle for artists), title in Item title, subtitle in Item subtitle. Hover or focus eases in a 12-point plate at 1.4 times the hover fill and raises the cover 3 points over 220 ms.
 
 ### Inputs / Fields
-- **Style:** text wells (`field_well`) take the well fill, 10px radius, 8px by 12px padding and a 1px rim in `dark-rim` or `light-outline`. The search field is a 34px pill well with a 16px leading search icon.
-- **Focus:** the rim eases over 120 ms to 1.5px and to `*-text` at 60%; the caret is a 2px lamp line.
-- **Taste prompt:** a three-row well in Prompt type, capped at 560px wide.
+- **Text well:** well glass inside a 1-point rim, 10-point corner, 8 by 12 padding.
+- **Search field:** a 34-point pill with a 16-point secondary search icon and dim hint text.
+- **Focus:** the rim widens to 1.5 points and moves to text at 60% over 120 ms.
+- **Switch:** a 40 by 22 pill whose track eases from surface active to moss over 220 ms, with a 16-point white knob.
 
 ### Navigation
-- **Sidebar:** the 24px mark and Bold 16 wordmark at the top, then channels. The selected channel takes the lamp: `*-selected-fill` behind an 8px-radius row with a 3px amber bar at its leading edge, 46% of the row height.
-- **Top bar:** back and forward keys, the search pill, then the Connect pill (opaque overlay base, amber tint at 14% rising to 22% on hover, a 1px amber stroke at 22% to 36%, a 13px amber icon and Badge lamp-text label), and icon buttons with the avatar.
+- **Sidebar:** the ridge mark at 24 points and the wordmark, then 38-point nav rows with a 20-point icon. Inactive rows use secondary ink; hover brings text ink and a quiet hover fill. The selected row is a neutral selected fill with text ink and bold weight. That fill glides between Home and Search over 220 ms. A rim hairline separates navigation from the library. There is no leading color bar.
+- **Top bar:** 32-point circular keys on key fill with a rim; the icon lifts from secondary to text on hover; disabled keys use dim. The Connect badge is a pill on opaque overlay with a moss tint (14% rising to 22%), a moss rim and moss text.
+- **Menus:** opaque overlay with a rim, 12-point corner, popover shadow and 6-point margin. Items are 28 points tall in Menu type with a 16-point secondary icon; hover fills at 1.6 times the hover fill. Disabled items use disabled ink on icon and label and take no clicks.
 
-### The Discovery Desk (signature)
-Home's For you desk is a well inset in the page pane with a static glow of the cover tint rising from its upper left. It holds the Desk Title, a mode strip of neutral choice chips (Familiar, Balanced, Adventurous), a 44px lamp play disc, a fixed-width reason column in Secondary and a 28px feedback column: a selected Love fills amber, a selected Less fills with `*-text`. Demo picks are labelled as demo; unplayable matches collapse into "Couldn't play (N)" behind a stroke chevron. Recommendation copy describes results from the configured AI service, which in this build is gpt-6-luna through CLIProxyAPI only; the UI does not claim parity with Spotify's own recommendations.
+### Track rows
+56 points (48 compact, 36 thin) with an 8-point corner. Hover eases in a hover fill; the selected row shows the selected fill only. The playing row uses moss text and the playing meter. Rows that cannot play stay visible with a dim title and do not start playback.
 
-### Fader Glide (signature motion)
-Every helper moves toward its target over a fixed time with exponential ease-out, (1 - 2^(-10t)) / (1 - 2^(-10)), retargets from wherever the value is, and asks for a repaint only while moving.
-- **Feedback** (120 ms): hover and press fills, field focus, egui's own animation time.
-- **State** (220 ms): the amber lamp travelling between sidebar channels, the neutral pill gliding between chips, switch tracks and feedback fills.
-- **Page** (220 ms, rising 6pt): content fades up from 35% opacity and settles 6pt into place after navigation, without delaying clicks.
-- **Ambient** (600 ms): the room light and the page wash crossing over to a new cover.
-
-**The Fader Glide Rule.** Selection travels; it never jumps or blinks. When the layout moves the selected item, the lamp follows at once instead of gliding.
-
-**The Still Under Reduce Motion Rule.** With the app's Reduce motion setting on, or the macOS Reduce Motion preference (read at most every 2 s), every helper returns its target immediately, egui animation time is 0 and scroll animation is off.
+### Discovery desk
+The For you content plate: Desk title, the update age (or "Demo picks"), shuffle and the 44-point play key, the exploration chips, one summary, then playable 56-point rows. Above 920 points each row shows a Secondary reason column. Each row ends in two 28-point rating discs; "More like this" fills moss and "Less like this" fills text, easing in over 220 ms. Notices are a 14-point icon and one Secondary line: danger for a blocking load failure, warning for a model failure, secondary for demo and info lines. Unmatched suggestions collapse into one "Couldn't play (n)" group with search actions. History and taste editing open inline on request.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** build every new surface from the four glass kinds (pane, console, popover, well) and their recorded opacities, sheen, rims and shadows.
-- **Do** keep panes 8px apart and from the window edge, with 24px page padding.
-- **Do** spend amber only on live state, and use the lamp-text role for any amber text.
-- **Do** select choices with the neutral inverted pill gliding over 220 ms.
-- **Do** make overlays opaque `*-overlay` glass.
-- **Do** put text inputs in a 10px-radius well with the 1px rim and the eased focus rim.
-- **Do** use only the three durations (120, 220, 600 ms) with exponential ease-out, and make them immediate under Reduce Motion.
-- **Do** keep demo, unplayable and remote-playback states honest and labelled.
+- **Do** keep the stack: window base, the one static scene, the flat wash, translucent chrome, clear page content, opaque popovers.
+- **Do** derive small live text with `Palette::accent_text()` and keep every text role at 4.5:1 over the real scene pixels.
+- **Do** make overlay fills relative to their host (white overlays in dark, black in light) so chips and disabled pills keep a visible step on panes and content plates.
+- **Do** use `FEEDBACK` (120 ms) for hover and press, `STATE` (220 ms) for selection and fills, `PAGE` (220 ms, 6-point rise) for page entrance, and return targets at once under Reduce Motion.
+- **Do** mark state with neutral fill plus text weight or moss ink, not with extra decoration.
+- **Do** use danger for blocking failures and warning for degraded results, on icon and text together.
+- **Do** keep demo labels, unplayable suggestions and the remote-playlist gate visible and honest.
 
 ### Don't:
-- **Don't** use OS backdrop blur, vibrancy or a per-frame blur pass for glass.
-- **Don't** make menus, popovers or dialogs translucent.
-- **Don't** select chips, segmented controls or settings options with amber; boolean switches are the one recorded exception.
-- **Don't** colour cautions or error icons amber.
-- **Don't** raise the light-theme cover wash above 20%.
-- **Don't** introduce a second typeface, gradient text, or uppercase eyebrows.
-- **Don't** return to a flat black Spotify clone with green accents and card grids.
-- **Don't** claim smoothness, frame rate or CPU cost; none has been measured.
-
-**Not canonized** (residuals in the shipped build, recorded so nobody copies them): the active sort header that paints plain `*-lamp` text (in light below 4.5:1) instead of lamp-text or a neutral; dialog text fields on the older recipe (8px radius, flat rim, no eased focus rim) instead of the 10px field well; placeholder hints in `*-dim`, which read faintly on light wells; the faint light-theme field rim (about 1.2:1 against the pane); a focus ring proven only by test, never captured; macOS shortcuts written "Cmd+" rather than the platform symbols. They stay out of the system because each is a known contrast or consistency gap, not a design decision.
+- **Don't** animate the background, add ambient cover glows, sheens, double rims or gradients to chrome.
+- **Don't** describe or build the glass as OS blur or a per-frame backdrop filter.
+- **Don't** reintroduce the amber studio palette or the leading lamp bar on selected rows.
+- **Don't** use moss for selection, hover or grouping.
+- **Don't** paint a dark chip or disabled pill with opaque `surface-active`; it disappears on the dark content plate.
+- **Don't** use a second cue (rim plus fill) to separate a plate from its host.
+- **Don't** fetch scenery or imagery from a network service; the scene is bundled.
+- **Don't** claim playback features Spotify does not support.

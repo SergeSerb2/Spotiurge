@@ -871,7 +871,7 @@ fn brand(ui: &mut egui::Ui, palette: &Palette) {
         return;
     }
     let mark = pos2(rect.left() + 18.0, rect.center().y);
-    theme::logo(ui, mark, 24.0);
+    theme::logo(ui, mark, 24.0, palette);
     let painter = ui.painter().with_clip_rect(rect);
     painter.text(
         pos2(mark.x + 18.0, rect.center().y),
@@ -1488,7 +1488,7 @@ fn contents(app: &mut App, ui: &mut egui::Ui, grid_art: Option<Rect>) {
                             Vec2::splat(44.0),
                         );
                         if entry.liked {
-                            liked_cover(ui, cover_rect, 6.0);
+                            liked_cover(ui, cover_rect, 6.0, &palette);
                         } else {
                             super::widgets::paint_cover(
                                 ui,
@@ -1742,7 +1742,7 @@ fn library_grid(
                             active,
                         );
                         if entry.liked {
-                            liked_cover(ui, cover_rect, 6.0);
+                            liked_cover(ui, cover_rect, 6.0, &palette);
                         } else if entry.folder.is_some() {
                             ui.painter().rect_filled(
                                 cover_rect,
@@ -2071,58 +2071,19 @@ fn drop_row(app: &mut App, entries: &[Entry], pinned_rows: usize, slot: usize, k
     });
 }
 
-/// The purple-to-blue Liked Songs tile.
-pub fn liked_cover(ui: &egui::Ui, rect: Rect, radius: f32) {
-    let texture_id = egui::Id::new("liked-cover-gradient");
-    let texture = ui
-        .data(|data| data.get_temp::<egui::TextureHandle>(texture_id))
-        .unwrap_or_else(|| {
-            let size = 64;
-            let lerp = |a: u8, b: u8, t: f32| (a as f32 + (b as f32 - a as f32) * t) as u8;
-            let top_left = [0x45, 0x0a, 0xf5];
-            let top_right = [0x6a, 0x3a, 0xe8];
-            let bottom_left = [0x8e, 0x9f, 0xe5];
-            let bottom_right = [0xc4, 0xef, 0xd9];
-            let pixels = (0..size)
-                .flat_map(|y| {
-                    let y = y as f32 / (size - 1) as f32;
-                    (0..size).map(move |x| {
-                        let x = x as f32 / (size - 1) as f32;
-                        egui::Color32::from_rgb(
-                            lerp(
-                                lerp(top_left[0], top_right[0], x),
-                                lerp(bottom_left[0], bottom_right[0], x),
-                                y,
-                            ),
-                            lerp(
-                                lerp(top_left[1], top_right[1], x),
-                                lerp(bottom_left[1], bottom_right[1], x),
-                                y,
-                            ),
-                            lerp(
-                                lerp(top_left[2], top_right[2], x),
-                                lerp(bottom_left[2], bottom_right[2], x),
-                                y,
-                            ),
-                        )
-                    })
-                })
-                .collect();
-            let texture = ui.ctx().load_texture(
-                "liked-cover-gradient",
-                egui::ColorImage::new([size, size], pixels),
-                egui::TextureOptions::LINEAR,
-            );
-            ui.data_mut(|data| data.insert_temp(texture_id, texture.clone()));
-            texture
-        });
-    egui::Image::new(&texture)
-        .corner_radius(CornerRadius::same(radius.min(127.0) as u8))
-        .paint_at(ui, rect);
+/// A flat forest tile, with the same moss heart used by live controls.
+pub fn liked_cover(ui: &egui::Ui, rect: Rect, radius: f32, palette: &Palette) {
+    let fill = if palette.dark {
+        egui::Color32::from_rgb(0x3c, 0x5d, 0x4b)
+    } else {
+        egui::Color32::from_rgb(0xe3, 0xef, 0xe6)
+    };
+    ui.painter()
+        .rect_filled(rect, CornerRadius::same(radius.min(127.0) as u8), fill);
     let size = rect.width() * 0.45;
     let icon_rect = Rect::from_center_size(rect.center(), Vec2::splat(size));
     Icon::HeartFilled
-        .image(egui::Color32::WHITE, size)
+        .image(palette.accent, size)
         .paint_at(ui, icon_rect);
 }
 

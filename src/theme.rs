@@ -35,51 +35,58 @@ pub struct Palette {
 }
 
 impl Palette {
-    /// The control room after dark: a blue-black room, smoked glass and one
-    /// VU-amber lamp for whatever is live.
-    pub fn dark() -> Self {
-        Self {
-            dark: true,
-            window: Color32::from_rgb(0x0b, 0x0d, 0x12),
-            panel: Color32::from_rgb(0x14, 0x17, 0x1f),
-            surface: Color32::from_rgb(0x1c, 0x20, 0x2a),
-            surface_hover: Color32::from_rgb(0x25, 0x2a, 0x37),
-            surface_active: Color32::from_rgb(0x2e, 0x34, 0x44),
-            outline: Color32::from_rgb(0x2a, 0x2f, 0x3c),
-            text: Color32::from_rgb(0xf3, 0xf2, 0xef),
-            secondary: Color32::from_rgb(0xa7, 0xad, 0xbb),
-            dim: Color32::from_rgb(0x70, 0x77, 0x87),
-            accent: Color32::from_rgb(0xff, 0xb5, 0x47),
-            accent_hover: Color32::from_rgb(0xff, 0xc7, 0x70),
-            on_accent: Color32::from_rgb(0x1f, 0x13, 0x03),
-            danger: Color32::from_rgb(0xff, 0x6f, 0x73),
-            warning: Color32::from_rgb(0xf6, 0xd3, 0x65),
-            overlay: Color32::from_rgb(0x1c, 0x20, 0x2b),
-            shadow: Color32::from_black_alpha(150),
+    /// Inactive controls have their own ink; dim text still carries information.
+    pub fn disabled_text(&self) -> Color32 {
+        if self.dark {
+            Color32::from_rgb(0x84, 0x98, 0x8b)
+        } else {
+            Color32::from_rgb(0x59, 0x69, 0x5e)
         }
     }
 
-    /// The control room by daylight: milky glass over a pale cool room, the
-    /// lamp deepened to amber-brown so it reads on white.
+    /// T3 Pretty's night forest palette, with moss for live controls.
+    pub fn dark() -> Self {
+        Self {
+            dark: true,
+            window: Color32::from_rgb(0x0e, 0x11, 0x10),
+            panel: Color32::from_rgb(0x14, 0x1a, 0x17),
+            surface: Color32::from_rgb(0x1a, 0x22, 0x1e),
+            surface_hover: Color32::from_rgb(0x20, 0x2a, 0x25),
+            surface_active: Color32::from_rgb(0x2c, 0x3a, 0x32),
+            outline: Color32::from_rgb(0x2e, 0x3b, 0x34),
+            text: Color32::from_rgb(0xf3, 0xf6, 0xf3),
+            secondary: Color32::from_rgb(0xc5, 0xcf, 0xc8),
+            dim: Color32::from_rgb(0xb8, 0xc5, 0xbb),
+            accent: Color32::from_rgb(0x98, 0xd2, 0xac),
+            accent_hover: Color32::from_rgb(0xb7, 0xe6, 0xc8),
+            on_accent: Color32::from_rgb(0x07, 0x14, 0x0c),
+            danger: Color32::from_rgb(0xff, 0xb0, 0xb8),
+            warning: Color32::from_rgb(0xff, 0xb0, 0x20),
+            overlay: Color32::from_rgb(0x20, 0x2a, 0x25),
+            shadow: Color32::from_black_alpha(115),
+        }
+    }
+
+    /// T3 Pretty's mist palette, with a deep forest accent for contrast.
     pub fn light() -> Self {
         Self {
             dark: false,
-            window: Color32::from_rgb(0xe9, 0xeb, 0xf1),
-            panel: Color32::from_rgb(0xfc, 0xfc, 0xfe),
-            surface: Color32::from_rgb(0xee, 0xf0, 0xf5),
-            surface_hover: Color32::from_rgb(0xe3, 0xe6, 0xee),
-            surface_active: Color32::from_rgb(0xd6, 0xda, 0xe4),
-            outline: Color32::from_rgb(0xd5, 0xd9, 0xe3),
-            text: Color32::from_rgb(0x15, 0x17, 0x1c),
-            secondary: Color32::from_rgb(0x4d, 0x54, 0x63),
-            dim: Color32::from_rgb(0x86, 0x8d, 0x9c),
-            accent: Color32::from_rgb(0xa9, 0x5c, 0x06),
-            accent_hover: Color32::from_rgb(0x91, 0x4e, 0x05),
+            window: Color32::from_rgb(0xf4, 0xf6, 0xf4),
+            panel: Color32::from_rgb(0xff, 0xff, 0xff),
+            surface: Color32::from_rgb(0xea, 0xf0, 0xeb),
+            surface_hover: Color32::from_rgb(0xe3, 0xe9, 0xe4),
+            surface_active: Color32::from_rgb(0xc9, 0xd1, 0xca),
+            outline: Color32::from_rgb(0xd8, 0xde, 0xd9),
+            text: Color32::from_rgb(0x16, 0x1a, 0x17),
+            secondary: Color32::from_rgb(0x4b, 0x52, 0x4c),
+            dim: Color32::from_rgb(0x47, 0x50, 0x4a),
+            accent: Color32::from_rgb(0x27, 0x63, 0x3f),
+            accent_hover: Color32::from_rgb(0x22, 0x57, 0x38),
             on_accent: Color32::WHITE,
-            danger: Color32::from_rgb(0xc8, 0x33, 0x44),
-            warning: Color32::from_rgb(0x85, 0x64, 0x00),
+            danger: Color32::from_rgb(0x95, 0x15, 0x24),
+            warning: Color32::from_rgb(0x7b, 0x36, 0x05),
             overlay: Color32::from_rgb(0xff, 0xff, 0xff),
-            shadow: Color32::from_black_alpha(48),
+            shadow: Color32::from_rgba_unmultiplied(16, 24, 18, 36),
         }
     }
 
@@ -87,8 +94,8 @@ impl Palette {
     /// the active device. Fills keep the accent. Where the accent reads at
     /// 4.5:1 it is used as it is; otherwise it deepens (on dark glass,
     /// brightens) in steps that keep its hue until it does. It is measured
-    /// against a conservative shaded `surface_active`, including the
-    /// light page's capped cover wash, rather than only an unlit pane.
+    /// against a conservative shaded `surface_active`. Custom palettes keep
+    /// this guard beyond the built-in scenery contrast tests.
     pub fn accent_text(&self) -> Color32 {
         let toward = if self.dark {
             Color32::WHITE
@@ -601,12 +608,10 @@ pub fn play_glyph_offset(icon: Icon, icon_size: f32) -> Vec2 {
     }
 }
 
-/// The app's mark, the same picture as the app icon: the smoked glass tile
-/// with the amber surge S, rasterised once per size by
-/// `util::app_icon_rgba` and drawn wherever the app shows its logo.
-pub fn logo(ui: &egui::Ui, center: egui::Pos2, diameter: f32) {
+/// The flat ridge glyph, tinted by the current palette like T3 Pretty's mark.
+pub fn logo(ui: &egui::Ui, center: egui::Pos2, diameter: f32, palette: &Palette) {
     let ppp = ui.ctx().pixels_per_point();
-    // The raster keeps a pixel of margin on each side of the tile.
+    // A little raster oversampling keeps the bare glyph crisp on Retina.
     let pixels = (diameter * ppp).round() as usize + 2;
     let id = egui::Id::new(("spotiurge-logo", pixels));
     let texture = ui
@@ -615,7 +620,7 @@ pub fn logo(ui: &egui::Ui, center: egui::Pos2, diameter: f32) {
         .unwrap_or_else(|| {
             let image = egui::ColorImage::from_rgba_unmultiplied(
                 [pixels, pixels],
-                &crate::util::app_icon_rgba(pixels),
+                &crate::util::glyph_rgba(pixels),
             );
             let texture =
                 ui.ctx()
@@ -630,7 +635,7 @@ pub fn logo(ui: &egui::Ui, center: egui::Pos2, diameter: f32) {
         texture.id(),
         rect,
         egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
-        Color32::WHITE,
+        palette.accent,
     );
 }
 
@@ -719,7 +724,10 @@ pub fn circle_spinner(
 /// A pill-shaped text button: filled for the primary action, outlined otherwise.
 pub fn pill_button(ui: &mut egui::Ui, palette: &Palette, label: &str, primary: bool) -> Response {
     let font = semibold(13.0);
-    let color = if primary {
+    let enabled = ui.is_enabled();
+    let color = if !enabled {
+        palette.disabled_text()
+    } else if primary {
         palette.on_accent
     } else {
         palette.text
@@ -731,27 +739,37 @@ pub fn pill_button(ui: &mut egui::Ui, palette: &Palette, label: &str, primary: b
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label)
     });
+    let mut painter = ui.painter().clone();
+    if !enabled {
+        painter.set_opacity(1.0);
+    }
     if ui.is_rect_visible(rect) {
         let lift = crate::ui::motion::toggle(
             ui.ctx(),
             response.id.with("lift"),
-            response.hovered(),
+            enabled && response.hovered(),
             crate::ui::motion::FEEDBACK,
         );
         let radius = rect.height() / 2.0;
         if primary {
-            let fill = palette.accent.lerp_to_gamma(palette.accent_hover, lift);
-            ui.painter().rect_filled(rect, radius, fill);
+            let fill = if enabled {
+                palette.accent.lerp_to_gamma(palette.accent_hover, lift)
+            } else if palette.dark {
+                Color32::WHITE.gamma_multiply(0.08)
+            } else {
+                palette.surface_active
+            };
+            painter.rect_filled(rect, radius, fill);
         } else {
             // A clear glass key: a faint fill that brightens under the
             // pointer, inside a rim that lights with it.
-            ui.painter().rect_filled(
+            painter.rect_filled(
                 rect,
                 radius,
                 crate::ui::material::hover_fill(palette).gamma_multiply(0.6 + 0.9 * lift),
             );
             let stroke_color = palette.dim.lerp_to_gamma(palette.text, lift);
-            ui.painter().rect_stroke(
+            painter.rect_stroke(
                 rect,
                 radius,
                 Stroke::new(1.0, stroke_color.gamma_multiply(0.7 + 0.3 * lift)),
@@ -759,7 +777,7 @@ pub fn pill_button(ui: &mut egui::Ui, palette: &Palette, label: &str, primary: b
             );
         }
         let pos = rect.center() - galley.size() / 2.0;
-        ui.painter().galley(pos, galley, color);
+        painter.galley(pos, galley, color);
     }
     focus_ring(ui, &response);
     response
@@ -951,7 +969,11 @@ pub fn choice_chips<T: Copy + PartialEq>(
         painter.rect_filled(
             *rect,
             rect.height() / 2.0,
-            palette.surface.lerp_to_gamma(palette.surface_hover, lift),
+            if palette.dark {
+                Color32::WHITE.gamma_multiply(0.08 + 0.04 * lift)
+            } else {
+                palette.surface.lerp_to_gamma(palette.surface_hover, lift)
+            },
         );
         if response.clicked() && *value != selected {
             clicked = Some(*value);
@@ -1081,15 +1103,14 @@ pub fn subtle(ui: &mut egui::Ui, palette: &Palette, label: &str) -> Response {
 mod tests {
     use super::*;
 
-    /// The logo drawn in the app is the app icon's own picture, not a
-    /// shape in the theme's accent colour: it uploads the icon's pixels.
+    /// The header uploads the shared alpha mask; the palette supplies its colour.
     #[test]
-    fn the_logo_in_the_app_is_the_app_icon() {
+    fn the_logo_uses_the_shared_ridge_mask() {
         // #given the logo drawn 40 points wide at twice the pixel density
         let ctx = egui::Context::default();
         ctx.set_pixels_per_point(2.0);
         let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
-            logo(ui, egui::pos2(40.0, 40.0), 40.0);
+            logo(ui, egui::pos2(40.0, 40.0), 40.0, &Palette::dark());
         });
 
         // #then the frame uploads the icon rasterised at that size
@@ -1103,7 +1124,7 @@ mod tests {
                 _ => None,
             })
             .expect("the logo's texture");
-        let icon = crate::util::app_icon_rgba(82);
+        let icon = crate::util::glyph_rgba(82);
         for (x, y) in [(41, 10), (46, 41), (41, 4)] {
             let expected = &icon[(y * 82 + x) * 4..(y * 82 + x) * 4 + 4];
             let got = uploaded.pixels[y * 82 + x].to_srgba_unmultiplied();
@@ -1112,39 +1133,21 @@ mod tests {
         output.textures_delta.clear();
     }
 
-    /// Live-state text reads at 4.5:1 on the light grounds it is drawn on,
-    /// sampled from the finish review's light captures: the warm-lit page
-    /// pane, a playing row, a selected sidebar row (Home, and Liked Songs
-    /// under its lavender light) and the active device in the opaque
-    /// Connect popover. The amber keeps its hue; dark glass keeps the accent.
+    /// Custom pale accents still deepen to readable small text.
     #[test]
-    fn live_text_reads_on_every_light_ground() {
-        let light = Palette::light();
-        let text = light.accent_text();
-        assert!(contrast(light.accent, Color32::from_rgb(209, 200, 191)) < 4.5);
-        for (name, ground) in [
-            ("page pane", Color32::from_rgb(229, 222, 217)),
-            ("playing row", Color32::from_rgb(230, 225, 222)),
-            ("selected Home row", Color32::from_rgb(209, 200, 191)),
-            ("selected Liked row", Color32::from_rgb(212, 204, 197)),
-            ("active device", Color32::from_rgb(237, 237, 237)),
-            // The light page caps cover light at 20%. These include the
-            // Liked lavender and the more saturated blue extreme, so
-            // scrolling a playing title into a header remains readable.
-            ("lavender cover wash", Color32::from_rgb(209, 201, 218)),
-            ("blue cover wash", Color32::from_rgb(183, 178, 225)),
-        ] {
-            let ratio = contrast(text, ground);
-            assert!(ratio >= 4.5, "{name}: {ratio:.2}:1");
+    fn custom_accent_text_keeps_its_contrast_guard() {
+        for mut palette in [Palette::dark(), Palette::light()] {
+            palette.accent = Color32::from_rgb(170, 190, 160);
+            let toward = if palette.dark {
+                Color32::WHITE
+            } else {
+                Color32::BLACK
+            };
+            let ground = palette
+                .surface_active
+                .lerp_to_gamma(toward, if palette.dark { 0.1 } else { 0.2 });
+            assert!(contrast(palette.accent_text(), ground) >= 4.5);
         }
-        assert!(text.r() > text.g() && text.g() > text.b(), "{text:?}");
-        let dark = Palette::dark();
-        assert_eq!(dark.accent_text(), dark.accent);
-        // A custom light palette with a pale accent deepens as well.
-        let mut custom = Palette::light();
-        custom.accent = Color32::from_rgb(255, 200, 120);
-        let deep = custom.accent_text();
-        assert!(contrast(deep, Color32::from_rgb(209, 200, 191)) >= 4.5);
     }
 
     /// Palette files name the sixteen colours every app shares, and only

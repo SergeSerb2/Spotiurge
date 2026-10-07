@@ -339,7 +339,11 @@ fn menu_item_response(
                 super::material::hover_fill(palette).gamma_multiply(1.6 * lift),
             );
         }
-        let color = if enabled { palette.text } else { palette.dim };
+        let color = if enabled {
+            palette.text
+        } else {
+            palette.disabled_text()
+        };
         let mut x = rect.left() + 10.0;
         if let Some(icon) = icon {
             let icon_rect =
@@ -348,7 +352,7 @@ fn menu_item_response(
                 if enabled {
                     palette.secondary
                 } else {
-                    palette.dim
+                    palette.disabled_text()
                 },
                 16.0,
             )
@@ -1349,15 +1353,6 @@ fn track_row_contents(
             CornerRadius::same(8),
             super::material::hover_fill(&palette).gamma_multiply(1.3 * lift),
         );
-    }
-    if is_current {
-        // The song on the air carries the lamp at its leading edge.
-        let bar = Rect::from_center_size(
-            pos2(rect.left() + 1.5, rect.center().y),
-            vec2(3.0, (rect.height() * 0.42).max(10.0)),
-        );
-        ui.painter()
-            .rect_filled(bar, CornerRadius::same(2), palette.accent);
     }
     // The row highlight also shows keyboard focus. Do not add an outline
     // when a mouse click gives the row focus for arrow-key navigation.

@@ -12,15 +12,18 @@ cannot play music through Spotiurge.
 
 https://github.com/user-attachments/assets/a5f669ce-b3b7-4f8e-9933-976a78876c7e
 
-![Spotiurge's native For you desk, glass sidebar and player console](docs/reviews/spotiurge-glass/after-home-dark-normal.png)
+![Spotiurge's native For you desk, glass sidebar and player console](docs/reviews/spotiurge-scenery/after-home-dark-normal.jpg)
 
-The desktop interface uses smoked or milky glass panes, cover-derived ambient
-light, an amber playback signal and Spotiurge's own surge mark. These are native
-rendered materials, without a browser or a continuous backdrop-blur pass.
+The desktop interface shares T3 Pretty's forest/mist palette and quiet scenery
+language. One locally bundled mountain/lake image sits beneath a flat contrast
+wash, with translucent navigation and controls, clear page content and a new
+ridge-meter mark. The scene is decoded once off the UI thread and never animates
+or downloads. The album-art colour setting retains a faint, flat tint in the
+player console. No browser or continuous backdrop-blur pass is used.
 Selection, navigation and control feedback use short, finite transitions.
 **Settings → Appearance → Reduce motion**, or macOS Reduce Motion, shows changes
 immediately. Optional Winamp skins retain their artwork.
-See the [native before/after comparison](docs/reviews/spotiurge-glass/index.html)
+See the [native before/after comparison](docs/reviews/spotiurge-scenery/index.html)
 for light/dark themes, narrow windows and error states.
 
 The inherited [Spotifast guide](https://spotifast.rocks/) explains the existing
@@ -80,7 +83,11 @@ saved per device; taste and feedback synchronize through the private store.
 **Save this mix** keeps an ordered Spotiurge mix without creating a Spotify
 playlist. Home shows the eight newest saved mixes; **See more** reveals 24 more
 at a time, and **Show less** returns to eight. **Sync my devices** exchanges taste preferences, feedback, mixes and AI
-history. Previous discoveries remain cached when AI is unavailable.
+history. Previous discoveries remain cached when AI is unavailable. Feedback
+retains the newest 500 records, counting cleared ratings. A shared logical cutoff
+prevents forgotten ratings from returning from an old offline device. Older
+feedback below that cutoff is discarded; new ratings advance above it. Upgrade
+all devices to enforce this bound. Saved mixes and taste remain separate.
 
 Pair each desktop once by launching with `SPOTIURGE_CLOUD_TOKEN` in its process
 environment. Obtain it from the private Railway service through a protected

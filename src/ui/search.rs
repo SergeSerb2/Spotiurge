@@ -311,15 +311,6 @@ fn top_result(
             CornerRadius::same(12),
             super::material::key_fill(&palette, lift),
         );
-        ui.painter().rect_stroke(
-            rect,
-            CornerRadius::same(12),
-            egui::Stroke::new(
-                1.0,
-                super::material::rim_colour(&palette).gamma_multiply(0.5 + 0.5 * lift),
-            ),
-            egui::StrokeKind::Inside,
-        );
         let image_rect = Rect::from_min_size(rect.min + vec2(20.0, 20.0), Vec2::splat(96.0))
             .translate(vec2(0.0, -3.0 * lift));
         widgets::paint_shadow(ui, &palette, image_rect, if round { 48.0 } else { 6.0 });

@@ -1,0 +1,660 @@
+{
+  "phase": "after",
+  "source_commit": "4736cd8fe97afaae1245fd71c7f797106b283aa7",
+  "binary_sha256": "3faae7ac9cff07f6855ec5d504cb7c9e56e32525c19ab6211490cb60c1c4b6da",
+  "platform": "macOS arm64",
+  "captures": [
+    {
+      "surface": "home",
+      "page": "home",
+      "flags": "discovery-matched",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-dark-normal.jpg",
+      "sha256": "f19e3ade21769282354a34f38a7fcbb5576d5c113ea562032035d53cba2dc971",
+      "native_capture_sha256": "4f404d78f44dcef503db07394865c48e4501fa4d6d4975f9e435ecf7bd3e2532",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home",
+      "page": "home",
+      "flags": "discovery-matched",
+      "theme": "dark",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "after-home-dark-narrow.jpg",
+      "sha256": "565dbbebb73ad15875bca9da44b4756f66ba0f346aad3d105f72c20f61999f9f",
+      "native_capture_sha256": "e4b539233a79e7214eaf2f0de2690fe061414cd031a28f13da7b20b4a84053f7",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ]
+    },
+    {
+      "surface": "home-onboarding",
+      "page": "home",
+      "flags": "discovery-onboarding",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-onboarding-dark-normal.jpg",
+      "sha256": "91c94e721caca4cd50598c5dbd5e8edf7c9476e7721924fb02246f0e2871bc23",
+      "native_capture_sha256": "eb28b8c3430b97f175ad07a203c2394394543282de322e127c78a7cd3598d443",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-error",
+      "page": "home",
+      "flags": "discovery-error",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-error-dark-normal.jpg",
+      "sha256": "6329c7c4807e55e75978baa96ef56c3e9368a628b3e1bfe4127b67039c189f72",
+      "native_capture_sha256": "946df772b4cf4b1dce2d15d167c54bfa65d0e10af6864bbbb98399be27b97e83",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-unmatched",
+      "page": "home",
+      "flags": "discovery-unmatched",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-unmatched-dark-normal.jpg",
+      "sha256": "10d98714c11b7f82314e85235dffc35fbadad0ad42dba2c0b2af517d172e4934",
+      "native_capture_sha256": "84b4a759e7c3ef07bba246fb16e180199794abc6f6f9c32aefa0ba2caf1455b2",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-menu",
+      "page": "home",
+      "flags": "discovery-menu",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-menu-dark-normal.jpg",
+      "sha256": "b1325dbfba050d334d4a91979cddc425b3ebc04db62e2fa99234ce27a15c7ff2",
+      "native_capture_sha256": "d8fef48f19af5b137cdff968063da4360229dce40fba209c7e9cdc4627b1255a",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-load-error",
+      "page": "home",
+      "flags": "discovery-load-error",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-load-error-dark-normal.jpg",
+      "sha256": "9ce5b8f331b5a7b4f35363ba769c6f3cba96132a8e2fc98f2ac49ce976b67f72",
+      "native_capture_sha256": "5443dbe2d51fb05427b75bde7cfd704adbb245fac88d8c7c546a40e9449f4942",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-taste",
+      "page": "home",
+      "flags": "discovery-taste",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-taste-dark-normal.jpg",
+      "sha256": "a348d3d6092d509ff341510a63b68c4aa982a8b314e9adeca4ff4c907aec007c",
+      "native_capture_sha256": "9c0b377197b723e17cae93ff06683826c69fc141a737a9ca8b34eb1d94d447d7",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "search",
+      "page": "search",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-search-dark-normal.jpg",
+      "sha256": "a1defd954eeb56fd6e024cb2980d4e0d4b3381c22a92bd1740f75e85cd10c907",
+      "native_capture_sha256": "43aea0e031671a34b10a859698a726db1b02b955f173b706000b4303511da66b",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "search",
+      "page": "search",
+      "flags": "",
+      "theme": "dark",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "after-search-dark-narrow.jpg",
+      "sha256": "c726c4fb26a495716b774e2e972b054d2473d5fc5bcf7b63d04d29903a3fcf3c",
+      "native_capture_sha256": "4d254811d88884b0343435404c618acd977a715b8b084a591c58cd85be21c463",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ]
+    },
+    {
+      "surface": "liked",
+      "page": "liked",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-liked-dark-normal.jpg",
+      "sha256": "27c723ac2866d87269ee833d3e13b0b684d03999b95f615dbe620bc29657203e",
+      "native_capture_sha256": "cd4ad08fe4229af1be985347908046dda510401e561192cb4560bc3838ae223e",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "playlist",
+      "page": "playlist:pl1",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-playlist-dark-normal.jpg",
+      "sha256": "8aea50ee26720a12c1be26e00edcf745a5eca7a24d7e5da0ed81059fcae6c0e6",
+      "native_capture_sha256": "40463bec66be2ba392960a14457bb8aad667f46b5bdb65fe9719feb012467b6e",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "album",
+      "page": "album:alb0",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-album-dark-normal.jpg",
+      "sha256": "94ae77227e3a46455217845f65c2aa13320081f85aebf5960e56ad8c1d0050d3",
+      "native_capture_sha256": "83012f32ad90c020f64701f40b5add77d4b4b4ecc875e2a998c29c9672b7f206",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "artist",
+      "page": "artist:art0",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-artist-dark-normal.jpg",
+      "sha256": "f6bdac1cbcd727c82763221c9a7edc70bb0ba4a62dfa03e78654bce57b38b61a",
+      "native_capture_sha256": "4e2f63fbb9c5c4cc6609cd7898449efa795417de83b3e00027c8eb6418864404",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "queue",
+      "page": "queue",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-queue-dark-normal.jpg",
+      "sha256": "b41e9b71bf1fdf865c65888e1e2c7e07a4f4f3d4237fbadef268e39bee428b23",
+      "native_capture_sha256": "e162282464ca2175f9b08282c1fffc21fd883182ffa764b5471fbe430eff7097",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "settings",
+      "page": "settings",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-settings-dark-normal.jpg",
+      "sha256": "4ed0fa931d7e3819c3bfd2965de3265cd54e566b96131635be3eaa9a652abb48",
+      "native_capture_sha256": "8c596d16dfe797b4e5b13bf617b09d87eedd19b3073368b16dde0ddae1c6c4e8",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "settings",
+      "page": "settings",
+      "flags": "",
+      "theme": "dark",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "after-settings-dark-narrow.jpg",
+      "sha256": "cb1f998da29819b80256eff0ee9a4a74c6fa956deca26a132d4451bc38072e83",
+      "native_capture_sha256": "2f243a9272e3af4f5297b75607f8727b07804742aa3543405b31b002c26ca957",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ]
+    },
+    {
+      "surface": "devices",
+      "page": "home",
+      "flags": "devices",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-devices-dark-normal.jpg",
+      "sha256": "b6ca73d37199202d0718a3e3c0d9fc08ae4263425091d20ecd7c410223dd7dfb",
+      "native_capture_sha256": "700bfc32bb6be0c1c4018b8dbf00d9780d629baa059a64ed56bcd8cdfd34573f",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "login",
+      "page": "home",
+      "flags": "signed-out",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-login-dark-normal.jpg",
+      "sha256": "496b584cf022f8dba4550fd6daf89d6a3dcf4343cbd6d82f477187858bc27400",
+      "native_capture_sha256": "3f7ebc63331e547f0d48bfb63282847bdfcc8deca739f296b7d113d1228a0862",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "loading",
+      "page": "playlist:pl1",
+      "flags": "collection-loading",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-loading-dark-normal.jpg",
+      "sha256": "948a00a6b91f176054c5e3238e84640236048b66bc96f294dc8bc2cf0a6f0913",
+      "native_capture_sha256": "a946d642fb4ec90624507211c7bba0931d3ccfa866cbbaacafea0dd4cc4fc6a5",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home",
+      "page": "home",
+      "flags": "discovery-matched",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-light-normal.jpg",
+      "sha256": "5b5913a5d36c8b7d9f3875c773a2ff6849ea32e146e6d7da3ce542e9cde66e33",
+      "native_capture_sha256": "248f99ff63429d62254c8a1df6fcc8651708ed5b8d27c8cd9839ebdebd518216",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home",
+      "page": "home",
+      "flags": "discovery-matched",
+      "theme": "light",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "after-home-light-narrow.jpg",
+      "sha256": "248c4d9a9170b80afdc5a729f7c786868f6dfda14b10b797901eca6f569461c2",
+      "native_capture_sha256": "d7ac4ee400a86e47af16a7494625ce4934ba30c255a585ea033f773d6481ec1b",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ]
+    },
+    {
+      "surface": "home-onboarding",
+      "page": "home",
+      "flags": "discovery-onboarding",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-onboarding-light-normal.jpg",
+      "sha256": "5686b62aa5f8623c461000192b34b86b22aa225cdcb1a4dbab6cc117698d2f35",
+      "native_capture_sha256": "55e4b2f1ba7d0cdfd5b5b15f3d3c272590c96309930655388c124593a48a586f",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-error",
+      "page": "home",
+      "flags": "discovery-error",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-error-light-normal.jpg",
+      "sha256": "f7fc817133693b5ecab7a1627bf62ae0705a551c6426370eb9138faf474fa191",
+      "native_capture_sha256": "41ecf73cebb42f4ec779f8938dfe3ee8d7ca740e27d45f3ebacd42075840519e",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-unmatched",
+      "page": "home",
+      "flags": "discovery-unmatched",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-unmatched-light-normal.jpg",
+      "sha256": "84489d1328e1102f7fd2a3441c79f3c4cb1b800760410d11c74857addb245fcf",
+      "native_capture_sha256": "db7f49b8962ac89999ae93017e2de0551f098694991ebf7280219446ccfedbd3",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-menu",
+      "page": "home",
+      "flags": "discovery-menu",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-menu-light-normal.jpg",
+      "sha256": "9c6b126d657a56c86217e5f288d2674f275116dc096a3df21b1eaa31abd979c6",
+      "native_capture_sha256": "884a50b257f04badd82c969fc9b1ed01c852a2e0f1b8ffe6d67e5b1f61e60077",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-load-error",
+      "page": "home",
+      "flags": "discovery-load-error",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-load-error-light-normal.jpg",
+      "sha256": "6c2b42dcded270d54a8d7dadc00295b7989fcd8fb24b06a2ebd0f6eff7c8ba76",
+      "native_capture_sha256": "06d08da37527f9bac00d1fe118d226192bb3b29bea9f9772d59f93d5110439ff",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "home-taste",
+      "page": "home",
+      "flags": "discovery-taste",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-home-taste-light-normal.jpg",
+      "sha256": "d257c84a7022d5492338bf6211f4c1e3cffae3401090174c181f96eb00039ec1",
+      "native_capture_sha256": "53dc4c616669a8da4cc16219eb4723b75d239239cb7c4dfc0d010756d14a5ff6",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "search",
+      "page": "search",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-search-light-normal.jpg",
+      "sha256": "c3586b20cf3ac34b429bc6af658ed7a783734386dded12ce8956e24d9fa16e26",
+      "native_capture_sha256": "eb8f183e2e10770ad5f508174dbc06d31bc6a007f24f5fb3004e0caf085e4d76",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "search",
+      "page": "search",
+      "flags": "",
+      "theme": "light",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "after-search-light-narrow.jpg",
+      "sha256": "f03ad8a5af4cb4bcd484c2a37ced9aa284be707084ed5ee0ccadaccb6afc91ab",
+      "native_capture_sha256": "e6737ad8ec5d4cacab4201dd9ce0fcabf1ea8580bfe529b2771b75abc92370d3",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ]
+    },
+    {
+      "surface": "liked",
+      "page": "liked",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-liked-light-normal.jpg",
+      "sha256": "2a3a3f871b9336cc74fb1de489d2285d5eb23f9fb937f4fb39c662ff5e0cb97c",
+      "native_capture_sha256": "91c2ef25038c65b3b741cdc278ce1158d946a2f97d26004c092a606b0bc699ab",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "playlist",
+      "page": "playlist:pl1",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-playlist-light-normal.jpg",
+      "sha256": "29ee91c25fdd25c88d5f0c950ffc9e424bf37eb1932d5f8364a168e1908586cf",
+      "native_capture_sha256": "5bbcbbe69dc2b32bb71ef4d2fb626a3696d9c1cfa79b88a4ec8dfcf22fdf84b4",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "album",
+      "page": "album:alb0",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-album-light-normal.jpg",
+      "sha256": "ee933ea039e70ef1a9cc0777b6e7d88e2f221b5120da7dc3494142afc2f2f8b9",
+      "native_capture_sha256": "040c2620398aee5b0d82cbbe2b8729f9ebd1229bfccc4eae333392f69505c046",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "artist",
+      "page": "artist:art0",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-artist-light-normal.jpg",
+      "sha256": "0c34fed106ec2a3242cd0f1816f1264405953969707a57d94c9a233fc497e1cf",
+      "native_capture_sha256": "4395c2ac7196f9da848d8afa94048b6ae60f1e96175b2931264c982c5e4c5fd4",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "queue",
+      "page": "queue",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-queue-light-normal.jpg",
+      "sha256": "625d1a012e9bdf8ef1b05abac530e183d0277b39064e1094710f410de677b342",
+      "native_capture_sha256": "0250c33f68600829f299fe5ab13b1217feb5703ef6bf34736d057dc16756ef0b",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "settings",
+      "page": "settings",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-settings-light-normal.jpg",
+      "sha256": "6f699ea174b9325f71f77cd947e5895398cef2970d299d2d7266ef9d698f6723",
+      "native_capture_sha256": "3e5ba059e75c22f18389350b3173ce7520f299b69c835fcf492cb84eaec57b3c",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "settings",
+      "page": "settings",
+      "flags": "",
+      "theme": "light",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "after-settings-light-narrow.jpg",
+      "sha256": "2f5a26a1231363e9c1d1e27c182e723897d65f6167154631ce02f55b2d22a8fb",
+      "native_capture_sha256": "784f37a0363540d518d8bb8542ad5de2d57a2738817d7575cf96ee8d4c477eb6",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ]
+    },
+    {
+      "surface": "devices",
+      "page": "home",
+      "flags": "devices",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-devices-light-normal.jpg",
+      "sha256": "96a8f0701847c084596f39149824a24c9cc965bb6f1fc95693997e28376b465f",
+      "native_capture_sha256": "ab204eca7f5ed4a74d4957ab9a1c7a5a5db6b3baab298d10528ed5ce5d0d0a94",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "login",
+      "page": "home",
+      "flags": "signed-out",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-login-light-normal.jpg",
+      "sha256": "009a83ebd9b37429d45ce4a8adccc6331dbf383e4d4606bccff20ce90226eb6f",
+      "native_capture_sha256": "ffd8883a48cef4e8d30f1cf294f7ea44ff68dc423147af19c8fd883974271acb",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "surface": "loading",
+      "page": "playlist:pl1",
+      "flags": "collection-loading",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "after-loading-light-normal.jpg",
+      "sha256": "40b55ce659ca23a041529b82a299e490b0366da36594ce53c9c2ceee547a030c",
+      "native_capture_sha256": "d144655bb1e70c8d39c7c4b1d28d84ebe1b9b43c82adb62dddff9e5fa0aabba3",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ]
+    }
+  ],
+  "capture_encoding": "Native-resolution JPEG quality 92 derived from native demo PNG; original PNG hashes retained.",
+  "source_dirty": true,
+  "source_state": "uncommitted scenery candidate r4, after five design fixes, three PR fixes and the final relative chip fills",
+  "source_files": {
+    "assets/brand/png/spotiurge-1024.png": "c50208af04d686b8b46e342bcafbf3afac1e44d457d70013952dd48d1b347d7e",
+    "assets/brand/png/spotiurge-128.png": "d10809c2994cc1f8e97a9c11d357196be713929adaada5ac32e8d109fad1ec6d",
+    "assets/brand/png/spotiurge-16.png": "f3e57811bade83ab07f79af881f0cb0e89811df01dd84a435cbb19bd4b1dbb72",
+    "assets/brand/png/spotiurge-256.png": "401b5211d392e0a8fe99a2e71c1a1118b3053c3f09a3519f1f3047fedaf72cc6",
+    "assets/brand/png/spotiurge-32.png": "73172390843e4ae8cac67a3926f42d7638eddcd6d4c4ca0efe63ad7c4f7e0c03",
+    "assets/brand/png/spotiurge-512.png": "f84ce4c2f4cb40731f8d480194c0f3206ff195c7350a8cab88b24941cfd28d9a",
+    "assets/brand/png/spotiurge-64.png": "a5b120d784ee30807aa47b2aee4bc5dab390c9d354653c6292f8dcfb9b4658d4",
+    "assets/brand/png/spotiurge-glyph-template-22.png": "3e70e2a3b60c1e8963bee5540780b365e67a45269acbde3a19f9a97f52a79fe4",
+    "assets/brand/png/spotiurge-glyph-template-44.png": "1193a1c6a7ef228eaf7ddf779499be3bdc9045245bdc442b6c629369a654959a",
+    "assets/brand/spotiurge-glyph.svg": "a73aba28eb07eee1276455e2603b1ab9744e05137185c4819d2df0e7b8860b9b",
+    "assets/brand/spotiurge-mark.svg": "097dbfdae5160d4330683264a48ef22f854942c6d51b4eef20d285efaf635a31",
+    "assets/i18n/de-DE.po": "166f8594079a58dd5dfb674ef0c9f8ebc9e9d50167dd0096812b2d7dadad299b",
+    "assets/i18n/es.po": "fb0657663608d8e210326d89d8de52dbe99d8041b4b662cb1959f07b385fba67",
+    "assets/i18n/fr.po": "d699c7ea88f4eb312b255cd631a281a6be65749ffe6f79f937b24ac0d6fc3eb1",
+    "assets/i18n/it.po": "34bdc765aa78ed9a01561b129513b3d2d03ae6de3f6b822281deac72ec920b16",
+    "assets/i18n/ja.po": "08ad94f1e91093786fecb650af411f4449736d5b827b48ff4ea48ee3a1b33336",
+    "assets/i18n/nl.po": "19d913f16d6b86c85710f82e8207f0d5ee58cc484e72fffd0692c312d65397c6",
+    "assets/i18n/pl.po": "10aec881627b6fba74dfe24bb00f0d231ca7d0eaf7812cd2b19e46404773c8df",
+    "assets/i18n/pt-BR.po": "bd0bc3ac7acf28c602ffde5bdb0c59722eb8322fda3a8e0fd63b18eca3bedc01",
+    "assets/i18n/pt-PT.po": "6396f4755f5a204aea9198d6ee5dd134f8fec19d5cc0c2a87164ed4895831093",
+    "assets/i18n/ru.po": "7d655c8b628b44d4575a931afbee4ee7398b42c4cd61cccc11c6c3307510cbdb",
+    "assets/i18n/spotifast.pot": "7c7c706b6046be0fe174f25a9ba81b87d7f0fb41750d4da46e00c32e93babac7",
+    "assets/i18n/sv.po": "829dac3000293aabb750ee2cb9ef627dabf7f449f44355572ee78f28c974c140",
+    "assets/i18n/tr.po": "3199d1d56790aa02fb9bbe443e119272f37f0e22226eec380c982423264cec01",
+    "assets/i18n/zh-Hans.po": "054b360b279db8c1769792e86e7233ce6fceffca7383bcc6170e6f4346de7ff0",
+    "assets/i18n/zh-Hant.po": "a1d14dcd7308f7c7d2212482086576d6e395ebc4fabf70215c29ac4baa68e9a8",
+    "packaging/icons/spotifast.svg": "097dbfdae5160d4330683264a48ef22f854942c6d51b4eef20d285efaf635a31",
+    "packaging/macos/spotiurge.icns": "d607e2aa8e04469a29b1997d4d072a9b660f9ca1866791635b41cbcd51fe2adb",
+    "packaging/windows/spotifast.ico": "272dda1e50e226d23db7552f28830817ad8c73c3ea0860aa33cfd58ab672c3d5",
+    "src/theme.rs": "ce93e96ddecb59f3bc320130c8840d7c7de190b85949ea8828f0dee57c32ab39",
+    "src/ui/collection.rs": "f037499a851667757409dc927723e6dcff5cd23144da0f5d7d1ab0c1e6eb445d",
+    "src/ui/discovery.rs": "8da855832bfa47589420f785b5583f08db690cdbf3b4304e83204ee0bd506e86",
+    "src/ui/home.rs": "0c8f3a8086ae76a8c7470e09c3116f7dbad5ad7309098bb2928a12255dd9525c",
+    "src/ui/login.rs": "c468e9713ea795cd6307f392fa5748749d8974c52fc1b8b88759d6bf4cdba787",
+    "src/ui/lyrics.rs": "ccc0f335c6806b09365f4b3655bd76cc3b7064922c7fd16aad185a1eb0587756",
+    "src/ui/material.rs": "bfa7a441cffba3cf1bce98819326b7b8b116b774ef66ce66671207518f5337c1",
+    "src/ui/mod.rs": "850f5f97d4141e5906f9cc742e00e8e5ab0c8581155afa223db11d33b965ff2c",
+    "src/ui/player_bar.rs": "3a25270ca0831b4b872a9f86163dd96fabdf89806cf2ef4046f2ad61d66b9c60",
+    "src/ui/search.rs": "95290c848bb9cf3f7e5787752a8468eecd71e854e834857f8c029dc53f6c33bf",
+    "src/ui/settings.rs": "87abea2f771162a7d5a24af86e59f4c75bca36f04571a8d9a5bf4562486ab3a1",
+    "src/ui/show.rs": "5780e280aa0e505d4da5780c8db1c06b5cdd9625c968506fbdc44e5b8fae4098",
+    "src/ui/sidebar.rs": "5f95d6eceff0df2c06e4e7fe4a6228cdc0249082ac602cf54d8fec7e2caac456",
+    "src/ui/widgets.rs": "2ff7526a1027a5776a1f23dc4f1a9ccd119e9efaa2271ab05be65c71d05738b5",
+    "src/util.rs": "18ac6ff0e806b57a945d0b1609bb09ac94982ed6daebd1c3f223268e26abb948",
+    "assets/scenery/alpine-lake.jpg": "e5615e82db7164ddbf63966b4162b0bd36e5d8bca694b17e6d363ff3a4e3ee1d",
+    "assets/scenery/README.md": "2923693483208eaafc06bab4efd4c7919466caefc982bca8f17746df23ae294b"
+  },
+  "source_closure_sha256": "6618d6d75524feebb8052f4d4c148067f986eda96ed2cf4e10f5d069db6a0994"
+}

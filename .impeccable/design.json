@@ -1,1181 +1,1237 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-07T06:19:40Z",
+  "generatedAt": "2026-10-07T09:21:36Z",
   "title": "Design System: Spotiurge",
   "extensions": {
     "colorMeta": {
       "dark-window": {
         "role": "neutral",
-        "displayName": "Control Room Night",
-        "canonical": "oklch(15.9% 0.0111 268.0)",
+        "displayName": "Night Forest Window (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#0e1110",
+        "oklch": "oklch(17.4% 0.005 173.7)",
         "tonalRamp": [
-          "oklch(15% 0.0111 268.0)",
-          "oklch(25% 0.0111 268.0)",
-          "oklch(35% 0.0111 268.0)",
-          "oklch(45% 0.0111 268.0)",
-          "oklch(55% 0.0111 268.0)",
-          "oklch(65% 0.0111 268.0)",
-          "oklch(80% 0.0111 268.0)",
-          "oklch(95% 0.0111 268.0)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#090c0b",
+          "#222524",
+          "#3d413f",
+          "#5b5f5d",
+          "#7a7e7d",
+          "#9b9f9e",
+          "#c1c5c4",
+          "#ebf0ee"
+        ]
       },
       "dark-panel": {
         "role": "neutral",
-        "displayName": "Smoked Pane",
-        "canonical": "oklch(20.5% 0.0167 268.8)",
+        "displayName": "Forest Panel (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#141a17",
+        "oklch": "oklch(21.0% 0.011 163.7)",
         "tonalRamp": [
-          "oklch(15% 0.0167 268.8)",
-          "oklch(25% 0.0167 268.8)",
-          "oklch(35% 0.0167 268.8)",
-          "oklch(45% 0.0167 268.8)",
-          "oklch(55% 0.0167 268.8)",
-          "oklch(65% 0.0167 268.8)",
-          "oklch(80% 0.0167 268.8)",
-          "oklch(95% 0.0167 268.8)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#070d0a",
+          "#1f2623",
+          "#3b423e",
+          "#58605c",
+          "#787f7b",
+          "#99a19c",
+          "#bec6c2",
+          "#e8f1ec"
+        ]
       },
       "dark-surface": {
         "role": "neutral",
-        "displayName": "Smoked Surface",
-        "canonical": "oklch(24.4% 0.0200 267.8)",
+        "displayName": "Forest Surface (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#1a221e",
+        "oklch": "oklch(24.3% 0.014 163.6)",
         "tonalRamp": [
-          "oklch(15% 0.0200 267.8)",
-          "oklch(25% 0.0200 267.8)",
-          "oklch(35% 0.0200 267.8)",
-          "oklch(45% 0.0200 267.8)",
-          "oklch(55% 0.0200 267.8)",
-          "oklch(65% 0.0200 267.8)",
-          "oklch(80% 0.0200 267.8)",
-          "oklch(95% 0.0200 267.8)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#060d0a",
+          "#1e2622",
+          "#39423e",
+          "#57605b",
+          "#76807b",
+          "#97a19c",
+          "#bdc7c2",
+          "#e7f2ec"
+        ]
       },
       "dark-surface-hover": {
         "role": "neutral",
-        "displayName": "Smoked Surface Hover",
-        "canonical": "oklch(28.6% 0.0250 268.4)",
+        "displayName": "Forest Surface Hover (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#202a25",
+        "oklch": "oklch(27.4% 0.017 163.4)",
         "tonalRamp": [
-          "oklch(15% 0.0250 268.4)",
-          "oklch(25% 0.0250 268.4)",
-          "oklch(35% 0.0250 268.4)",
-          "oklch(45% 0.0250 268.4)",
-          "oklch(55% 0.0250 268.4)",
-          "oklch(65% 0.0250 268.4)",
-          "oklch(80% 0.0250 268.4)",
-          "oklch(95% 0.0250 268.4)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#050d09",
+          "#1d2722",
+          "#38433d",
+          "#55615b",
+          "#75817a",
+          "#96a29b",
+          "#bbc8c1",
+          "#e5f2eb"
+        ]
       },
       "dark-surface-active": {
         "role": "neutral",
-        "displayName": "Smoked Surface Pressed",
-        "canonical": "oklch(32.6% 0.0297 268.7)",
+        "displayName": "Forest Surface Active (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#2c3a32",
+        "oklch": "oklch(33.3% 0.023 159.8)",
         "tonalRamp": [
-          "oklch(15% 0.0297 268.7)",
-          "oklch(25% 0.0297 268.7)",
-          "oklch(35% 0.0297 268.7)",
-          "oklch(45% 0.0297 268.7)",
-          "oklch(55% 0.0297 268.7)",
-          "oklch(65% 0.0297 268.7)",
-          "oklch(80% 0.0297 268.7)",
-          "oklch(95% 0.0297 268.7)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#030e08",
+          "#1a2820",
+          "#35443b",
+          "#536259",
+          "#728278",
+          "#93a399",
+          "#b8c9bf",
+          "#e2f4e9"
+        ]
       },
       "dark-outline": {
         "role": "neutral",
-        "displayName": "Night Outline",
-        "canonical": "oklch(30.6% 0.0245 268.5)",
+        "displayName": "Forest Outline (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#2e3b34",
+        "oklch": "oklch(33.8% 0.021 161.5)",
         "tonalRamp": [
-          "oklch(15% 0.0245 268.5)",
-          "oklch(25% 0.0245 268.5)",
-          "oklch(35% 0.0245 268.5)",
-          "oklch(45% 0.0245 268.5)",
-          "oklch(55% 0.0245 268.5)",
-          "oklch(65% 0.0245 268.5)",
-          "oklch(80% 0.0245 268.5)",
-          "oklch(95% 0.0245 268.5)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
-      },
-      "dark-rim": {
-        "role": "neutral",
-        "displayName": "Night Rim",
-        "canonical": "oklch(35.3% 0.0216 270.7)",
-        "tonalRamp": [
-          "oklch(15% 0.0216 270.7)",
-          "oklch(25% 0.0216 270.7)",
-          "oklch(35% 0.0216 270.7)",
-          "oklch(45% 0.0216 270.7)",
-          "oklch(55% 0.0216 270.7)",
-          "oklch(65% 0.0216 270.7)",
-          "oklch(80% 0.0216 270.7)",
-          "oklch(95% 0.0216 270.7)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#040e08",
+          "#1b2721",
+          "#36433c",
+          "#54625a",
+          "#738179",
+          "#94a39a",
+          "#b9c9c0",
+          "#e3f3ea"
+        ]
       },
       "dark-text": {
         "role": "neutral",
-        "displayName": "Warm Paper Text",
-        "canonical": "oklch(96.1% 0.0041 91.4)",
+        "displayName": "Frost Text (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#f3f6f3",
+        "oklch": "oklch(97.0% 0.005 145.5)",
         "tonalRamp": [
-          "oklch(15% 0.0041 91.4)",
-          "oklch(25% 0.0041 91.4)",
-          "oklch(35% 0.0041 91.4)",
-          "oklch(45% 0.0041 91.4)",
-          "oklch(55% 0.0041 91.4)",
-          "oklch(65% 0.0041 91.4)",
-          "oklch(80% 0.0041 91.4)",
-          "oklch(95% 0.0041 91.4)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#0a0c0a",
+          "#222523",
+          "#3e403e",
+          "#5c5e5c",
+          "#7b7e7b",
+          "#9c9f9c",
+          "#c2c5c2",
+          "#ecefec"
+        ]
       },
       "dark-secondary": {
         "role": "neutral",
-        "displayName": "Slate Secondary",
-        "canonical": "oklch(74.7% 0.0212 267.2)",
+        "displayName": "Sage Secondary (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#c5cfc8",
+        "oklch": "oklch(84.5% 0.014 155.5)",
         "tonalRamp": [
-          "oklch(15% 0.0212 267.2)",
-          "oklch(25% 0.0212 267.2)",
-          "oklch(35% 0.0212 267.2)",
-          "oklch(45% 0.0212 267.2)",
-          "oklch(55% 0.0212 267.2)",
-          "oklch(65% 0.0212 267.2)",
-          "oklch(80% 0.0212 267.2)",
-          "oklch(95% 0.0212 267.2)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#070d09",
+          "#1f2621",
+          "#3a423c",
+          "#57605a",
+          "#77807a",
+          "#98a19b",
+          "#bdc7c0",
+          "#e7f2ea"
+        ]
       },
       "dark-dim": {
         "role": "neutral",
-        "displayName": "Slate Dim",
-        "canonical": "oklch(56.9% 0.0261 266.7)",
+        "displayName": "Lichen Dim (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#b8c5bb",
+        "oklch": "oklch(81.1% 0.020 152.7)",
         "tonalRamp": [
-          "oklch(15% 0.0261 266.7)",
-          "oklch(25% 0.0261 266.7)",
-          "oklch(35% 0.0261 266.7)",
-          "oklch(45% 0.0261 266.7)",
-          "oklch(55% 0.0261 266.7)",
-          "oklch(65% 0.0261 266.7)",
-          "oklch(80% 0.0261 266.7)",
-          "oklch(95% 0.0261 266.7)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#050e07",
+          "#1d271f",
+          "#38433b",
+          "#566158",
+          "#758178",
+          "#96a299",
+          "#bbc8be",
+          "#e5f3e8"
+        ]
       },
-      "dark-lamp": {
-        "role": "primary",
-        "displayName": "VU Amber Lamp",
-        "canonical": "oklch(82.4% 0.1486 73.3)",
-        "tonalRamp": [
-          "oklch(15% 0.1486 73.3)",
-          "oklch(25% 0.1486 73.3)",
-          "oklch(35% 0.1486 73.3)",
-          "oklch(45% 0.1486 73.3)",
-          "oklch(55% 0.1486 73.3)",
-          "oklch(65% 0.1486 73.3)",
-          "oklch(80% 0.1486 73.3)",
-          "oklch(95% 0.1486 73.3)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
-      },
-      "dark-lamp-hover": {
-        "role": "primary",
-        "displayName": "VU Amber Lamp, Lifted",
-        "canonical": "oklch(86.2% 0.1226 77.0)",
-        "tonalRamp": [
-          "oklch(15% 0.1226 77.0)",
-          "oklch(25% 0.1226 77.0)",
-          "oklch(35% 0.1226 77.0)",
-          "oklch(45% 0.1226 77.0)",
-          "oklch(55% 0.1226 77.0)",
-          "oklch(65% 0.1226 77.0)",
-          "oklch(80% 0.1226 77.0)",
-          "oklch(95% 0.1226 77.0)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
-      },
-      "dark-lamp-text": {
-        "role": "primary",
-        "displayName": "VU Amber Lamp Text",
-        "canonical": "oklch(82.4% 0.1486 73.3)",
-        "tonalRamp": [
-          "oklch(15% 0.1486 73.3)",
-          "oklch(25% 0.1486 73.3)",
-          "oklch(35% 0.1486 73.3)",
-          "oklch(45% 0.1486 73.3)",
-          "oklch(55% 0.1486 73.3)",
-          "oklch(65% 0.1486 73.3)",
-          "oklch(80% 0.1486 73.3)",
-          "oklch(95% 0.1486 73.3)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale.",
-        "derivation": "Palette::accent_text() on dark: ground = surface_active toward white 0.1 (#434857); the accent already reads 5.19:1, so lamp text equals dark-lamp. src/theme.rs:92-108."
-      },
-      "dark-on-lamp": {
+      "dark-disabled": {
         "role": "neutral",
-        "displayName": "Ink on Amber",
-        "canonical": "oklch(19.8% 0.0353 74.5)",
+        "displayName": "Faded Lichen Disabled (dark)",
+        "source": "Palette::disabled_text()",
+        "canonical": "#84988b",
+        "oklch": "oklch(66.0% 0.030 157.0)",
         "tonalRamp": [
-          "oklch(15% 0.0353 74.5)",
-          "oklch(25% 0.0353 74.5)",
-          "oklch(35% 0.0353 74.5)",
-          "oklch(45% 0.0353 74.5)",
-          "oklch(55% 0.0353 74.5)",
-          "oklch(65% 0.0353 74.5)",
-          "oklch(80% 0.0353 74.5)",
-          "oklch(95% 0.0353 74.5)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#020f06",
+          "#18281e",
+          "#334539",
+          "#506357",
+          "#6f8376",
+          "#90a497",
+          "#b5cabd",
+          "#dff5e7"
+        ]
+      },
+      "dark-moss": {
+        "role": "primary",
+        "displayName": "Mint Moss (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#98d2ac",
+        "oklch": "oklch(81.4% 0.080 155.5)",
+        "tonalRamp": [
+          "#001300",
+          "#002f12",
+          "#114c2d",
+          "#336b4a",
+          "#548c69",
+          "#75ae89",
+          "#9ad4ae",
+          "#c4ffd8"
+        ]
+      },
+      "dark-moss-hover": {
+        "role": "primary",
+        "displayName": "Bright Mint Hover (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#b7e6c8",
+        "oklch": "oklch(88.4% 0.064 156.8)",
+        "tonalRamp": [
+          "#001202",
+          "#002d17",
+          "#1f4a32",
+          "#3e694f",
+          "#5d896e",
+          "#7eab8f",
+          "#a3d1b4",
+          "#ccfcde"
+        ]
+      },
+      "dark-moss-text": {
+        "role": "primary",
+        "displayName": "Mint Moss Text (dark)",
+        "source": "Palette::accent_text(), derived at runtime",
+        "canonical": "#98d2ac",
+        "oklch": "oklch(81.4% 0.080 155.5)",
+        "tonalRamp": [
+          "#001300",
+          "#002f12",
+          "#114c2d",
+          "#336b4a",
+          "#548c69",
+          "#75ae89",
+          "#9ad4ae",
+          "#c4ffd8"
+        ]
+      },
+      "dark-on-moss": {
+        "role": "primary",
+        "displayName": "Ink on Mint (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#07140c",
+        "oklch": "oklch(17.6% 0.025 156.3)",
+        "tonalRamp": [
+          "#030e07",
+          "#1a281f",
+          "#35443a",
+          "#526258",
+          "#728277",
+          "#92a398",
+          "#b8c9bd",
+          "#e2f4e8"
+        ]
       },
       "dark-danger": {
-        "role": "error",
-        "displayName": "Night Danger",
-        "canonical": "oklch(71.8% 0.1760 20.9)",
+        "role": "status",
+        "displayName": "Blush Danger (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#ffb0b8",
+        "oklch": "oklch(83.5% 0.093 12.6)",
         "tonalRamp": [
-          "oklch(15% 0.1760 20.9)",
-          "oklch(25% 0.1760 20.9)",
-          "oklch(35% 0.1760 20.9)",
-          "oklch(45% 0.1760 20.9)",
-          "oklch(55% 0.1760 20.9)",
-          "oklch(65% 0.1760 20.9)",
-          "oklch(80% 0.1760 20.9)",
-          "oklch(95% 0.1760 20.9)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#260002",
+          "#460717",
+          "#682732",
+          "#8a464f",
+          "#ad656e",
+          "#d1868e",
+          "#faabb3",
+          "#ffd5dd"
+        ]
       },
       "dark-warning": {
-        "role": "neutral",
-        "displayName": "Night Warning",
-        "canonical": "oklch(87.6% 0.1343 91.8)",
+        "role": "status",
+        "displayName": "Signal Gold Warning (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#ffb020",
+        "oklch": "oklch(81.3% 0.165 75.0)",
         "tonalRamp": [
-          "oklch(15% 0.1343 91.8)",
-          "oklch(25% 0.1343 91.8)",
-          "oklch(35% 0.1343 91.8)",
-          "oklch(45% 0.1343 91.8)",
-          "oklch(55% 0.1343 91.8)",
-          "oklch(65% 0.1343 91.8)",
-          "oklch(80% 0.1343 91.8)",
-          "oklch(95% 0.1343 91.8)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#240000",
+          "#431300",
+          "#633200",
+          "#845100",
+          "#a67110",
+          "#ca933e",
+          "#f2b966",
+          "#ffe390"
+        ]
       },
       "dark-overlay": {
         "role": "neutral",
-        "displayName": "Opaque Night Overlay",
-        "canonical": "oklch(24.5% 0.0219 269.2)",
+        "displayName": "Forest Overlay (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "#202a25",
+        "oklch": "oklch(27.4% 0.017 163.4)",
         "tonalRamp": [
-          "oklch(15% 0.0219 269.2)",
-          "oklch(25% 0.0219 269.2)",
-          "oklch(35% 0.0219 269.2)",
-          "oklch(45% 0.0219 269.2)",
-          "oklch(55% 0.0219 269.2)",
-          "oklch(65% 0.0219 269.2)",
-          "oklch(80% 0.0219 269.2)",
-          "oklch(95% 0.0219 269.2)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#050d09",
+          "#1d2722",
+          "#38433d",
+          "#55615b",
+          "#75817a",
+          "#96a29b",
+          "#bbc8c1",
+          "#e5f2eb"
+        ]
       },
       "dark-shadow": {
         "role": "neutral",
-        "displayName": "Night Shadow",
-        "canonical": "oklch(0.0% 0.0000 0.0) / 0.59",
-        "tonalRamp": [
-          "oklch(15% 0.0000 0.0)",
-          "oklch(25% 0.0000 0.0)",
-          "oklch(35% 0.0000 0.0)",
-          "oklch(45% 0.0000 0.0)",
-          "oklch(55% 0.0000 0.0)",
-          "oklch(65% 0.0000 0.0)",
-          "oklch(80% 0.0000 0.0)",
-          "oklch(95% 0.0000 0.0)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+        "displayName": "Night Shadow (dark)",
+        "source": "Palette::dark() in src/theme.rs",
+        "canonical": "rgba(0, 0, 0, 0.45)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
       },
       "dark-pane-glass": {
-        "role": "neutral",
-        "displayName": "Smoked Pane Glass",
-        "canonical": "oklch(20.5% 0.0167 268.8) / 0.72",
-        "tonalRamp": [
-          "oklch(15% 0.0167 268.8)",
-          "oklch(25% 0.0167 268.8)",
-          "oklch(35% 0.0167 268.8)",
-          "oklch(45% 0.0167 268.8)",
-          "oklch(55% 0.0167 268.8)",
-          "oklch(65% 0.0167 268.8)",
-          "oklch(80% 0.0167 268.8)",
-          "oklch(95% 0.0167 268.8)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+        "role": "material",
+        "displayName": "Pane Glass (dark)",
+        "source": "material::glass(Kind::Pane)",
+        "canonical": "rgba(20, 26, 23, 0.68)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
+      },
+      "dark-content-glass": {
+        "role": "material",
+        "displayName": "Content Plate Glass (dark)",
+        "source": "material::glass(Kind::Content)",
+        "canonical": "rgba(44, 58, 50, 0.85)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
       },
       "dark-console-glass": {
-        "role": "neutral",
-        "displayName": "Smoked Console Glass",
-        "canonical": "oklch(20.5% 0.0167 268.8) / 0.8",
-        "tonalRamp": [
-          "oklch(15% 0.0167 268.8)",
-          "oklch(25% 0.0167 268.8)",
-          "oklch(35% 0.0167 268.8)",
-          "oklch(45% 0.0167 268.8)",
-          "oklch(55% 0.0167 268.8)",
-          "oklch(65% 0.0167 268.8)",
-          "oklch(80% 0.0167 268.8)",
-          "oklch(95% 0.0167 268.8)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+        "role": "material",
+        "displayName": "Console Glass (dark)",
+        "source": "material::glass(Kind::Console)",
+        "canonical": "rgba(20, 26, 23, 0.80)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
       },
       "dark-well-glass": {
-        "role": "neutral",
-        "displayName": "Smoked Well Glass",
-        "canonical": "oklch(24.4% 0.0200 267.8) / 0.55",
-        "tonalRamp": [
-          "oklch(15% 0.0200 267.8)",
-          "oklch(25% 0.0200 267.8)",
-          "oklch(35% 0.0200 267.8)",
-          "oklch(45% 0.0200 267.8)",
-          "oklch(55% 0.0200 267.8)",
-          "oklch(65% 0.0200 267.8)",
-          "oklch(80% 0.0200 267.8)",
-          "oklch(95% 0.0200 267.8)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+        "role": "material",
+        "displayName": "Well Glass (dark)",
+        "source": "material::glass(Kind::Well)",
+        "canonical": "rgba(26, 34, 30, 0.55)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
+      },
+      "dark-rim": {
+        "role": "material",
+        "displayName": "Quiet Rim (dark)",
+        "source": "material::rim_colour()",
+        "canonical": "rgba(243, 246, 243, 0.07)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
       },
       "dark-hover-fill": {
-        "role": "neutral",
-        "displayName": "Light Through Dark Glass",
-        "canonical": "oklch(100.0% 0.0000 89.9) / 0.06",
-        "tonalRamp": [
-          "oklch(15% 0.0000 89.9)",
-          "oklch(25% 0.0000 89.9)",
-          "oklch(35% 0.0000 89.9)",
-          "oklch(45% 0.0000 89.9)",
-          "oklch(55% 0.0000 89.9)",
-          "oklch(65% 0.0000 89.9)",
-          "oklch(80% 0.0000 89.9)",
-          "oklch(95% 0.0000 89.9)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+        "role": "material",
+        "displayName": "Hover Fill (dark)",
+        "source": "material::hover_fill()",
+        "canonical": "rgba(255, 255, 255, 0.06)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
+      },
+      "dark-key-fill": {
+        "role": "material",
+        "displayName": "Key Fill (rest) (dark)",
+        "source": "material::key_fill(lift = 0); +0.04 dark / +0.03 light at lift 1",
+        "canonical": "rgba(255, 255, 255, 0.095)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
       },
       "dark-selected-fill": {
+        "role": "material",
+        "displayName": "Selected Fill (dark)",
+        "source": "material::selected_fill()",
+        "canonical": "rgba(255, 255, 255, 0.095)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
+      },
+      "dark-chip-fill": {
+        "role": "material",
+        "displayName": "Chip Fill (rest) (dark)",
+        "source": "theme::choice_chips dark branch, WHITE.gamma_multiply(0.08 + 0.04 * lift)",
+        "canonical": "rgba(255, 255, 255, 0.08)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
+      },
+      "dark-chip-fill-hover": {
+        "role": "material",
+        "displayName": "Chip Fill (hover) (dark)",
+        "source": "theme::choice_chips dark branch at lift 1",
+        "canonical": "rgba(255, 255, 255, 0.12)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
+      },
+      "dark-scenery-wash": {
+        "role": "material",
+        "displayName": "Night Wash (dark)",
+        "source": "material::scenery_layers()",
+        "canonical": "rgba(0, 0, 0, 0.612)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
+      },
+      "dark-liked-cover": {
         "role": "neutral",
-        "displayName": "Selected Light Through Dark Glass",
-        "canonical": "oklch(100.0% 0.0000 89.9) / 0.095",
+        "displayName": "Liked Cover Moss (dark)",
+        "source": "sidebar::liked_cover()",
+        "canonical": "#3c5d4b",
+        "oklch": "oklch(44.7% 0.049 159.7)",
         "tonalRamp": [
-          "oklch(15% 0.0000 89.9)",
-          "oklch(25% 0.0000 89.9)",
-          "oklch(35% 0.0000 89.9)",
-          "oklch(45% 0.0000 89.9)",
-          "oklch(55% 0.0000 89.9)",
-          "oklch(65% 0.0000 89.9)",
-          "oklch(80% 0.0000 89.9)",
-          "oklch(95% 0.0000 89.9)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#001105",
+          "#0a2b1c",
+          "#274837",
+          "#456654",
+          "#648773",
+          "#85a894",
+          "#aaceb9",
+          "#d4f9e3"
+        ]
       },
       "light-window": {
         "role": "neutral",
-        "displayName": "Pale Cool Room",
-        "canonical": "oklch(94.0% 0.0083 271.3)",
+        "displayName": "Mist Window (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#f4f6f4",
+        "oklch": "oklch(97.1% 0.003 145.5)",
         "tonalRamp": [
-          "oklch(15% 0.0083 271.3)",
-          "oklch(25% 0.0083 271.3)",
-          "oklch(35% 0.0083 271.3)",
-          "oklch(45% 0.0083 271.3)",
-          "oklch(55% 0.0083 271.3)",
-          "oklch(65% 0.0083 271.3)",
-          "oklch(80% 0.0083 271.3)",
-          "oklch(95% 0.0083 271.3)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#0a0c0a",
+          "#232423",
+          "#3f403f",
+          "#5c5e5c",
+          "#7c7e7c",
+          "#9d9f9d",
+          "#c3c5c3",
+          "#edefed"
+        ]
       },
       "light-panel": {
         "role": "neutral",
-        "displayName": "Milky Pane",
-        "canonical": "oklch(99.2% 0.0026 286.4)",
+        "displayName": "White Panel (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 89.9)",
         "tonalRamp": [
-          "oklch(15% 0.0026 286.4)",
-          "oklch(25% 0.0026 286.4)",
-          "oklch(35% 0.0026 286.4)",
-          "oklch(45% 0.0026 286.4)",
-          "oklch(55% 0.0026 286.4)",
-          "oklch(65% 0.0026 286.4)",
-          "oklch(80% 0.0026 286.4)",
-          "oklch(95% 0.0026 286.4)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#0b0b0b",
+          "#242424",
+          "#404040",
+          "#5d5d5d",
+          "#7d7d7d",
+          "#9e9e9e",
+          "#c4c4c4",
+          "#eeeeee"
+        ]
       },
       "light-surface": {
         "role": "neutral",
-        "displayName": "Milky Surface",
-        "canonical": "oklch(95.5% 0.0070 268.5)",
+        "displayName": "Mist Surface (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#eaf0eb",
+        "oklch": "oklch(94.9% 0.009 150.7)",
         "tonalRamp": [
-          "oklch(15% 0.0070 268.5)",
-          "oklch(25% 0.0070 268.5)",
-          "oklch(35% 0.0070 268.5)",
-          "oklch(45% 0.0070 268.5)",
-          "oklch(55% 0.0070 268.5)",
-          "oklch(65% 0.0070 268.5)",
-          "oklch(80% 0.0070 268.5)",
-          "oklch(95% 0.0070 268.5)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#080c09",
+          "#212522",
+          "#3c413d",
+          "#5a5f5b",
+          "#797f7a",
+          "#9aa09b",
+          "#c0c6c1",
+          "#eaf0eb"
+        ]
       },
       "light-surface-hover": {
         "role": "neutral",
-        "displayName": "Milky Surface Hover",
-        "canonical": "oklch(92.5% 0.0113 269.5)",
+        "displayName": "Mist Surface Hover (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#e3e9e4",
+        "oklch": "oklch(92.8% 0.009 150.7)",
         "tonalRamp": [
-          "oklch(15% 0.0113 269.5)",
-          "oklch(25% 0.0113 269.5)",
-          "oklch(35% 0.0113 269.5)",
-          "oklch(45% 0.0113 269.5)",
-          "oklch(55% 0.0113 269.5)",
-          "oklch(65% 0.0113 269.5)",
-          "oklch(80% 0.0113 269.5)",
-          "oklch(95% 0.0113 269.5)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#080c09",
+          "#212522",
+          "#3c413d",
+          "#5a5f5b",
+          "#797f7a",
+          "#9aa09b",
+          "#c0c6c1",
+          "#eaf0eb"
+        ]
       },
       "light-surface-active": {
         "role": "neutral",
-        "displayName": "Milky Surface Pressed",
-        "canonical": "oklch(88.8% 0.0144 268.5)",
+        "displayName": "Mist Surface Active (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#c9d1ca",
+        "oklch": "oklch(85.3% 0.013 149.2)",
         "tonalRamp": [
-          "oklch(15% 0.0144 268.5)",
-          "oklch(25% 0.0144 268.5)",
-          "oklch(35% 0.0144 268.5)",
-          "oklch(45% 0.0144 268.5)",
-          "oklch(55% 0.0144 268.5)",
-          "oklch(65% 0.0144 268.5)",
-          "oklch(80% 0.0144 268.5)",
-          "oklch(95% 0.0144 268.5)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#080d08",
+          "#202621",
+          "#3b423c",
+          "#59605a",
+          "#787f79",
+          "#99a19a",
+          "#bfc7c0",
+          "#e9f1ea"
+        ]
       },
       "light-outline": {
         "role": "neutral",
-        "displayName": "Daylight Outline and Rim",
-        "canonical": "oklch(88.5% 0.0144 268.5)",
+        "displayName": "Mist Outline (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#d8ded9",
+        "oklch": "oklch(89.5% 0.009 150.7)",
         "tonalRamp": [
-          "oklch(15% 0.0144 268.5)",
-          "oklch(25% 0.0144 268.5)",
-          "oklch(35% 0.0144 268.5)",
-          "oklch(45% 0.0144 268.5)",
-          "oklch(55% 0.0144 268.5)",
-          "oklch(65% 0.0144 268.5)",
-          "oklch(80% 0.0144 268.5)",
-          "oklch(95% 0.0144 268.5)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#080c09",
+          "#212522",
+          "#3c413d",
+          "#5a5f5b",
+          "#797f7a",
+          "#9aa09b",
+          "#c0c6c1",
+          "#eaf0eb"
+        ]
       },
       "light-text": {
         "role": "neutral",
-        "displayName": "Ink Text",
-        "canonical": "oklch(20.5% 0.0104 268.2)",
+        "displayName": "Forest Ink (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#161a17",
+        "oklch": "oklch(21.2% 0.008 153.2)",
         "tonalRamp": [
-          "oklch(15% 0.0104 268.2)",
-          "oklch(25% 0.0104 268.2)",
-          "oklch(35% 0.0104 268.2)",
-          "oklch(45% 0.0104 268.2)",
-          "oklch(55% 0.0104 268.2)",
-          "oklch(65% 0.0104 268.2)",
-          "oklch(80% 0.0104 268.2)",
-          "oklch(95% 0.0104 268.2)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#090c09",
+          "#212522",
+          "#3c413e",
+          "#5a5f5b",
+          "#7a7f7b",
+          "#9ba09c",
+          "#c0c6c1",
+          "#eaf0ec"
+        ]
       },
       "light-secondary": {
         "role": "neutral",
-        "displayName": "Graphite Secondary",
-        "canonical": "oklch(44.5% 0.0262 265.5)",
+        "displayName": "Slate Secondary (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#4b524c",
+        "oklch": "oklch(43.0% 0.013 149.6)",
         "tonalRamp": [
-          "oklch(15% 0.0262 265.5)",
-          "oklch(25% 0.0262 265.5)",
-          "oklch(35% 0.0262 265.5)",
-          "oklch(45% 0.0262 265.5)",
-          "oklch(55% 0.0262 265.5)",
-          "oklch(65% 0.0262 265.5)",
-          "oklch(80% 0.0262 265.5)",
-          "oklch(95% 0.0262 265.5)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#070d08",
+          "#202621",
+          "#3b423c",
+          "#59605a",
+          "#788079",
+          "#99a19a",
+          "#bec7c0",
+          "#e9f1ea"
+        ]
       },
       "light-dim": {
         "role": "neutral",
-        "displayName": "Graphite Dim",
-        "canonical": "oklch(64.3% 0.0238 265.7)",
+        "displayName": "Stone Dim (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#47504a",
+        "oklch": "oklch(42.1% 0.015 156.5)",
         "tonalRamp": [
-          "oklch(15% 0.0238 265.7)",
-          "oklch(25% 0.0238 265.7)",
-          "oklch(35% 0.0238 265.7)",
-          "oklch(45% 0.0238 265.7)",
-          "oklch(55% 0.0238 265.7)",
-          "oklch(65% 0.0238 265.7)",
-          "oklch(80% 0.0238 265.7)",
-          "oklch(95% 0.0238 265.7)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#060d09",
+          "#1e2621",
+          "#3a423c",
+          "#57605a",
+          "#76807a",
+          "#97a19b",
+          "#bdc7c0",
+          "#e7f2ea"
+        ]
       },
-      "light-lamp": {
-        "role": "primary",
-        "displayName": "Daylight Amber Lamp",
-        "canonical": "oklch(55.4% 0.1299 58.5)",
-        "tonalRamp": [
-          "oklch(15% 0.1299 58.5)",
-          "oklch(25% 0.1299 58.5)",
-          "oklch(35% 0.1299 58.5)",
-          "oklch(45% 0.1299 58.5)",
-          "oklch(55% 0.1299 58.5)",
-          "oklch(65% 0.1299 58.5)",
-          "oklch(80% 0.1299 58.5)",
-          "oklch(95% 0.1299 58.5)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
-      },
-      "light-lamp-hover": {
-        "role": "primary",
-        "displayName": "Daylight Amber Lamp, Pressed Deeper",
-        "canonical": "oklch(49.5% 0.1159 58.3)",
-        "tonalRamp": [
-          "oklch(15% 0.1159 58.3)",
-          "oklch(25% 0.1159 58.3)",
-          "oklch(35% 0.1159 58.3)",
-          "oklch(45% 0.1159 58.3)",
-          "oklch(55% 0.1159 58.3)",
-          "oklch(65% 0.1159 58.3)",
-          "oklch(80% 0.1159 58.3)",
-          "oklch(95% 0.1159 58.3)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
-      },
-      "light-lamp-text": {
-        "role": "primary",
-        "displayName": "Deep Lamp Brown (derived lamp text)",
-        "canonical": "oklch(38.7% 0.0867 59.9)",
-        "tonalRamp": [
-          "oklch(15% 0.0867 59.9)",
-          "oklch(25% 0.0867 59.9)",
-          "oklch(35% 0.0867 59.9)",
-          "oklch(45% 0.0867 59.9)",
-          "oklch(55% 0.0867 59.9)",
-          "oklch(65% 0.0867 59.9)",
-          "oklch(80% 0.0867 59.9)",
-          "oklch(95% 0.0867 59.9)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale.",
-        "derivation": "Palette::accent_text(): ground = surface_active lerp_to_gamma toward black 0.2 (#abaeb6); step light-lamp #a95c06 lerp_to_gamma toward black 0.05 until WCAG contrast >= 4.5; ten steps give #653706 (4.50:1 on that ground). src/theme.rs:92-108."
-      },
-      "light-on-lamp": {
+      "light-disabled": {
         "role": "neutral",
-        "displayName": "White on Amber",
-        "canonical": "oklch(100.0% 0.0000 89.9)",
+        "displayName": "Faded Stone Disabled (light)",
+        "source": "Palette::disabled_text()",
+        "canonical": "#59695e",
+        "oklch": "oklch(50.4% 0.026 155.3)",
         "tonalRamp": [
-          "oklch(15% 0.0000 89.9)",
-          "oklch(25% 0.0000 89.9)",
-          "oklch(35% 0.0000 89.9)",
-          "oklch(45% 0.0000 89.9)",
-          "oklch(55% 0.0000 89.9)",
-          "oklch(65% 0.0000 89.9)",
-          "oklch(80% 0.0000 89.9)",
-          "oklch(95% 0.0000 89.9)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#030e07",
+          "#1a281f",
+          "#35443a",
+          "#526257",
+          "#728277",
+          "#92a398",
+          "#b8c9bd",
+          "#e2f4e7"
+        ]
+      },
+      "light-moss": {
+        "role": "primary",
+        "displayName": "Deep Forest Moss (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#27633f",
+        "oklch": "oklch(45.0% 0.086 154.4)",
+        "tonalRamp": [
+          "#001400",
+          "#002f0f",
+          "#0b4d2a",
+          "#306c47",
+          "#518c66",
+          "#72af86",
+          "#97d5ab",
+          "#c1ffd5"
+        ]
+      },
+      "light-moss-hover": {
+        "role": "primary",
+        "displayName": "Deeper Forest Hover (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#225738",
+        "oklch": "oklch(41.2% 0.077 155.1)",
+        "tonalRamp": [
+          "#001300",
+          "#002e12",
+          "#154b2d",
+          "#366a4a",
+          "#568b69",
+          "#77ad8a",
+          "#9cd3af",
+          "#c6ffd8"
+        ]
+      },
+      "light-moss-text": {
+        "role": "primary",
+        "displayName": "Derived Forest Text (light)",
+        "source": "Palette::accent_text(), derived at runtime",
+        "canonical": "#1a422a",
+        "oklch": "oklch(34.3% 0.062 154.9)",
+        "tonalRamp": [
+          "#001201",
+          "#022c16",
+          "#224931",
+          "#40684e",
+          "#5f896d",
+          "#80aa8e",
+          "#a5d1b3",
+          "#cffcdc"
+        ]
+      },
+      "light-on-moss": {
+        "role": "primary",
+        "displayName": "White on Forest (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#242424",
+          "#404040",
+          "#5d5d5d",
+          "#7d7d7d",
+          "#9e9e9e",
+          "#c4c4c4",
+          "#eeeeee"
+        ]
       },
       "light-danger": {
-        "role": "error",
-        "displayName": "Daylight Danger",
-        "canonical": "oklch(55.5% 0.1846 19.7)",
+        "role": "status",
+        "displayName": "Deep Crimson Danger (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#951524",
+        "oklch": "oklch(43.3% 0.161 22.2)",
         "tonalRamp": [
-          "oklch(15% 0.1846 19.7)",
-          "oklch(25% 0.1846 19.7)",
-          "oklch(35% 0.1846 19.7)",
-          "oklch(45% 0.1846 19.7)",
-          "oklch(55% 0.1846 19.7)",
-          "oklch(65% 0.1846 19.7)",
-          "oklch(80% 0.1846 19.7)",
-          "oklch(95% 0.1846 19.7)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#2d0000",
+          "#4f0005",
+          "#721b21",
+          "#963d3d",
+          "#ba5d5c",
+          "#df7f7c",
+          "#ffa4a1",
+          "#ffceca"
+        ]
       },
       "light-warning": {
-        "role": "neutral",
-        "displayName": "Daylight Warning",
-        "canonical": "oklch(52.2% 0.1070 85.9)",
+        "role": "status",
+        "displayName": "Burnt Umber Warning (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#7b3605",
+        "oklch": "oklch(42.0% 0.110 48.3)",
         "tonalRamp": [
-          "oklch(15% 0.1070 85.9)",
-          "oklch(25% 0.1070 85.9)",
-          "oklch(35% 0.1070 85.9)",
-          "oklch(45% 0.1070 85.9)",
-          "oklch(55% 0.1070 85.9)",
-          "oklch(65% 0.1070 85.9)",
-          "oklch(80% 0.1070 85.9)",
-          "oklch(95% 0.1070 85.9)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#290000",
+          "#4a0500",
+          "#6c2800",
+          "#8e471d",
+          "#b2673f",
+          "#d6895f",
+          "#ffae84",
+          "#ffd9ad"
+        ]
       },
       "light-overlay": {
         "role": "neutral",
-        "displayName": "Opaque Daylight Overlay",
-        "canonical": "oklch(100.0% 0.0000 89.9)",
+        "displayName": "White Overlay (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 89.9)",
         "tonalRamp": [
-          "oklch(15% 0.0000 89.9)",
-          "oklch(25% 0.0000 89.9)",
-          "oklch(35% 0.0000 89.9)",
-          "oklch(45% 0.0000 89.9)",
-          "oklch(55% 0.0000 89.9)",
-          "oklch(65% 0.0000 89.9)",
-          "oklch(80% 0.0000 89.9)",
-          "oklch(95% 0.0000 89.9)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#0b0b0b",
+          "#242424",
+          "#404040",
+          "#5d5d5d",
+          "#7d7d7d",
+          "#9e9e9e",
+          "#c4c4c4",
+          "#eeeeee"
+        ]
       },
       "light-shadow": {
         "role": "neutral",
-        "displayName": "Daylight Shadow",
-        "canonical": "oklch(0.0% 0.0000 0.0) / 0.19",
-        "tonalRamp": [
-          "oklch(15% 0.0000 0.0)",
-          "oklch(25% 0.0000 0.0)",
-          "oklch(35% 0.0000 0.0)",
-          "oklch(45% 0.0000 0.0)",
-          "oklch(55% 0.0000 0.0)",
-          "oklch(65% 0.0000 0.0)",
-          "oklch(80% 0.0000 0.0)",
-          "oklch(95% 0.0000 0.0)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+        "displayName": "Mist Shadow (light)",
+        "source": "Palette::light() in src/theme.rs",
+        "canonical": "rgba(16, 24, 18, 0.14)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
       },
       "light-pane-glass": {
-        "role": "neutral",
-        "displayName": "Milky Pane Glass",
-        "canonical": "oklch(99.2% 0.0026 286.4) / 0.58",
-        "tonalRamp": [
-          "oklch(15% 0.0026 286.4)",
-          "oklch(25% 0.0026 286.4)",
-          "oklch(35% 0.0026 286.4)",
-          "oklch(45% 0.0026 286.4)",
-          "oklch(55% 0.0026 286.4)",
-          "oklch(65% 0.0026 286.4)",
-          "oklch(80% 0.0026 286.4)",
-          "oklch(95% 0.0026 286.4)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+        "role": "material",
+        "displayName": "Pane Glass (light)",
+        "source": "material::glass(Kind::Pane)",
+        "canonical": "rgba(255, 255, 255, 0.68)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
+      },
+      "light-content-glass": {
+        "role": "material",
+        "displayName": "Content Plate Glass (light)",
+        "source": "material::glass(Kind::Content)",
+        "canonical": "rgba(255, 255, 255, 0.68)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
       },
       "light-console-glass": {
-        "role": "neutral",
-        "displayName": "Milky Console Glass",
-        "canonical": "oklch(99.2% 0.0026 286.4) / 0.72",
-        "tonalRamp": [
-          "oklch(15% 0.0026 286.4)",
-          "oklch(25% 0.0026 286.4)",
-          "oklch(35% 0.0026 286.4)",
-          "oklch(45% 0.0026 286.4)",
-          "oklch(55% 0.0026 286.4)",
-          "oklch(65% 0.0026 286.4)",
-          "oklch(80% 0.0026 286.4)",
-          "oklch(95% 0.0026 286.4)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+        "role": "material",
+        "displayName": "Console Glass (light)",
+        "source": "material::glass(Kind::Console)",
+        "canonical": "rgba(255, 255, 255, 0.80)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
       },
       "light-well-glass": {
-        "role": "neutral",
-        "displayName": "Milky Well Glass",
-        "canonical": "oklch(95.5% 0.0070 268.5) / 0.75",
-        "tonalRamp": [
-          "oklch(15% 0.0070 268.5)",
-          "oklch(25% 0.0070 268.5)",
-          "oklch(35% 0.0070 268.5)",
-          "oklch(45% 0.0070 268.5)",
-          "oklch(55% 0.0070 268.5)",
-          "oklch(65% 0.0070 268.5)",
-          "oklch(80% 0.0070 268.5)",
-          "oklch(95% 0.0070 268.5)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+        "role": "material",
+        "displayName": "Well Glass (light)",
+        "source": "material::glass(Kind::Well)",
+        "canonical": "rgba(234, 240, 235, 0.75)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
+      },
+      "light-rim": {
+        "role": "material",
+        "displayName": "Quiet Rim (light)",
+        "source": "material::rim_colour()",
+        "canonical": "rgba(22, 26, 23, 0.08)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
       },
       "light-hover-fill": {
-        "role": "neutral",
-        "displayName": "Shade on Light Glass",
-        "canonical": "oklch(0.0% 0.0000 0.0) / 0.045",
-        "tonalRamp": [
-          "oklch(15% 0.0000 0.0)",
-          "oklch(25% 0.0000 0.0)",
-          "oklch(35% 0.0000 0.0)",
-          "oklch(45% 0.0000 0.0)",
-          "oklch(55% 0.0000 0.0)",
-          "oklch(65% 0.0000 0.0)",
-          "oklch(80% 0.0000 0.0)",
-          "oklch(95% 0.0000 0.0)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+        "role": "material",
+        "displayName": "Hover Fill (light)",
+        "source": "material::hover_fill()",
+        "canonical": "rgba(0, 0, 0, 0.045)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
+      },
+      "light-key-fill": {
+        "role": "material",
+        "displayName": "Key Fill (rest) (light)",
+        "source": "material::key_fill(lift = 0); +0.04 dark / +0.03 light at lift 1",
+        "canonical": "rgba(0, 0, 0, 0.035)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
       },
       "light-selected-fill": {
-        "role": "neutral",
-        "displayName": "Selected Shade on Light Glass",
-        "canonical": "oklch(0.0% 0.0000 0.0) / 0.07",
-        "tonalRamp": [
-          "oklch(15% 0.0000 0.0)",
-          "oklch(25% 0.0000 0.0)",
-          "oklch(35% 0.0000 0.0)",
-          "oklch(45% 0.0000 0.0)",
-          "oklch(55% 0.0000 0.0)",
-          "oklch(65% 0.0000 0.0)",
-          "oklch(80% 0.0000 0.0)",
-          "oklch(95% 0.0000 0.0)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+        "role": "material",
+        "displayName": "Selected Fill (light)",
+        "source": "material::selected_fill()",
+        "canonical": "rgba(0, 0, 0, 0.07)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
       },
-      "liked-tint": {
-        "role": "secondary",
-        "displayName": "Liked Songs Violet",
-        "canonical": "oklch(46.5% 0.2097 282.1)",
+      "light-scenery-wash": {
+        "role": "material",
+        "displayName": "Mist Wash (light)",
+        "source": "material::scenery_layers()",
+        "canonical": "rgba(255, 255, 255, 0.68)",
+        "note": "Translucent overlay composited by egui over its host; no tonal ramp."
+      },
+      "light-liked-cover": {
+        "role": "neutral",
+        "displayName": "Liked Cover Mist (light)",
+        "source": "sidebar::liked_cover()",
+        "canonical": "#e3efe6",
+        "oklch": "oklch(94.1% 0.017 153.6)",
         "tonalRamp": [
-          "oklch(15% 0.2097 282.1)",
-          "oklch(25% 0.2097 282.1)",
-          "oklch(35% 0.2097 282.1)",
-          "oklch(45% 0.2097 282.1)",
-          "oklch(55% 0.2097 282.1)",
-          "oklch(65% 0.2097 282.1)",
-          "oklch(80% 0.2097 282.1)",
-          "oklch(95% 0.2097 282.1)"
-        ],
-        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+          "#060d08",
+          "#1e2720",
+          "#39433b",
+          "#566159",
+          "#768078",
+          "#97a299",
+          "#bcc8bf",
+          "#e6f2e9"
+        ]
+      },
+      "brand-tile": {
+        "role": "brand",
+        "displayName": "Forest Icon Tile",
+        "source": "assets/brand/spotiurge-mark.svg, util::app_icon_rgba",
+        "canonical": "#141a17",
+        "oklch": "oklch(21.0% 0.011 163.7)",
+        "tonalRamp": [
+          "#070d0a",
+          "#1f2623",
+          "#3b423e",
+          "#58605c",
+          "#787f7b",
+          "#99a19c",
+          "#bec6c2",
+          "#e8f1ec"
+        ]
+      },
+      "brand-mint": {
+        "role": "brand",
+        "displayName": "Ridge Mint",
+        "source": "assets/brand/spotiurge-mark.svg, util::app_icon_rgba",
+        "canonical": "#8fceab",
+        "oklch": "oklch(79.9% 0.082 159.5)",
+        "tonalRamp": [
+          "#001401",
+          "#002f15",
+          "#054c30",
+          "#2e6c4d",
+          "#4f8c6c",
+          "#70ae8d",
+          "#96d5b2",
+          "#bfffdb"
+        ]
       }
     },
     "typographyMeta": {
+      "hero": {
+        "displayName": "Hero",
+        "purpose": "Collection, album and artist titles; 32 px wide (>720 pt), 28 px narrow, shrinking in 2 px steps to 20 px.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
+      },
       "display": {
         "displayName": "Display",
-        "purpose": "Collection hero titles at wide widths; steps down toward 28px to fit."
+        "purpose": "Login wordmark and \"Your top songs\".",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Page titles: Library, Settings, Queue."
+        "purpose": "Library, Queue and Settings page titles.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
       "desk-title": {
         "displayName": "Desk Title",
-        "purpose": "The For you desk title and the search top result."
+        "purpose": "\"For you\" and the Search heading.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Dialog titles and the Home greeting."
+        "purpose": "Home greeting, dialog and update titles.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
       "section": {
         "displayName": "Section",
-        "purpose": "Settings and queue section heads."
+        "purpose": "Settings sections, Queue groups, lyrics header.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
+      },
+      "shelf-title": {
+        "displayName": "Shelf Title",
+        "purpose": "Home shelves and theme::section_title.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
       "wordmark": {
         "displayName": "Wordmark",
-        "purpose": "The Spotiurge wordmark beside the 24px sidebar mark."
+        "purpose": "\"Spotiurge\" beside the sidebar mark.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
-      "prompt": {
-        "displayName": "Prompt",
-        "purpose": "The taste prompt."
+      "nav": {
+        "displayName": "Nav",
+        "purpose": "Inactive sidebar navigation rows.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
-      "track-title": {
-        "displayName": "Track Title",
-        "purpose": "Row titles."
+      "nav-active": {
+        "displayName": "Nav Active",
+        "purpose": "The selected sidebar navigation row.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
+      },
+      "item-title": {
+        "displayName": "Item Title",
+        "purpose": "Card and row titles.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
       "body": {
         "displayName": "Body",
-        "purpose": "egui body and button text, the search field."
+        "purpose": "egui body and button text, field input.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
-      "secondary": {
-        "displayName": "Secondary",
-        "purpose": "Subtitles, discovery reasons, settings fields."
+      "menu": {
+        "displayName": "Menu",
+        "purpose": "Popup menu items.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Pill buttons.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Chips and soft buttons."
+        "purpose": "Soft buttons and choice chips.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
-      "label-strong": {
-        "displayName": "Label Strong",
-        "purpose": "Pill buttons."
+      "secondary": {
+        "displayName": "Secondary",
+        "purpose": "Subtle lines, discovery reasons, notices.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
-      "detail": {
-        "displayName": "Detail",
-        "purpose": "Row subtitles."
+      "item-subtitle": {
+        "displayName": "Item Subtitle",
+        "purpose": "Card and row subtitles.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
-      "badge": {
-        "displayName": "Badge",
-        "purpose": "The Connect pill label."
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Durations and counts.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       },
       "small": {
         "displayName": "Small",
-        "purpose": "Small print."
+        "purpose": "egui TextStyle::Small.",
+        "weightSource": "fastframe_fonts::Weight (Regular 400, Medium 500, SemiBold 600, Bold 700)",
+        "lineHeight": "Inter font metrics in egui; not set explicitly"
       }
     },
     "shadows": [
       {
-        "name": "pane",
-        "value": "0 8px 28px rgba(0,0,0,0.32) dark / rgba(0,0,0,0.09) light",
-        "purpose": "Floating shell panes: shadow colour at 55% (dark) or 50% (light). src/ui/material.rs:73-78."
-      },
-      {
-        "name": "console",
-        "value": "0 10px 32px rgba(0,0,0,0.47) dark / rgba(0,0,0,0.13) light",
-        "purpose": "The player console: shadow colour at 80% (dark) or 70% (light). src/ui/material.rs:79-84."
-      },
-      {
         "name": "popover",
-        "value": "0 12px 32px rgba(0,0,0,0.59) dark / rgba(0,0,0,0.19) light",
-        "purpose": "Menus, popovers, dialogs, toasts, login card. src/ui/material.rs:85-90."
+        "value": "0 8px 24px 0 {colors.*-shadow}",
+        "purpose": "Menus, popovers, toasts and egui windows (material::glass Kind::Popover, theme popup_shadow)."
       },
       {
-        "name": "popup",
-        "value": "0 8px 24px rgba(0,0,0,0.59) dark / rgba(0,0,0,0.19) light",
-        "purpose": "egui popups. src/theme.rs:335-340."
+        "name": "card-art-dark",
+        "value": "0 10px 28px 0 rgba(0, 0, 0, 0.47)",
+        "purpose": "Card and search result covers, dark scheme only (widgets::paint_shadow)."
       },
       {
-        "name": "header",
-        "value": "linear-gradient(to bottom, rgba(0,0,0,0.43) dark / rgba(0,0,0,0.14) light, transparent) 14px tall",
-        "purpose": "The top bar shadow over a scrolled page, deepening over the first 24pt of scroll. src/ui/mod.rs:402-415."
+        "name": "hero-cover-dark",
+        "value": "0 14px 36px 0 rgba(0, 0, 0, 0.41)",
+        "purpose": "Collection hero cover, dark: dark-shadow at 90% (collection::cover_lift)."
+      },
+      {
+        "name": "hero-cover-light",
+        "value": "0 8px 24px 0 rgba(16, 24, 18, 0.11)",
+        "purpose": "Collection hero cover, light: light-shadow at 80%."
       },
       {
         "name": "switch-knob",
-        "value": "0 1px 4px rgba(0,0,0,0.24)",
-        "purpose": "The white 16px switch knob. src/ui/widgets.rs:2957-2968."
+        "value": "0 1px 4px 0 rgba(0, 0, 0, 0.24)",
+        "purpose": "White knob of widgets::switch."
       }
     ],
     "motion": [
       {
-        "name": "ease-out-expo",
-        "value": "(1 - 2^(-10t)) / (1 - 2^(-10))",
-        "purpose": "The only easing; exact 0 at start and 1 at end, retargets from the current value. src/ui/motion.rs:94-101."
-      },
-      {
         "name": "feedback",
         "value": "120ms",
-        "purpose": "Hover and press fills, field focus rims, egui animation_time. src/ui/motion.rs:12."
+        "source": "motion::FEEDBACK = 0.12",
+        "purpose": "Hover, press release and focus rim; also egui style.animation_time."
       },
       {
         "name": "state",
         "value": "220ms",
-        "purpose": "Lamp glide between sidebar channels, neutral pill glide between chips, switch track, feedback fills. src/ui/motion.rs:14."
+        "source": "motion::STATE = 0.22",
+        "purpose": "Selection glide between nav rows and chips, switch track, rating fills, card hover lift."
       },
       {
         "name": "page",
-        "value": "220ms, rise 6pt, opacity from 0.35",
-        "purpose": "Page entrance after navigation. src/ui/motion.rs:16,20; src/ui/mod.rs:339-355."
+        "value": "220ms, 6pt rise, opacity 0.35 to 1",
+        "source": "motion::PAGE = 0.22, motion::PAGE_RISE = 6.0",
+        "purpose": "Page entrance after navigation; never delays a click."
       },
       {
-        "name": "ambient",
+        "name": "ease-out-expo",
+        "value": "(1 - 2^(-10t)) / (1 - 2^(-10)); approx. cubic-bezier(0.16, 1, 0.3, 1)",
+        "source": "motion::ease_out",
+        "purpose": "The single curve for every motion helper; retargeting starts from the current value."
+      },
+      {
+        "name": "press",
+        "value": "instant sink (icon 90%, disc 94%), release over 120ms",
+        "source": "theme::icon_button, theme::circle_button",
+        "purpose": "Press feedback."
+      },
+      {
+        "name": "console-tint-fade",
+        "value": "450ms",
+        "source": "player_bar TINT_FADE_SECONDS = 0.45 via egui animate_value_with_time",
+        "purpose": "The optional 4% art tint crossing to a new cover; skipped under Reduce Motion."
+      },
+      {
+        "name": "tooltip-delay",
+        "value": "400ms",
+        "source": "style.interaction.tooltip_delay = 0.4",
+        "purpose": "Tooltip appearance."
+      },
+      {
+        "name": "spinner",
+        "value": "1.2 rev/s, repaint every 33ms while visible",
+        "source": "theme::spinner",
+        "purpose": "Busy indicator."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "all helpers return targets at once; animation_time 0; scroll animation none",
+        "source": "motion::reduced, motion::set_reduced, macOS accessibilityDisplayShouldReduceMotion polled at most every 2s",
+        "purpose": "Reduce Motion from the app setting or the system."
+      },
+      {
+        "name": "ambient-unused",
         "value": "600ms",
-        "purpose": "Room light and page wash crossing to a new cover. src/ui/motion.rs:18."
-      },
-      {
-        "name": "reduce-motion",
-        "value": "immediate",
-        "purpose": "App setting Reduce motion OR macOS accessibilityDisplayShouldReduceMotion (polled at most every 2 s): every helper returns its target, animation_time 0, scroll animation none. src/ui/motion.rs:25-91."
+        "source": "motion::AMBIENT = 0.6",
+        "purpose": "Defined but has no production caller (test-only). Not a live glide; the selection glide is STATE."
       }
     ],
     "breakpoints": [
       {
-        "name": "window-min",
-        "value": "760px x 520px"
+        "name": "discovery-reason-column",
+        "value": "920pt available width",
+        "source": "discovery::WIDE"
       },
       {
-        "name": "search-fold",
-        "value": "200px (search field ideal; Connect folds to an icon chip below it, 8px reserve)"
+        "name": "hero-wide",
+        "value": "720pt available width",
+        "source": "collection::hero"
       },
       {
-        "name": "table-album",
-        "value": "560px"
+        "name": "sidebar",
+        "value": "210pt min, 250pt default, 600pt max",
+        "source": "ui::SIDEBAR_MIN_WIDTH, settings sidebar_width"
       },
       {
-        "name": "table-added",
-        "value": "760px"
+        "name": "side-panel-min",
+        "value": "280pt",
+        "source": "theme::SIDE_PANEL_MIN_WIDTH"
       },
       {
-        "name": "wide",
-        "value": "920px (discovery reason column, extra table columns)"
+        "name": "grid-column-min",
+        "value": "108pt",
+        "source": "sidebar::GRID_MIN_CARD_WIDTH"
       },
       {
-        "name": "capture-narrow",
-        "value": "900px x 760px"
+        "name": "console-sides",
+        "value": "30% of width, clamped 200pt to 420pt",
+        "source": "player_bar::show"
       },
       {
-        "name": "capture-normal",
-        "value": "1440px x 900px"
+        "name": "macos-titlebar-inset",
+        "value": "28pt, 0 in fullscreen",
+        "source": "theme::titlebar_inset"
+      },
+      {
+        "name": "captured-sizes",
+        "value": "1440x900 and 900x760 logical",
+        "source": "docs/reviews/spotiurge-scenery"
       }
     ],
-    "glass": {
-      "note": "Rendered by the app as painted layers (shadow, fill, top sheen fading within 90pt, one-physical-pixel two-tone rim). No OS backdrop blur or vibrancy. src/ui/material.rs:1-138.",
-      "kinds": [
-        {
-          "kind": "pane",
-          "opacity": {
-            "dark": 0.72,
-            "light": 0.58
-          },
-          "sheenWhite": {
-            "dark": 0.045,
-            "light": 0.55
-          },
-          "rimTopWhite": {
-            "dark": 0.11,
-            "light": 0.95
-          },
-          "rimBottomBlack": {
-            "dark": 0.42,
-            "light": 0.1
-          }
+    "material": {
+      "model": "Painted compositing in egui: translucent fills over the window base, the bundled scene and a flat wash. No OS blur, no backdrop-filter, no per-frame blur.",
+      "scenery": {
+        "asset": "assets/scenery/alpine-lake.jpg (960x540, original generated image, bundled locally, see assets/scenery/README.md)",
+        "stack": "window fill, then the image at alpha (0.85 - wash) / (1 - wash), then the wash; image plus wash cover 85% of the base",
+        "imageAlpha": {
+          "dark": 0.6134,
+          "light": 0.5313
         },
-        {
-          "kind": "console",
-          "opacity": {
-            "dark": 0.8,
-            "light": 0.72
-          },
-          "sheenWhite": {
-            "dark": 0.06,
-            "light": 0.6
-          },
-          "rimTopWhite": {
-            "dark": 0.14,
-            "light": 1.0
-          },
-          "rimBottomBlack": {
-            "dark": 0.45,
-            "light": 0.12
-          },
-          "extra": "base eased 12% toward the playing cover tint (src/ui/player_bar.rs:15,49)"
+        "wash": {
+          "dark": "black at 0.612",
+          "light": "white at 0.68"
         },
-        {
-          "kind": "popover",
-          "opacity": {
-            "dark": 1.0,
-            "light": 1.0
-          },
-          "sheenWhite": {
-            "dark": 0.05,
-            "light": 0.5
-          },
-          "rimTopWhite": {
-            "dark": 0.13,
-            "light": 1.0
-          },
-          "rimBottomBlack": {
-            "dark": 0.5,
-            "light": 0.14
-          }
-        },
-        {
-          "kind": "well",
-          "opacity": {
-            "dark": 0.55,
-            "light": 0.75
-          },
-          "sheenWhite": {
-            "dark": 0,
-            "light": 0
-          },
-          "rimTopWhite": {
-            "dark": 0,
-            "light": 0
-          },
-          "rimBottomBlack": {
-            "dark": 0,
-            "light": 0
-          }
-        }
-      ],
-      "rimBase": "outline at 60% (dark) or 80% (light); lit over the top 35%, shaded over the bottom 35%",
-      "room": "window colour plus key light (cover tint, else lamp) at 42% dark / 40% light from upper left, radius 0.62 of the diagonal; counter-light (hue +0.33) at 20% dark / 22% light from lower right, radius 0.5. src/ui/material.rs:335-378; src/ui/mod.rs:96-105.",
-      "pageWash": "cover tint at 20% (light, all pages), 30% (dark Home/Search/Settings/Queue), 55% (dark collections); stops 0pt full, 140pt 45%, 360pt clear; crosses over in 600ms. src/ui/mod.rs:294-327."
+        "crop": "centred aspect fill (material::cover_uv)",
+        "decode": "once, on a background thread named spotiurge-scenery; cached as one texture; on failure the window base shows alone"
+      },
+      "kinds": {
+        "Pane": "panel at 0.68, no stroke, no shadow",
+        "Content": "dark surface_active at 0.85, light panel at 0.68, no stroke, no shadow",
+        "Console": "panel at 0.80 with rim; optional 4% art tint",
+        "Popover": "overlay at 1.0 with rim and popover shadow",
+        "Well": "surface at 0.55 dark, 0.75 light, outline stroke"
+      },
+      "focusRing": "1pt selection stroke (moss) 2pt outside the control, 4pt corner",
+      "selection": "neutral selected fill only; egui text selection uses moss at 35%"
+    },
+    "brand": {
+      "glyph": "assets/brand/spotiurge-glyph.svg: asymmetric mountain cut into three level-meter columns; in-app tint is palette moss (theme::logo)",
+      "appIcon": "assets/brand/spotiurge-mark.svg: brand-mint glyph on brand-tile, 120-unit plate with rx 27 on a 128 canvas",
+      "tray": "alpha-only template from util::tray_template_rgba; the OS supplies its colour",
+      "smallSizes": "vertical edges snap to whole pixels at 32px and below"
     },
     "evidence": {
-      "artifact": ".qa/spotiurge-glass-final-candidate",
-      "sha256": "fa1b2ab01f6e7ce36b429b17a69af0065dec21c2a6a53135cf1bbaecbdd52480",
-      "sourceCommit": "0b3e670",
-      "platform": "macOS arm64",
-      "captures": 52,
-      "review": "finish review r1 then verdict r2: seven fixes resolved, disposition ship, static captures only",
-      "unverified": [
-        "motion smoothness and frame pacing",
-        "controlled idle-power baseline and repaint cost",
-        "live macOS Reduce Motion preference changes",
-        "local playback and Connect transfer in the exact glass package",
-        "Windows and Linux UI runs",
-        "real listening (demo data is synthetic)"
-      ],
-      "packagedChecks": "Separate universal R2 DMG: Spotify and cloud credential restoration, private sync and twelve Luna suggestions passed; Spotify matching timed out. Native app Reduce motion control operation exercised in isolated demo. See docs/reviews/spotiurge-glass/verification.md."
+      "captures": "docs/reviews/spotiurge-scenery: before/after native macOS arm64 demo captures with synthetic tracks; 17 surfaces in light and dark at 1440x900 plus Home, Search and Settings at 900x760",
+      "sourceState": ".qa/scenery-source-state-r4.json; captured source/asset hashes are recorded; the POT date was restored after regeneration and the notch accent was updated separately after captures",
+      "captureStatus": "All 40 final r4 after captures and 40 matching before captures are recorded and their hashes/dimensions verified. This document makes no fresh overall Opus ship verdict.",
+      "contrast": "material.rs test every_scene_pixel_preserves_text_contrast checks six text roles and chip labels over every scene pixel. Earlier recorded minima: dark [7.668, 5.221, 4.668, 4.830, 4.832, 4.565], light [10.052, 4.599, 4.775, 6.466, 4.980, 5.061] for text, secondary, dim, moss text, danger, warning. The r4 chip-label check and full required local Mac checks passed.",
+      "idle": ".qa/scenery-idle-measurement.json, r1, sampled 60 s after settle: CPU 0.05% before and after, RSS about +1.3 MiB. No r4 frame rate or endurance claim.",
+      "reviews": ".qa/scenery-finish-design-review-r1.md, -verdict-r2.md, -verdict-r3.md, run directly on Opus because the impeccable-finish-reviewer agent was unavailable",
+      "scope": "Desktop native only. The iOS candidate is a separate unpublished branch and is not validated by these captures. Visualizer, fullscreen and lyrics art contents are out of scope and retained."
     }
   },
   "components": [
     {
-      "name": "Shell Pane",
+      "name": "Scenery Ground and Pane",
       "kind": "card",
-      "refersTo": "pane",
-      "description": "Floating smoked glass pane for the sidebar, page and side panels (approximation: the app paints this natively, no backdrop blur).",
-      "html": "<div class=\"ds-pane\"><div class=\"ds-pane-title\">For you</div><div class=\"ds-pane-sub\">Demo picks</div></div>",
-      "css": ".ds-pane { background: rgba(20,23,31,0.72); border-radius: 14px; padding: 24px; color: #f3f2ef; font-family: Inter, system-ui, sans-serif; box-shadow: 0 8px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.11), inset 0 -1px 0 rgba(0,0,0,0.42); background-image: linear-gradient(to bottom, rgba(255,255,255,0.045), transparent 90px); } .ds-pane-title { font-weight: 700; font-size: 26px; } .ds-pane-sub { font-size: 13px; color: #a7adbb; margin-top: 4px; }"
+      "refersTo": "pane-dark",
+      "description": "Illustration only: the window base, a stand-in for the bundled scene, the flat wash and a sidebar pane. In the app the scene is the real JPEG and glass is egui compositing, not CSS blur.",
+      "html": "<div class=\"ds-ground\"><div class=\"ds-wash\"></div><aside class=\"ds-pane\"><div class=\"ds-brand\"><svg viewBox=\"22 22 84 84\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path fill=\"#98d2ac\" d=\"M24 98V72L46 47V98ZM53 98V39.1L61 30L75 42.4V98ZM82 98V48.6L104 68V98Z\"/></svg><span>Spotiurge</span></div></aside></div>",
+      "css": ".ds-ground{position:relative;width:360px;height:200px;background:#0e1110 linear-gradient(180deg,#3a4652,#1d2a2a 60%,#121a18);border-radius:8px;overflow:hidden;font-family: Inter, system-ui, sans-serif;} .ds-wash{position:absolute;inset:0;background:rgba(0,0,0,0.612);} .ds-pane{position:absolute;left:8px;top:8px;bottom:8px;width:150px;background:rgba(20,26,23,0.68);border-radius:14px;padding:8px;} .ds-brand{display:flex;align-items:center;gap:6px;height:34px;padding-left:6px;color:#f3f6f3;font-weight:700;font-size:16px;}"
     },
     {
-      "name": "Primary Pill Button",
+      "name": "Primary Pill",
       "kind": "button",
-      "refersTo": "button-primary",
-      "description": "The lamp-filled primary action.",
-      "html": "<button class=\"ds-btn-primary\">Play</button>",
-      "css": ".ds-btn-primary { background: #ffb547; color: #1f1303; border: none; border-radius: 9999px; padding: 8px 18px; font: 600 13px Inter, system-ui, sans-serif; transition: background 120ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-primary:hover { background: #ffc770; } .ds-btn-primary:focus-visible { outline: 1px solid #ffb547; outline-offset: 2px; }"
+      "refersTo": "button-primary-dark",
+      "description": "The moss primary action; hover eases to moss hover in 120 ms. Disabled keeps a white 8% overlay and disabled ink.",
+      "html": "<div class=\"ds-row\"><button class=\"ds-btn-primary\">Save taste</button><button class=\"ds-btn-primary\" disabled>Save taste</button></div>",
+      "css": ".ds-row{display:flex;gap:8px;padding:16px;background:rgba(44,58,50,0.85);border-radius:14px;} .ds-btn-primary{font-family: Inter, system-ui, sans-serif;font-weight:600;font-size:13px;padding:8px 18px;border:none;border-radius:9999px;background:#98d2ac;color:#07140c;transition:background 120ms cubic-bezier(0.16,1,0.3,1);} .ds-btn-primary:hover:not(:disabled){background:#b7e6c8;} .ds-btn-primary:focus-visible{outline:1px solid #98d2ac;outline-offset:2px;} .ds-btn-primary:disabled{background:rgba(255,255,255,0.08);color:#84988b;}"
     },
     {
-      "name": "Play Key",
+      "name": "Secondary Pill",
       "kind": "button",
-      "refersTo": "play-key",
-      "description": "36px lamp disc in the console (44px on the desk); grows 5% on hover, sinks to 94% when pressed.",
-      "html": "<button class=\"ds-play\" aria-label=\"Play\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"#1f1303\"><path d=\"M7 4v16l13-8z\"/></svg></button>",
-      "css": ".ds-play { width: 36px; height: 36px; border-radius: 9999px; border: none; background: #ffb547; display: inline-grid; place-items: center; transition: transform 120ms cubic-bezier(0.16,1,0.3,1), background 120ms; } .ds-play:hover { transform: scale(1.05); background: #ffc770; } .ds-play:active { transform: scale(0.94); } .ds-play:focus-visible { outline: 1px solid #ffb547; outline-offset: 2px; }"
+      "refersTo": "button-secondary-dark",
+      "description": "A clear key: faint hover fill inside a rim that moves from dim to text under the pointer.",
+      "html": "<div class=\"ds-host\"><button class=\"ds-btn-secondary\">Cancel</button></div>",
+      "css": ".ds-host{padding:16px;background:rgba(44,58,50,0.85);border-radius:14px;} .ds-btn-secondary{font-family: Inter, system-ui, sans-serif;font-weight:600;font-size:13px;padding:8px 18px;border-radius:9999px;color:#f3f6f3;background:rgba(255,255,255,0.036);border:1px solid rgba(184,197,187,0.7);transition:background 120ms cubic-bezier(0.16,1,0.3,1),border-color 120ms cubic-bezier(0.16,1,0.3,1);} .ds-btn-secondary:hover{background:rgba(255,255,255,0.09);border-color:#f3f6f3;} .ds-btn-secondary:focus-visible{outline:1px solid #98d2ac;outline-offset:2px;}"
     },
     {
       "name": "Choice Chips",
       "kind": "chip",
-      "refersTo": "choice-chip-selected",
-      "description": "Neutral inverted pill selects a choice and glides between options over 220 ms; never amber.",
-      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\">Familiar</button><button class=\"ds-chip ds-chip-on\">Balanced</button><button class=\"ds-chip\">Adventurous</button></div>",
-      "css": ".ds-chips { display: flex; gap: 6px; } .ds-chip { background: #1c202a; color: #f3f2ef; border: none; border-radius: 9999px; padding: 7px 12px; font: 500 13px Inter, system-ui, sans-serif; transition: background 120ms, color 220ms; } .ds-chip:hover { background: #252a37; } .ds-chip-on, .ds-chip-on:hover { background: #f3f2ef; color: #0b0d12; } .ds-chip:focus-visible { outline: 1px solid #ffb547; outline-offset: 2px; }"
+      "refersTo": "chip-dark",
+      "description": "Mutually exclusive choices. Dark chips rest on a white 8% overlay (12% on hover); the selected text-coloured fill glides between chips over 220 ms.",
+      "html": "<div class=\"ds-chips\" role=\"radiogroup\"><button class=\"ds-chip\">Familiar</button><button class=\"ds-chip ds-chip-on\" aria-checked=\"true\">Balanced</button><button class=\"ds-chip\">Adventurous</button></div>",
+      "css": ".ds-chips{display:flex;gap:6px;padding:16px;background:rgba(44,58,50,0.85);border-radius:14px;} .ds-chip{font-family: Inter, system-ui, sans-serif;font-weight:500;font-size:13px;padding:7px 12px;border:none;border-radius:9999px;background:rgba(255,255,255,0.08);color:#f3f6f3;transition:background 120ms cubic-bezier(0.16,1,0.3,1),color 220ms cubic-bezier(0.16,1,0.3,1);} .ds-chip:hover{background:rgba(255,255,255,0.12);} .ds-chip:focus-visible{outline:1px solid #98d2ac;outline-offset:2px;} .ds-chip-on,.ds-chip-on:hover{background:#f3f6f3;color:#0e1110;}"
     },
     {
-      "name": "Text Well",
+      "name": "Search Field",
       "kind": "input",
-      "refersTo": "field-well",
-      "description": "Text field set into the glass: well fill, 10px radius, 1px rim that eases to a focus rim.",
-      "html": "<input class=\"ds-well\" placeholder=\"Client ID\">",
-      "css": ".ds-well { background: rgba(28,32,42,0.55); color: #f3f2ef; border: 1px solid #373b47; border-radius: 10px; padding: 8px 12px; font: 400 13px Inter, system-ui, sans-serif; caret-color: #ffb547; transition: border-color 120ms, border-width 120ms; } .ds-well:focus-visible { outline: none; border: 1.5px solid rgba(243,242,239,0.6); } .ds-well::placeholder { color: #707787; }"
+      "refersTo": "search-field-dark",
+      "description": "A 34-point well pill with a secondary search icon; the rim widens to 1.5 and moves to text at 60% while focused.",
+      "html": "<label class=\"ds-search\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#c5cfc8\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input placeholder=\"What do you want to play?\"></label>",
+      "css": ".ds-search{display:flex;align-items:center;gap:10px;width:300px;height:34px;padding:0 14px 0 10px;border-radius:9999px;background:rgba(26,34,30,0.55);box-shadow:inset 0 0 0 1px rgba(243,246,243,0.07);transition:box-shadow 120ms cubic-bezier(0.16,1,0.3,1);} .ds-search:focus-within{box-shadow:inset 0 0 0 1.5px rgba(243,246,243,0.6);} .ds-search input{font-family: Inter, system-ui, sans-serif;flex:1;font-size:14px;background:none;border:none;outline:none;color:#f3f6f3;} .ds-search input::placeholder{color:#b8c5bb;}"
     },
     {
-      "name": "Search Pill",
-      "kind": "input",
-      "refersTo": "search-field",
-      "description": "34px pill well with a 16px leading search icon.",
-      "html": "<label class=\"ds-search\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#a7adbb\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/></svg><input placeholder=\"Search\"></label>",
-      "css": ".ds-search { display: inline-flex; align-items: center; gap: 10px; height: 34px; width: 280px; padding: 0 12px 0 10px; background: rgba(28,32,42,0.55); border: 1px solid #373b47; border-radius: 9999px; transition: border-color 120ms; } .ds-search:focus-within { border: 1.5px solid rgba(243,242,239,0.6); } .ds-search input { background: none; border: none; outline: none; color: #f3f2ef; font: 400 14px Inter, system-ui, sans-serif; width: 100%; } .ds-search input::placeholder { color: #707787; }"
-    },
-    {
-      "name": "Sidebar Channel",
+      "name": "Sidebar Navigation",
       "kind": "nav",
-      "refersTo": "nav-row-selected",
-      "description": "Selected navigation row: selected fill plus a 3px amber lamp bar at the leading edge that glides between channels.",
-      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-on\" href=\"#\">Home</a><a class=\"ds-nav-item\" href=\"#\">Search</a></nav>",
-      "css": ".ds-nav { display: grid; gap: 4px; width: 220px; } .ds-nav-item { position: relative; display: block; padding: 10px 14px; border-radius: 8px; color: #f3f2ef; text-decoration: none; font: 600 14px Inter, system-ui, sans-serif; transition: background 120ms; } .ds-nav-item:hover { background: rgba(255,255,255,0.06); } .ds-nav-on, .ds-nav-on:hover { background: rgba(255,255,255,0.095); } .ds-nav-on::before { content: \"\"; position: absolute; left: 0; top: 27%; height: 46%; width: 3px; border-radius: 2px; background: #ffb547; } .ds-nav-item:focus-visible { outline: 1px solid #ffb547; outline-offset: 2px; }"
+      "refersTo": "nav-row-active-dark",
+      "description": "38-point rows on pane glass. Selection is a neutral fill with bold text, gliding over 220 ms; no leading colour bar.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-row ds-nav-on\" href=\"#\" aria-current=\"page\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"/><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/></svg>Home</a><a class=\"ds-nav-row\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg>Search</a></nav>",
+      "css": ".ds-nav{width:220px;padding:8px;background:rgba(20,26,23,0.68);border-radius:14px;display:flex;flex-direction:column;} .ds-nav-row{font-family: Inter, system-ui, sans-serif;display:flex;align-items:center;gap:14px;height:38px;padding-left:12px;border-radius:8px;font-size:14.5px;font-weight:600;color:#c5cfc8;text-decoration:none;transition:background 120ms cubic-bezier(0.16,1,0.3,1),color 120ms cubic-bezier(0.16,1,0.3,1);} .ds-nav-row:hover{background:rgba(255,255,255,0.06);color:#f3f6f3;} .ds-nav-row:focus-visible{outline:1px solid #98d2ac;outline-offset:2px;} .ds-nav-on,.ds-nav-on:hover{background:rgba(255,255,255,0.095);color:#f3f6f3;font-weight:700;}"
     },
     {
       "name": "Opaque Menu",
       "kind": "custom",
-      "refersTo": "popover",
-      "description": "Menus, popovers and dialogs are opaque glass with sheen, rim and shadow.",
-      "html": "<div class=\"ds-menu\"><div class=\"ds-menu-item\">Tune taste</div><div class=\"ds-menu-item\">Show AI history</div><div class=\"ds-menu-item\">Turn off automatic picks</div></div>",
-      "css": ".ds-menu { width: 260px; background: #1c202b; border: 1px solid #373b47; border-radius: 12px; padding: 6px; box-shadow: 0 12px 32px rgba(0,0,0,0.59); background-image: linear-gradient(to bottom, rgba(255,255,255,0.05), transparent 90px); font: 400 14px Inter, system-ui, sans-serif; color: #f3f2ef; } .ds-menu-item { padding: 8px 10px; border-radius: 6px; transition: background 120ms; } .ds-menu-item:hover { background: rgba(255,255,255,0.06); }"
+      "refersTo": "popover-dark",
+      "description": "Opaque overlay with one rim and the popover shadow; disabled items use their own ink and take no clicks.",
+      "html": "<div class=\"ds-menu\" role=\"menu\"><button class=\"ds-menu-item\" role=\"menuitem\">Play next</button><button class=\"ds-menu-item\" role=\"menuitem\" disabled>Save this mix</button><button class=\"ds-menu-item\" role=\"menuitem\">Refresh picks</button></div>",
+      "css": ".ds-menu{width:240px;padding:6px;background:#202a25;border:1px solid rgba(243,246,243,0.07);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.45);display:flex;flex-direction:column;} .ds-menu-item{font-family: Inter, system-ui, sans-serif;height:28px;padding:0 10px;text-align:left;font-size:13.5px;color:#f3f6f3;background:none;border:none;border-radius:8px;transition:background 120ms cubic-bezier(0.16,1,0.3,1);} .ds-menu-item:hover:not(:disabled){background:rgba(255,255,255,0.096);} .ds-menu-item:focus-visible{outline:1px solid #98d2ac;outline-offset:-1px;} .ds-menu-item:disabled{color:#84988b;}"
+    },
+    {
+      "name": "Console Play Key",
+      "kind": "custom",
+      "refersTo": "play-key-console-dark",
+      "description": "The console: panel glass at 80% with one rim and an 18-point corner, holding the 36-point moss play disc.",
+      "html": "<div class=\"ds-console\"><button class=\"ds-play\" aria-label=\"Play\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path fill=\"#07140c\" d=\"M6 3.5v17a1 1 0 0 0 1.5.86l14-8.5a1 1 0 0 0 0-1.72l-14-8.5A1 1 0 0 0 6 3.5Z\"/></svg></button></div>",
+      "css": ".ds-console{display:flex;align-items:center;justify-content:center;width:420px;height:88px;background:rgba(20,26,23,0.80);border:1px solid rgba(243,246,243,0.07);border-radius:18px;} .ds-play{width:36px;height:36px;border:none;border-radius:50%;background:#98d2ac;display:grid;place-items:center;transition:transform 120ms cubic-bezier(0.16,1,0.3,1),background 120ms cubic-bezier(0.16,1,0.3,1);} .ds-play:hover{background:#b7e6c8;transform:scale(1.05);} .ds-play:active{transform:scale(0.94);transition:none;} .ds-play:focus-visible{outline:1px solid #98d2ac;outline-offset:2px;}"
+    },
+    {
+      "name": "Discovery Notices",
+      "kind": "custom",
+      "refersTo": "content-plate-dark",
+      "description": "A 14-point icon and one 13 px line: danger for blocking load failures, warning for model failure, secondary for demo and info lines.",
+      "html": "<div class=\"ds-notices\"><p class=\"ds-notice ds-danger\"><span aria-hidden=\"true\">!</span>Cannot read discovery state. Your picks are kept.</p><p class=\"ds-notice ds-warning\"><span aria-hidden=\"true\">!</span>Recommendations are unavailable right now.</p><p class=\"ds-notice\"><span aria-hidden=\"true\">i</span>Demo discoveries. Feedback, recommendations and cloud requests are disabled.</p></div>",
+      "css": ".ds-notices{padding:20px;background:rgba(44,58,50,0.85);border-radius:14px;} .ds-notice{font-family: Inter, system-ui, sans-serif;display:flex;align-items:center;gap:6px;margin:0 0 6px;font-size:13px;color:#c5cfc8;} .ds-notice span{display:inline-grid;place-items:center;width:14px;height:14px;border:1.5px solid currentColor;border-radius:50%;font-size:9px;font-weight:700;} .ds-danger{color:#ffb0b8;} .ds-warning{color:#ffb020;}"
     },
     {
       "name": "Settings Switch",
       "kind": "custom",
-      "refersTo": "switch-on",
-      "description": "The one recorded amber choice-like control: boolean switches, 40 by 22px, track eases to the lamp over 220 ms.",
-      "html": "<button class=\"ds-switch\" role=\"switch\" aria-checked=\"true\" aria-label=\"Autoplay\"><span></span></button>",
-      "css": ".ds-switch { position: relative; width: 40px; height: 22px; border: none; border-radius: 9999px; background: #2e3444; transition: background 220ms cubic-bezier(0.16,1,0.3,1); } .ds-switch span { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 9999px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.24); transition: left 220ms cubic-bezier(0.16,1,0.3,1); } .ds-switch[aria-checked=\"true\"] { background: #ffb547; } .ds-switch[aria-checked=\"true\"] span { left: 21px; } .ds-switch:focus-visible { outline: 1px solid #ffb547; outline-offset: 2px; }"
-    },
-    {
-      "name": "Connect Pill",
-      "kind": "chip",
-      "refersTo": "connect-pill",
-      "description": "Live remote-playback badge: opaque base, 14% amber tint, 1px amber stroke, lamp-text label; folds to an icon chip when the search field would drop below 200px.",
-      "html": "<button class=\"ds-connect\">Playing on Kitchen speaker</button>",
-      "css": ".ds-connect { background: linear-gradient(rgba(255,181,71,0.14), rgba(255,181,71,0.14)), #1c202b; color: #ffb547; border: 1px solid rgba(255,181,71,0.22); border-radius: 9999px; padding: 6px 12px; font: 500 12.5px Inter, system-ui, sans-serif; transition: border-color 120ms; } .ds-connect:hover { border-color: rgba(255,181,71,0.36); } .ds-connect:focus-visible { outline: 1px solid #ffb547; outline-offset: 2px; }"
+      "refersTo": "switch-on-dark",
+      "description": "A 40 by 22 track easing from surface active to moss over 220 ms, with a 16-point white knob.",
+      "html": "<label class=\"ds-switch\"><input type=\"checkbox\" checked><span></span></label>",
+      "css": ".ds-switch{display:inline-block;position:relative;width:40px;height:22px;} .ds-switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;} .ds-switch span{position:absolute;inset:0;border-radius:9999px;background:#2c3a32;transition:background 220ms cubic-bezier(0.16,1,0.3,1);} .ds-switch span::after{content:\"\";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.24);transition:transform 220ms cubic-bezier(0.16,1,0.3,1);} .ds-switch input:checked+span{background:#98d2ac;} .ds-switch input:checked+span::after{transform:translateX(18px);} .ds-switch input:focus-visible+span{outline:1px solid #98d2ac;outline-offset:2px;}"
     }
   ],
   "narrative": {
-    "northStar": "The Studio Control Room",
-    "overview": "Music lives in the lit room behind the glass; Spotiurge is the console in front of it. The whole native desktop app (sidebar, top chrome, Home and its For you discovery desk, library, search, collection pages, queue, lyrics, menus, Connect, settings, login and the player console) is built from smoked glass panes that float 8px apart over a dim room. The room is the window colour lit by two soft colour fields: the playing cover's light from the upper left and a counter-light, the same colour turned a third of the way round the hue wheel, from the lower right. With no cover tint the key light is the lamp amber, so the default room reads amber and teal. The dark theme is a blue-black room at night; the light theme is milky glass over a pale cool room that the amber key light warms toward peach.\n\nThe glass is rendered natively by the app as painted layers: a translucent fill, a top sheen that fades out within 90pt, a two-tone rim one physical pixel wide (lit along the top third, shaded along the bottom third), and a soft offset shadow. There is no OS backdrop blur, no macOS vibrancy and no per-frame blur pass; the room is already as smooth as blurred light, so translucency over it reads as frosted. Pane, console, popover and well are four glass kinds with their own opacity, sheen, rim and shadow (see Elevation & Depth).\n\nDensity is a desktop music console: 56px rows, a 56px top bar, an 88px console, and Inter ranked by weight rather than by colour. One VU-amber lamp marks whatever is live. Everything else, including every choice, is neutral. Motion is a single signature, the fader glide, finite and interruptible, and Reduce Motion (the app's own setting or the macOS system preference) makes every transition immediate. The mark is an amber surge S on a smoked glass tile (`assets/brand/spotiurge-mark.svg`), rasterised at runtime by `util::app_icon_rgba` so the in-app logo and the app icon are the same picture.\n\nThe category default this world refuses: a flat black Spotify clone with green accents and card grids.\n\n**Evidence and limits.** Every token here is read from the shipped source of the frozen candidate `.qa/spotiurge-glass-final-candidate` (SHA-256 `fa1b2ab01f6e7ce36b429b17a69af0065dec21c2a6a53135cf1bbaecbdd52480`, macOS arm64, source commit `0b3e670`, all design files hash-identical to `.qa/glass-candidate-source.json`). The finish review (r1, then the r2 verdict) scored all seven r1 fixes resolved with disposition \"ship\", on 52 static macOS captures (`docs/reviews/spotiurge-glass/after-captures.json`). Later packaged Mac checks restored Spotify and cloud credentials, completed private sync and received twelve Luna suggestions; Spotify catalogue verification timed out. App Reduce motion control operation was exercised in native demo. See `docs/reviews/spotiurge-glass/verification.md` for those separate checks and short CPU observations. Not verified: motion smoothness and frame pacing, a controlled idle-power baseline, live macOS Reduce Motion changes, local playback/Connect in the exact glass package, and any Windows or Linux UI run. No capture represents real listening; the demo data is synthetic and labelled as demo in the UI.",
+    "northStar": "The Quiet Listening Workspace",
+    "overview": "**Creative North Star: \"The Quiet Listening Workspace\"**\n\nSpotiurge is a quiet listening workspace in T3 Pretty's World Scenery family. Music stays in the foreground, and the scenery gives the app a recognizable place. One static, locally bundled, original mountain and lake image sits beneath a flat black or white contrast wash. Over it, flat translucent forest (dark) or mist (light) chrome holds navigation and the playback console. The main page stays clear. Menus and popovers are opaque.\n\nThe native composition is unchanged from the inherited app: sidebar, top bar, page and floating console, with Inter and the existing native control vocabulary. Glass here is painted compositing in egui (a translucent fill over the image and wash). It is not OS blur or backdrop-filter, and nothing is blurred per frame. Moss (mint in dark, deep forest in light) is the only accent, and it marks what is live: the play keys, the playing title, active console toggles and the Connect state.\n\nThe scenery is static and never causes idle animation. Motion is finite, interruptible and short, and Reduce Motion removes it. The previous amber studio world, its cover glows, sheen, double rims and leading lamp bars are retired.",
     "keyCharacteristics": [
-      "Smoked glass panes floating 8px apart over a cover-lit room, painted by the app, never OS blur.",
-      "One VU-amber lamp for live state; neutral inverted pills for choices.",
-      "Opaque overlays: menus, popovers and dialogs never let content ghost through.",
-      "Inter only, hierarchy by weight on a tight scale.",
-      "Finite exponential ease-out motion in three durations (120 / 220 / 600 ms), immediate under Reduce Motion."
+      "One static photographic scene under a flat wash, covering 85% of the base together.",
+      "Flat translucent chrome for panes and the console; clear page content; opaque popovers.",
+      "Forest and mist neutrals with a single moss accent for live state.",
+      "Inter at four weights; dense native rows (56, 48, 36 points).",
+      "Finite motion: 120 ms feedback, 220 ms state and page; Reduce Motion honored.",
+      "A bare mint ridge mark cut into three level-meter columns, on a forest tile for the app icon."
     ],
     "rules": [
       {
-        "name": "The One Lamp Rule",
-        "body": "Amber marks live state only: playing, primary play, the current navigation channel, Connect and the active device. Choices, cautions and errors never take it. The build also spends amber on a selected Love rating in the discovery feedback column, a slider fill while it is held, the 1px keyboard focus ring, the text caret and the text-selection tint, and the native Settings switch; those are the recorded extent, not licence for more.",
+        "name": "The One Voice Rule",
+        "body": "Moss marks live or primary state only. Selection, hover and grouping use neutral overlays, never the accent.",
         "section": "colors"
       },
       {
-        "name": "The Derived Lamp Text Rule",
-        "body": "Never set small amber text by hand. Use the lamp-text role, which deepens until it reads at 4.5:1; light lamp text is `#653706`.",
+        "name": "The Measured Ink Rule",
+        "body": "Text, secondary, dim, moss text, danger and warning hold at least 4.5:1 over every pixel of the bundled scene after the wash, on bare ground, on pane glass and on content plates, including hover and selected fills. Option labels on chip fills are held to the same floor. A test in `material.rs` checks this; do not change a text role or wash without rerunning it.",
         "section": "colors"
       },
       {
-        "name": "The Capped Wash Rule",
-        "body": "A page's cover wash pools at the top of the page pane (full strength at 0pt, 45% at 140pt, gone by 360pt). In light it is capped at 20% of the tint so live text stays legible; in dark it is 30% on Home, Search, Settings and Queue and 55% on collection pages.",
-        "section": "colors"
-      },
-      {
-        "name": "The Weight Ranks Rule",
-        "body": "Rank with weight, then size; never with a second family, colour or uppercase eyebrow. Uppercase appears only in data column headers.",
+        "name": "The One Family Rule",
+        "body": "Inter at its four weights carries the whole hierarchy. Do not add a display face.",
         "section": "typography"
       },
       {
-        "name": "The Fixed Cell Rule",
-        "body": "Changing state never shifts geometry: durations right-align, and the discovery reason sits in a fixed-width cell so the 28px feedback column holds one x position on every row.",
-        "section": "typography"
-      },
-      {
-        "name": "The Rendered Glass Rule",
-        "body": "Glass is painted: fill, sheen, rim and shadow over cached colour fields. Never use OS backdrop blur, vibrancy or a per-frame blur pass.",
+        "name": "The Single Cue Rule",
+        "body": "A surface steps off its host with fill or with a hairline, never both, and never with a glow, sheen or second rim.",
         "section": "elevation"
       },
       {
-        "name": "The Opaque Overlay Rule",
-        "body": "Anything that floats over content (menus, popovers, dialogs, toasts) is opaque glass. Sheen, rim and shadow keep it glass; content beneath never ghosts through its text.",
+        "name": "The Still Scenery Rule",
+        "body": "The scene is decoded once off the UI thread, cached as one texture and drawn under a flat wash. It never animates, never follows playback and is never blurred per frame.",
         "section": "elevation"
-      },
-      {
-        "name": "The One Pixel Rim Rule",
-        "body": "Rims are one physical pixel, lit along the top third and shaded along the bottom third, over the outline at 60% (dark) or 80% (light).",
-        "section": "elevation"
-      },
-      {
-        "name": "The Neutral Choice Rule",
-        "body": "Chips, segmented controls and settings options select with the inverted neutral pill, never amber.",
-        "section": "components"
-      },
-      {
-        "name": "The Native Switch Exception",
-        "body": "On/off settings rows use a native-style switch (40 by 22px pill, white 16px knob): the track eases from `*-surface-active` to the lamp over 220 ms. This is the only choice-like control that turns amber, scoped to boolean switches.",
-        "section": "components"
-      },
-      {
-        "name": "The Fader Glide Rule",
-        "body": "Selection travels; it never jumps or blinks. When the layout moves the selected item, the lamp follows at once instead of gliding.",
-        "section": "components"
-      },
-      {
-        "name": "The Still Under Reduce Motion Rule",
-        "body": "With the app's Reduce motion setting on, or the macOS Reduce Motion preference (read at most every 2 s), every helper returns its target immediately, egui animation time is 0 and scroll animation is off.",
-        "section": "components"
       }
     ],
     "dos": [
-      "**Do** build every new surface from the four glass kinds (pane, console, popover, well) and their recorded opacities, sheen, rims and shadows.",
-      "**Do** keep panes 8px apart and from the window edge, with 24px page padding.",
-      "**Do** spend amber only on live state, and use the lamp-text role for any amber text.",
-      "**Do** select choices with the neutral inverted pill gliding over 220 ms.",
-      "**Do** make overlays opaque `*-overlay` glass.",
-      "**Do** put text inputs in a 10px-radius well with the 1px rim and the eased focus rim.",
-      "**Do** use only the three durations (120, 220, 600 ms) with exponential ease-out, and make them immediate under Reduce Motion.",
-      "**Do** keep demo, unplayable and remote-playback states honest and labelled."
+      "Do keep the stack: window base, the one static scene, the flat wash, translucent chrome, clear page content, opaque popovers.",
+      "Do derive small live text with `Palette::accent_text()` and keep every text role at 4.5:1 over the real scene pixels.",
+      "Do make overlay fills relative to their host (white overlays in dark, black in light) so chips and disabled pills keep a visible step on panes and content plates.",
+      "Do use `FEEDBACK` (120 ms) for hover and press, `STATE` (220 ms) for selection and fills, `PAGE` (220 ms, 6-point rise) for page entrance, and return targets at once under Reduce Motion.",
+      "Do mark state with neutral fill plus text weight or moss ink, not with extra decoration.",
+      "Do use danger for blocking failures and warning for degraded results, on icon and text together.",
+      "Do keep demo labels, unplayable suggestions and the remote-playlist gate visible and honest."
     ],
     "donts": [
-      "**Don't** use OS backdrop blur, vibrancy or a per-frame blur pass for glass.",
-      "**Don't** make menus, popovers or dialogs translucent.",
-      "**Don't** select chips, segmented controls or settings options with amber; boolean switches are the one recorded exception.",
-      "**Don't** colour cautions or error icons amber.",
-      "**Don't** raise the light-theme cover wash above 20%.",
-      "**Don't** introduce a second typeface, gradient text, or uppercase eyebrows.",
-      "**Don't** return to a flat black Spotify clone with green accents and card grids.",
-      "**Don't** claim smoothness, frame rate or CPU cost; none has been measured."
-    ],
-    "notCanonized": "**Not canonized** (residuals in the shipped build, recorded so nobody copies them): the active sort header that paints plain `*-lamp` text (in light below 4.5:1) instead of lamp-text or a neutral; dialog text fields on the older recipe (8px radius, flat rim, no eased focus rim) instead of the 10px field well; placeholder hints in `*-dim`, which read faintly on light wells; the faint light-theme field rim (about 1.2:1 against the pane); a focus ring proven only by test, never captured; macOS shortcuts written \"Cmd+\" rather than the platform symbols. They stay out of the system because each is a known contrast or consistency gap, not a design decision."
+      "Don't animate the background, add ambient cover glows, sheens, double rims or gradients to chrome.",
+      "Don't describe or build the glass as OS blur or a per-frame backdrop filter.",
+      "Don't reintroduce the amber studio palette or the leading lamp bar on selected rows.",
+      "Don't use moss for selection, hover or grouping.",
+      "Don't paint a dark chip or disabled pill with opaque `surface-active`; it disappears on the dark content plate.",
+      "Don't use a second cue (rim plus fill) to separate a plate from its host.",
+      "Don't fetch scenery or imagery from a network service; the scene is bundled.",
+      "Don't claim playback features Spotify does not support."
+    ]
   }
 }

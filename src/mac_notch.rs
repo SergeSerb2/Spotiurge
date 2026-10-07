@@ -287,9 +287,15 @@ impl NotchIcons {
     }
 }
 
-/// Spotiurge's VU-amber lamp, the dark palette's accent (#ffb547).
+/// The notch player's dark chrome uses the shared moss accent.
 fn lamp_accent() -> Retained<NSColor> {
-    NSColor::colorWithRed_green_blue_alpha(1.0, 181.0 / 255.0, 71.0 / 255.0, 1.0)
+    let accent = crate::theme::Palette::dark().accent;
+    NSColor::colorWithRed_green_blue_alpha(
+        f64::from(accent.r()) / 255.0,
+        f64::from(accent.g()) / 255.0,
+        f64::from(accent.b()) / 255.0,
+        1.0,
+    )
 }
 
 fn inactive_button_tint() -> Retained<NSColor> {
@@ -1429,7 +1435,7 @@ fn handle_draw_canvas(_view: &SpotifastCanvasView, _dirty: NSRect) {
     NSColor::whiteColor().set();
     thumb_path.fill();
 
-    // 5. Play button disc (Row 3, Center): the amber lamp, as the player
+    // 5. Play button disc (Row 3, Center): the moss accent, as the player
     //    bar's theme::circle_button (diameter 36.0).
     let center_x = card_w / 2.0;
     let disc_rect = NSRect::new(NSPoint::new(center_x - 18.0, 97.0), NSSize::new(36.0, 36.0));

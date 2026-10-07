@@ -75,7 +75,7 @@ pub(super) fn hero(app: &mut App, ui: &mut egui::Ui, hero: Hero<'_>) {
     let radius = if hero.round { cover_size / 2.0 } else { 10.0 };
     cover_lift(ui, &palette, rect, radius);
     if hero.liked {
-        super::sidebar::liked_cover(ui, rect, radius);
+        super::sidebar::liked_cover(ui, rect, radius, &palette);
     } else {
         widgets::paint_cover_with_thumbnail(
             ui,

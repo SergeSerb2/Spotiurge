@@ -55,52 +55,15 @@ impl egui::TextBuffer for PromptBuffer<'_> {
 
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
-    // Cover-derived light when the theme follows the art, the accent otherwise.
-    let tint = app.now_playing_tint().unwrap_or(palette.accent);
-    // The desk is an inset well in the page's pane, not a second floating
-    // pane: the well's glass without a rim or shadow. The glow is reserved
-    // inside the frame, so it sits above the fill and below the content.
-    let framed = Frame::new()
-        .fill(material::glass(&palette, material::Kind::Well).fill)
+    Frame::new()
+        .fill(material::glass(&palette, material::Kind::Content).fill)
         .corner_radius(CornerRadius::same(material::PANE_RADIUS as u8))
         .inner_margin(Margin::same(20))
         .show(ui, |ui| {
-            let glow = ui.painter().add(egui::Shape::Noop);
             ui.set_width(ui.available_width());
             pane(app, ui);
-            glow
         });
-    ui.painter().set(
-        framed.inner,
-        glow_mesh(framed.response.rect, tint, palette.dark),
-    );
     ui.add_space(24.0);
-}
-
-/// A soft, static light rising from the upper left. Every edge vertex is
-/// transparent, so the glow never spills past the well's rounded corners
-/// (`material::light` paints at once and could not sit under the content).
-fn glow_mesh(rect: egui::Rect, tint: Color32, dark: bool) -> egui::Shape {
-    let mut mesh = egui::Mesh::default();
-    let center = rect.lerp_inside(vec2(0.22, 0.18));
-    mesh.colored_vertex(center, tint.gamma_multiply(if dark { 0.12 } else { 0.10 }));
-    let ring = [
-        rect.left_top(),
-        rect.center_top(),
-        rect.right_top(),
-        rect.right_center(),
-        rect.right_bottom(),
-        rect.center_bottom(),
-        rect.left_bottom(),
-        rect.left_center(),
-    ];
-    for point in ring {
-        mesh.colored_vertex(point, Color32::TRANSPARENT);
-    }
-    for index in 0..ring.len() as u32 {
-        mesh.add_triangle(0, 1 + index, 1 + (index + 1) % ring.len() as u32);
-    }
-    egui::Shape::mesh(mesh)
 }
 
 #[derive(Default)]
@@ -511,8 +474,8 @@ fn summary(app: &mut App, ui: &mut egui::Ui, counts: &Counts) {
             .into_owned(),
         };
         let detail = app.discovery.status.clone();
-        // Neutral: the amber lamp is kept for live state.
-        let response = notice(ui, &palette, Icon::CircleAlert, palette.text, &text);
+        // Model failures are warnings; local workspace failures below need recovery.
+        let response = notice(ui, &palette, Icon::CircleAlert, palette.warning, &text);
         if !detail.is_empty() && detail != text {
             response.on_hover_text(detail);
         }
@@ -531,13 +494,13 @@ fn summary(app: &mut App, ui: &mut egui::Ui, counts: &Counts) {
         } else {
             ui.horizontal(|ui| {
                 ui.spacing_mut().item_spacing.x = 6.0;
-                theme::icon(ui, Icon::CircleAlert, 14.0, palette.text);
+                theme::icon(ui, Icon::CircleAlert, 14.0, palette.danger);
                 // Keep the complete recovery advice visible in narrow windows.
                 let galley = crate::bidi::layout(
                     ui.painter(),
                     &app.discovery.status,
                     theme::regular(13.0),
-                    palette.secondary,
+                    palette.danger,
                     ui.available_width(),
                     usize::MAX,
                     None,
@@ -692,7 +655,16 @@ fn notice(
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 6.0;
         theme::icon(ui, icon, 14.0, icon_color);
-        theme::text(ui, text, theme::regular(13.0), palette.secondary)
+        theme::text(
+            ui,
+            text,
+            theme::regular(13.0),
+            if icon_color == palette.warning || icon_color == palette.danger {
+                icon_color
+            } else {
+                palette.secondary
+            },
+        )
     })
     .inner
 }
@@ -768,7 +740,7 @@ fn playable_rows(app: &mut App, ui: &mut egui::Ui) {
         let reason = pick.suggestion.reason.as_str();
         // The row's hover fill sits behind the song, its reason and its
         // feedback, so the line lifts as one. The song carries its own
-        // stronger lift and, while it plays, the lamp at its leading edge.
+        // stronger lift and, while it plays, moss text and a playing meter.
         let highlight = ui.painter().add(egui::Shape::Noop);
         let line = ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = gap;

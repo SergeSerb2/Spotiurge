@@ -49,6 +49,7 @@ legible liquid/frosted glass, thoughtful typography and platform interactions.
 
 The inherited desktop application, deterministic demo captures, real Mac
 decoded playback and Mac/Windows synchronization through the deployed private
-store. No Spotiurge iPhone playback proof, TestFlight build or listening-quality
-study exists yet. See `docs/reviews/spotiurge-discovery/verification.md` for
+store. The device probe proved 17 minutes 22 seconds of locked playback using an
+experimental dependency identity change. Production iOS, TestFlight and a
+listening-quality study remain unverified. See `docs/reviews/spotiurge-discovery/verification.md` for
 tested behavior and `docs/_reference/spotiurge-architecture.md` for the audit.

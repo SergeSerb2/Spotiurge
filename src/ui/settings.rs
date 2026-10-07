@@ -179,9 +179,9 @@ fn section(
     ui.add_space(10.0);
     theme::text(ui, title, theme::bold(18.0), palette.text);
     ui.add_space(8.0);
-    // A quiet well of glass inside the page's pane holds the section's rows.
+    // Flat chrome groups keep settings readable above the scenery.
     Frame::new()
-        .fill(material::glass(palette, material::Kind::Well).fill)
+        .fill(material::glass(palette, material::Kind::Content).fill)
         .corner_radius(CornerRadius::same(material::PANE_RADIUS as u8))
         .inner_margin(Margin::symmetric(20, 16))
         .show(ui, |ui| {
@@ -1940,7 +1940,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             ui.horizontal(|ui| {
                 ui.spacing_mut().item_spacing.x = 14.0;
                 let (logo, _) = ui.allocate_exact_size(Vec2::splat(56.0), egui::Sense::hover());
-                theme::logo(ui, logo.center(), 56.0);
+                theme::logo(ui, logo.center(), 56.0, &palette);
                 ui.vertical(|ui| {
                     ui.spacing_mut().item_spacing.y = 2.0;
                     // The wordmark and its version share a baseline.

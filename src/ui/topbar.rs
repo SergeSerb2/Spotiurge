@@ -137,7 +137,7 @@ fn badge(
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), galley.text())
     });
-    // A soft amber tint: the badges report live state. It warms a little
+    // A soft moss tint: the badges report live state. It warms a little
     // under the pointer. It rests on opaque popover glass, so its label
     // reads the same over a cover's light as over a plain pane.
     let lift = motion::toggle(
@@ -176,7 +176,7 @@ fn badge(
     response
 }
 
-/// A badge's fills, bottom first: opaque glass, then the amber tint.
+/// A badge's fills, bottom first: opaque glass, then the moss tint.
 fn badge_fills(palette: &Palette, lift: f32) -> [egui::Color32; 2] {
     [
         material::glass(palette, material::Kind::Popover).fill,
@@ -443,7 +443,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                                 .unwrap_or('?')
                                 .to_uppercase()
                                 .to_string();
-                            // Neutral: the amber lamp is kept for live state.
+                            // Neutral: the moss accent is kept for live state.
                             ui.painter().circle_filled(
                                 inner.center(),
                                 14.0,
