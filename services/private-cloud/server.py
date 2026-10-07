@@ -135,17 +135,66 @@ EXPLORATION = {
 }
 
 
-def same_track(left, right):
-    def normalize(value):
-        return " ".join(unicodedata.normalize("NFC", value).casefold().split())
+def fold_name(value):
+    # Keep meaningful punctuation; fold the same typographic variants as the
+    # catalogue matcher, in addition to the server's existing NFC/case folding.
+    for variants, replacement in [("‘’ʼ`´", "'"), ("“”", '"'), ("‐‑‒–—―", "-")]:
+        for variant in variants:
+            value = value.replace(variant, replacement)
+    return " ".join(unicodedata.normalize("NFC", value).casefold().split())
 
-    if normalize(left["title"]) != normalize(right["title"]):
+
+def without_credits(title, artists):
+    # Feedback stores the actual credits joined by ", ". Whole-credit lookup
+    # also preserves artist names containing commas or separators. Never strip
+    # an unknown guest or a real version label (Remix, Live, Edit, etc.).
+    known = f", {artists}, "
+    checked = {}
+
+    def credited(credit):
+        if credit not in checked:
+            checked[credit] = bool(credit) and (f", {credit}, " in known or any(
+                credited(credit[:at]) and credited(credit[at + len(separator):])
+                for separator in (", and ", ", ", " & ", " and ", " featuring ",
+                    " feat. ", " feat ", " ft. ", " ft ", " with ", " vs. ",
+                    " vs ", " x ", " + ", " / ")
+                for at in range(len(credit)) if credit.startswith(separator, at)))
+        return checked[credit]
+
+    markers = ("feat. ", "feat ", "ft. ", "ft ", "featuring ", "with ")
+    start = 0
+    while True:
+        openings = [at for symbol in "([" if (at := title.find(symbol, start)) >= 0]
+        if not openings:
+            break
+        opening = min(openings)
+        closing = title.find(")" if title[opening] == "(" else "]", opening)
+        if closing < 0:
+            break
+        inner = title[opening + 1:closing]
+        if any(inner.startswith(marker) and credited(inner[len(marker):]) for marker in markers):
+            title = title[:opening] + title[closing + 1:]
+        else:
+            start = closing + 1
+    # Like the catalogue matcher, an unbracketed "with" can be part of the
+    # actual title; remove only a trailing featured-artist credit.
+    for marker in markers[:-1]:
+        at = title.rfind(" " + marker)
+        if at >= 0 and credited(title[at + len(marker) + 1:]):
+            title = title[:at]
+    return " ".join(title.split())
+
+
+def same_track(left, right):
+    a, b = fold_name(left["artist"]), fold_name(right["artist"])
+    if not (f", {a}, " in f", {b}, " or f", {b}, " in f", {a}, "):
         return False
+
     # Desktop feedback joins the actual Spotify credits with ", "; model
     # suggestions use a primary credit. Match whole credits in either order,
     # including a credit whose own name contains commas, without prefix fuzz.
-    a, b = normalize(left["artist"]), normalize(right["artist"])
-    return f", {a}, " in f", {b}, " or f", {b}, " in f", {a}, "
+    artists = b if len(b) >= len(a) else a
+    return without_credits(fold_name(left["title"]), artists) == without_credits(fold_name(right["title"]), artists)
 
 
 def recommend(body, config):

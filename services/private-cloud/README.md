@@ -24,8 +24,10 @@ SQLite commits are durable on the volume. Recommendations use
 `exploration` value (`familiar`, `balanced`, or `adventurous`). Either taste or at
 least one feedback record is required. Spotify URIs are removed before prompting;
 canonical titles and primary artists are requested. Repeat filtering recognizes
-primary and guest credits within Spotify's comma-separated feedback credits;
-distinct versions and different credited artists remain distinct.
+primary and guest credits within Spotify's comma-separated feedback credits,
+including featured-artist title groups and trailing credits that name actual
+credited artists. Unknown guests, distinct versions and different credited
+artists remain distinct.
 A 429 includes a bounded `code`: `busy` for another active
 request, `rate_limited` for the subscription provider's quota. One AI request
 runs at a time, with a bounded Luna proxy call and no model fallback; a proxy

@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from http.server import ThreadingHTTPServer
 
 from unittest.mock import patch
-from server import Store, make_handler, recommend, RateLimited, BoundedServer, MAX_BYTES
+from server import Store, make_handler, recommend, same_track, RateLimited, BoundedServer, MAX_BYTES
 
 
 class PrivateCloudTests(unittest.TestCase):
@@ -163,6 +163,44 @@ class PrivateCloudTests(unittest.TestCase):
         self.assertEqual([(s["title"], s["artist"]) for s in result["suggestions"]], [
             ("Butterflies", "Skrillexx"), ("Butterflies (Remix)", "Skrillex"), ("New Song", "Artist A, Artist B")])
         self.assertEqual(captured[0]["model"], "gpt-6-luna")
+
+    def test_featured_titles_cannot_repeat_rated_tracks_but_versions_remain_distinct(self):
+        feedback = [
+            {"title": "Stay (feat. Alessia Cara)", "artist": "Zedd, Alessia Cara", "rating": "less"},
+            {"title": "Butterflies [with Starrah & Four Tet]", "artist": "Skrillex, Starrah, Four Tet", "rating": "love"},
+            {"title": "See You Again feat. Kali Uchis", "artist": "Tyler, The Creator, Kali Uchis", "rating": "less"},
+        ]
+        suggestions = [
+            {"title": "Stay", "artist": "Zedd", "reason": "repeat without credit"},
+            {"title": "Stay [with Alessia Cara]", "artist": "Zedd", "reason": "alternate credit"},
+            {"title": "Butterflies", "artist": "Skrillex", "reason": "two credited guests"},
+            {"title": "See You Again", "artist": "Tyler, The Creator", "reason": "comma name"},
+            {"title": "Stay (Remix)", "artist": "Zedd", "reason": "different version"},
+            {"title": "Stay (Live)", "artist": "Zedd", "reason": "different version"},
+            {"title": "Stay (feat. Unknown Artist)", "artist": "Zedd", "reason": "uncredited guest"},
+        ]
+        captured = []
+        result = self.recommend_with({"feedback": feedback}, {"suggestions": suggestions}, captured)
+        self.assertEqual([s["title"] for s in result["suggestions"]], [
+            "Stay (Remix)", "Stay (Live)", "Stay (feat. Unknown Artist)"])
+        self.assertEqual(captured[0]["model"], "gpt-6-luna")
+
+    def test_title_credit_folding_is_symmetric_and_keeps_versions_and_meaningful_titles(self):
+        for credited in ["Song (feat. Guest)", "Song [with Guest]", "Song ft. Guest",
+                "Song (featuring Guest)", "Song (feat. Guest) (Extended Mix)"]:
+            base = "Song (Extended Mix)" if "Extended Mix" in credited else "Song"
+            left = {"title": credited, "artist": "Primary, Guest"}
+            right = {"title": base, "artist": "Primary"}
+            self.assertTrue(same_track(left, right), credited)
+            self.assertTrue(same_track(right, left), credited)
+        for title in ["Song (Remix)", "Song (Live)", "Song (Edit)", "Song (Extended Mix)",
+                "Song with Guest", "Song (feat. Guest Extra)", "Song (feat. Stranger)"]:
+            self.assertFalse(same_track({"title": title, "artist": "Primary, Guest"},
+                {"title": "Song", "artist": "Primary"}), title)
+        self.assertTrue(same_track({"title": "Don’t Go [with Guest]", "artist": "Primary, Guest"},
+            {"title": "Don't Go", "artist": "Primary"}))
+        self.assertTrue(same_track({"title": "Song (feat. Simon & Garfunkel)", "artist": "Primary, Simon & Garfunkel"},
+            {"title": "Song", "artist": "Primary"}))
 
     def test_server_busy_and_model_rate_limits_report_distinct_codes(self):
         started, release = threading.Event(), threading.Event()
