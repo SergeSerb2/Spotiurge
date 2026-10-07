@@ -222,6 +222,7 @@ struct Listening {
 }
 
 pub struct App {
+    pub discovery: crate::discovery::Discovery,
     pub dirs: AppDirs,
     pub settings: Settings,
     /// Proxy policy actually handed to network workers. Manual form edits are
@@ -262,6 +263,7 @@ pub struct App {
     control_now_playing: Option<std::sync::Arc<std::sync::Mutex<String>>>,
     /// The same, for its `devices` verb.
     control_devices: Option<std::sync::Arc<std::sync::Mutex<String>>>,
+    control_sign_in_url: Option<std::sync::Arc<std::sync::Mutex<String>>>,
     /// Whether that device slot still matches [`Self::devices`]. The
     /// now-playing snapshot is rebuilt every frame because its position
     /// moves every frame; a device list changes when Spotify answers, which
@@ -578,7 +580,7 @@ const RECENTS_PAGE: u32 = 50;
 /// Who the desktop's media controls belong to. Links to Spotify, as
 /// `spotify:` URIs or web addresses, are what they may ask Spotifast to open.
 fn media_app() -> fastframe_now_playing::App {
-    let mut app = fastframe_now_playing::App::new("spotifast", "Spotifast");
+    let mut app = fastframe_now_playing::App::new("spotiurge", "Spotiurge");
     app.uri_schemes = vec!["spotify".into(), "https".into(), "http".into()];
     app
 }
@@ -639,14 +641,14 @@ fn play_pause_label(playing: bool) -> &'static str {
 fn tray_config() -> fastframe_tray::Config {
     use fastframe_tray::MenuItem;
     fastframe_tray::Config {
-        id: "spotifast",
-        title: "Spotifast".into(),
+        id: "spotiurge",
+        title: "Spotiurge".into(),
         icon: util::app_icon_rgba,
         template_icon: Some(util::tray_template_rgba),
         themed_icon: true,
         menu_on_click: false,
         menu: vec![
-            MenuItem::action(TRAY_SHOW, "Show or hide Spotifast"),
+            MenuItem::action(TRAY_SHOW, "Show or hide Spotiurge"),
             MenuItem::Separator,
             MenuItem::action(TRAY_PLAY_PAUSE, play_pause_label(false)),
             MenuItem::action(TRAY_NEXT, "Next"),
@@ -735,6 +737,7 @@ impl App {
 
         let palette = settings.cached_palette().unwrap_or_else(Palette::dark);
         let mut app = Self {
+            discovery: crate::discovery::Discovery::default(),
             custom_themes: theme::Catalog::default(),
             dirs,
             settings,
@@ -760,6 +763,7 @@ impl App {
             control_commands: None,
             control_now_playing: None,
             control_devices: None,
+            control_sign_in_url: None,
             control_devices_stale: true,
             offline: false,
             palette,
@@ -962,6 +966,7 @@ impl App {
         self.control_commands = Some(guard.commands());
         self.control_now_playing = Some(guard.now_playing_slot());
         self.control_devices = Some(guard.devices_slot());
+        self.control_sign_in_url = Some(guard.sign_in_url_slot());
     }
 
     /// Per-window setup: fonts, icons, loaders, theme. Called every time a
@@ -1220,6 +1225,15 @@ impl App {
         } else {
             Target::Remote(None)
         }
+    }
+
+    pub fn discovery_playback_available(&self) -> bool {
+        // An explicit remote selection takes effect before Connect has stopped
+        // the old local track. URI-list discovery must stay gated in that gap.
+        self.selected_device
+            .as_deref()
+            .is_none_or(|selected| Some(selected) == self.local_device_id.as_deref())
+            && self.target() == Target::Local
     }
 
     /// Context shown as playing, including pending local play requests.
@@ -1823,6 +1837,146 @@ impl App {
                 continue;
             }
             match event {
+                Event::DiscoveryLoaded(result) => match result {
+                    Ok(replica) => {
+                        let mut throttle = replica.recommendation_throttle.clone();
+                        throttle.last_attempt_at = throttle
+                            .last_attempt_at
+                            .or(self.settings.discovery.refreshed_at);
+                        self.discovery.automatic = crate::discovery::AutoRecommendations::restore(
+                            &throttle,
+                            Instant::now(),
+                            crate::discovery::unix_now(),
+                        );
+                        self.discovery.last_error = self
+                            .discovery
+                            .automatic
+                            .suspended
+                            .then_some(crate::discovery::RecommendationErrorKind::Pairing);
+                        self.discovery.draft = replica.document.taste().into();
+                        self.discovery.picks = replica.cached_picks.clone();
+                        self.discovery.replica = replica;
+                        self.discovery.ready = true;
+                        self.discovery.status.clear();
+                    }
+                    Err(error) => self.discovery.status = error,
+                },
+                Event::DiscoverySynced(result) => {
+                    self.discovery.syncing = false;
+                    let snapshot = self.discovery.sync_snapshot.take();
+                    match result {
+                        Ok(document) => {
+                            let before = self.discovery.replica.document.clone();
+                            let draft_unchanged =
+                                self.discovery.draft == self.discovery.replica.document.taste();
+                            match self
+                                .discovery
+                                .replica
+                                .merge_synced(&document, snapshot.as_ref())
+                            {
+                                Ok(()) => {
+                                    let inputs_changed =
+                                        !before.same_inputs(&self.discovery.replica.document);
+                                    if self.discovery.last_error
+                                        == Some(crate::discovery::RecommendationErrorKind::Pairing)
+                                    {
+                                        self.discovery.automatic.rearm();
+                                        self.checkpoint_discovery_throttle();
+                                        self.discovery.last_error = None;
+                                    }
+                                    if inputs_changed {
+                                        self.invalidate_discovery_request();
+                                        self.discovery.automatic.changed(Instant::now(), true);
+                                    }
+                                    self.checkpoint_discovery_throttle();
+                                    self.discovery.dirty =
+                                        self.discovery.replica.document != document;
+                                    if draft_unchanged {
+                                        self.discovery.draft =
+                                            self.discovery.replica.document.taste().into();
+                                    }
+                                    self.discovery.status = if self.discovery.dirty {
+                                        gettext(self.locale, "Synced. New local edits are saved; sync again to send them.")
+                                    } else { gettext(self.locale, "Synced with your private cloud.") }.into();
+                                    self.backend.send(Command::SaveDiscovery(
+                                        self.discovery.replica.clone(),
+                                    ));
+                                }
+                                Err(error) => self.discovery.status = error,
+                            }
+                        }
+                        Err(error) => self.discovery.status = error,
+                    }
+                }
+                Event::DiscoveryResolved { request, result } => {
+                    self.finish_discovery_request(request);
+                    if request != self.discovery.request {
+                        continue;
+                    }
+                    self.discovery.busy = false;
+                    self.discovery.catalogue = result.outcome;
+                    self.discovery.picks = result.picks;
+                    self.discovery.replica.cached_picks = self.discovery.picks.clone();
+                    self.discovery.retry_after = matches!(
+                        result.outcome,
+                        crate::discovery::CatalogueOutcome::RateLimited
+                            | crate::discovery::CatalogueOutcome::QuotaExhausted
+                    )
+                    .then(|| Instant::now() + Duration::from_secs(30));
+                    self.backend
+                        .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+                }
+                Event::DiscoveryRecommended {
+                    request,
+                    prompt,
+                    result,
+                } => {
+                    let completed_active = self.discovery.in_flight_request == Some(request);
+                    self.finish_discovery_request(request);
+                    if request != self.discovery.request {
+                        // Picks belong to their input generation; failure backoff
+                        // belongs to the completed request even after input changes.
+                        if completed_active && let Err(error) = result {
+                            self.discovery_request_failed(error);
+                        }
+                        continue;
+                    }
+                    self.discovery.busy = false;
+                    match result {
+                        Ok(result) => {
+                            let picks = result.picks;
+                            self.discovery.catalogue = result.outcome;
+                            self.discovery.retry_after = matches!(
+                                result.outcome,
+                                crate::discovery::CatalogueOutcome::RateLimited
+                                    | crate::discovery::CatalogueOutcome::QuotaExhausted
+                            )
+                            .then(|| Instant::now() + Duration::from_secs(30));
+                            self.discovery.automatic.rearm();
+                            self.checkpoint_discovery_throttle();
+                            self.discovery.last_error = None;
+                            self.settings.discovery.refreshed_at =
+                                Some(crate::discovery::unix_now());
+                            self.settings_dirty = true;
+                            self.discovery.replica.cached_picks = picks.clone();
+                            let suggestions = picks.iter().map(|p| p.suggestion.clone()).collect();
+                            match self.discovery.replica.record_history(prompt, suggestions) {
+                                Ok(()) => {
+                                    self.discovery.dirty = true;
+                                    self.discovery.status.clear();
+                                }
+                                Err(error) => self.discovery.status = error,
+                            }
+                            // A full document can reject history; the picks still persist.
+                            self.backend
+                                .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+                            self.discovery.picks = picks;
+                        }
+                        Err(error) => {
+                            self.discovery_request_failed(error);
+                        }
+                    }
+                }
                 Event::PlaylistCoverChecked {
                     id,
                     request,
@@ -1998,6 +2152,7 @@ impl App {
                                 self.toast(
                                     // Translators: {version} is a version number such as 1.4.0.
                                     gettext(self.locale, "Spotifast {version} is available")
+                                        .replace("Spotifast", "Spotiurge")
                                         .replace("{version}", &notice.version.to_string()),
                                 );
                             }
@@ -2014,7 +2169,10 @@ impl App {
                         Ok(None) => {
                             self.update = None;
                             if manual {
-                                self.toast(gettext(self.locale, "Spotifast is up to date"));
+                                self.toast(
+                                    gettext(self.locale, "Spotifast is up to date")
+                                        .replace("Spotifast", "Spotiurge"),
+                                );
                             } else {
                                 log::debug!("this is the newest release");
                             }
@@ -2098,7 +2256,7 @@ impl App {
                     gettext(self.locale, "Local playback: {error}").replace("{error}", message),
                 );
             }
-            LocalPlayback::Authorizing | LocalPlayback::Connecting => {}
+            LocalPlayback::Authorizing { .. } | LocalPlayback::Connecting => {}
         }
         self.local_playback = status;
     }
@@ -2721,6 +2879,30 @@ impl App {
     }
 
     fn tick(&mut self, ctx: &egui::Context) {
+        if self.discovery.request == 0 && !self.offline {
+            self.discovery.request = 1;
+            self.backend.send(Command::LoadDiscovery);
+        }
+        if matches!(self.page(), Page::Home) {
+            let has_inputs = self.discovery.replica.document.has_inputs();
+            if let Some(due) = self.discovery.automatic.due(
+                Instant::now(),
+                crate::discovery::unix_now(),
+                &self.settings.discovery,
+                self.discovery.ready
+                    && !self.offline
+                    && !self.discovery.busy
+                    && self.is_connected(),
+                has_inputs,
+                self.discovery.picks.is_empty(),
+            ) {
+                if due.is_zero() {
+                    self.actions.push(Action::DiscoveryAutoRecommend);
+                } else {
+                    ctx.request_repaint_after(due);
+                }
+            }
+        }
         self.poll_custom_themes(ctx);
         let now = Instant::now();
         if self.winamp_level_reassert > 0 {
@@ -2750,7 +2932,8 @@ impl App {
             .retain(|toast| toast.created.elapsed() < TOAST_LIFETIME);
         self.maybe_suggest_personal_app();
 
-        if self.settings.check_for_updates
+        if crate::updates::ENABLED
+            && self.settings.check_for_updates
             && !self.offline
             && self
                 .last_update_check
@@ -3454,6 +3637,14 @@ impl App {
     }
 
     fn sync_media_controls(&mut self, ctx: &egui::Context) {
+        if let Some(slot) = &self.control_sign_in_url {
+            let mut published = slot.lock().unwrap_or_else(|p| p.into_inner());
+            match (&self.auth, &self.local_playback) {
+                (AuthStatus::WaitingForBrowser { url }, _)
+                | (_, LocalPlayback::Authorizing { url }) => published.clone_from(url),
+                _ => published.clear(),
+            }
+        }
         let art_file = self
             .now_playing()
             .and_then(|now| now.art_url)
@@ -6317,10 +6508,13 @@ impl App {
             }
             _ => {
                 self.pending_link = None;
-                self.toast_error(gettext(
-                    self.locale,
-                    "Spotifast cannot open this kind of Spotify link",
-                ));
+                self.toast_error(
+                    gettext(
+                        self.locale,
+                        "Spotifast cannot open this kind of Spotify link",
+                    )
+                    .replace("Spotifast", "Spotiurge"),
+                );
             }
         }
     }
@@ -6831,7 +7025,7 @@ impl App {
                 // wait for the connecting engine or ask for a device.
                 if matches!(
                     self.local_playback,
-                    LocalPlayback::Connecting | LocalPlayback::Authorizing
+                    LocalPlayback::Connecting | LocalPlayback::Authorizing { .. }
                 ) || (self.settings.playback_authorized
                     && matches!(self.auth, AuthStatus::Starting | AuthStatus::Connecting))
                 {
@@ -8235,6 +8429,218 @@ impl App {
             self.leave_lyrics_fullscreen(ctx);
         }
         match action {
+            Action::DiscoveryDraft(text) => {
+                self.discovery.draft = text;
+                crate::discovery::limit_prompt(&mut self.discovery.draft);
+            }
+            Action::DiscoverySaveTaste => {
+                if !self.discovery.ready || self.offline {
+                    return;
+                }
+                let value = crate::discovery::Value::Taste {
+                    text: self.discovery.draft.clone(),
+                };
+                match self.discovery.replica.edit("taste".into(), Some(value)) {
+                    Ok(()) => {
+                        self.discovery.dirty = true;
+                        self.discovery.editing_taste = false;
+                        self.invalidate_discovery_request();
+                        self.discovery.automatic.changed(Instant::now(), true);
+                        self.checkpoint_discovery_throttle();
+                        self.backend
+                            .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+                        self.discovery.status = gettext(
+                            self.locale,
+                            "Taste saved locally. Sync when you are connected.",
+                        )
+                        .into();
+                    }
+                    Err(error) => self.discovery.status = error,
+                }
+            }
+            Action::DiscoveryRecommend => self.request_discovery(false),
+            Action::DiscoveryAutoRecommend => self.request_discovery(true),
+            Action::DiscoveryRetryMatches => {
+                if !self.discovery.ready
+                    || self.offline
+                    || self.discovery.busy
+                    || self
+                        .discovery
+                        .retry_after
+                        .is_some_and(|until| until > Instant::now())
+                {
+                    return;
+                }
+                self.discovery.request += 1;
+                self.discovery.busy = true;
+                self.discovery.in_flight_request = Some(self.discovery.request);
+                self.backend.send(Command::ResolveDiscovery {
+                    request: self.discovery.request,
+                    picks: self.discovery.picks.clone(),
+                });
+            }
+            Action::DiscoveryExploration(exploration) => {
+                if !self.discovery.ready || self.offline {
+                    return;
+                }
+                if self.settings.discovery.exploration != exploration {
+                    self.settings.discovery.exploration = exploration;
+                    self.settings_dirty = true;
+                    self.invalidate_discovery_request();
+                    self.discovery.automatic.changed(Instant::now(), true);
+                    self.checkpoint_discovery_throttle();
+                    self.backend
+                        .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+                }
+            }
+            Action::DiscoveryAutomatic(enabled) => {
+                self.settings.discovery.automatic = enabled;
+                self.settings_dirty = true;
+            }
+            Action::DiscoveryEditTaste(open) => self.discovery.editing_taste = open,
+            Action::DiscoveryCancelTaste => {
+                self.discovery.draft = self.discovery.replica.document.taste().into();
+                self.discovery.editing_taste = false;
+            }
+            Action::DiscoveryShowHistory => {
+                self.discovery.show_history = !self.discovery.show_history
+            }
+            Action::DiscoveryPlayAll { shuffle } => {
+                if !self.discovery_playback_available() {
+                    return;
+                }
+                let uris = self
+                    .discovery
+                    .picks
+                    .iter()
+                    .filter_map(|pick| pick.track.as_ref().map(|track| track.uri.clone()))
+                    .collect::<Vec<_>>();
+                if !uris.is_empty() {
+                    self.play_request(PlayRequest::tracks(uris), shuffle);
+                }
+            }
+            Action::DiscoveryPlayMix(key) => {
+                if !self.discovery_playback_available() {
+                    return;
+                }
+                if let Some(crate::discovery::Value::Mix { uris, .. }) = self
+                    .discovery
+                    .replica
+                    .document
+                    .records
+                    .get(&key)
+                    .and_then(|record| record.value.as_ref())
+                    && !uris.is_empty()
+                {
+                    self.play_request(
+                        PlayRequest::tracks(uris.clone()).starting_at_index(0),
+                        false,
+                    );
+                }
+            }
+            Action::DiscoverySync => {
+                if !self.discovery.ready || self.discovery.syncing || self.offline {
+                    return;
+                }
+                self.discovery.syncing = true;
+                self.discovery.sync_snapshot = Some(self.discovery.replica.document.clone());
+                self.discovery.status = gettext(
+                    self.locale,
+                    "Syncing preferences, feedback, mixes and AI history…",
+                )
+                .into();
+                self.backend
+                    .send(Command::SyncDiscovery(self.discovery.replica.clone()));
+            }
+            Action::DiscoveryRate {
+                uri,
+                title,
+                artist,
+                rating,
+            } => {
+                if !self.discovery.ready || self.offline {
+                    return;
+                }
+                let key = format!("feedback:{uri}");
+                let value = rating.map(|rating| crate::discovery::Value::Feedback {
+                    uri,
+                    title,
+                    artist,
+                    rating,
+                });
+                match self.discovery.replica.edit(key, value) {
+                    Ok(()) => {
+                        self.discovery.dirty = true;
+                        self.invalidate_discovery_request();
+                        self.discovery.automatic.changed(Instant::now(), false);
+                        self.checkpoint_discovery_throttle();
+                        self.backend
+                            .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+                        self.discovery.status = gettext(
+                            self.locale,
+                            "Feedback saved. It will shape your next discoveries.",
+                        )
+                        .into();
+                    }
+                    Err(error) => self.discovery.status = error,
+                }
+            }
+            Action::DiscoverySaveMix => {
+                if !self.discovery.ready || self.offline {
+                    return;
+                }
+                let uris = self
+                    .discovery
+                    .picks
+                    .iter()
+                    .filter_map(|p| p.track.as_ref().map(|t| t.uri.clone()))
+                    .collect::<Vec<_>>();
+                if uris.is_empty() {
+                    return;
+                }
+                match self
+                    .discovery
+                    .replica
+                    .save_mix(gettext(self.locale, "My discovery mix").into(), uris)
+                {
+                    Ok(()) => {
+                        self.discovery.dirty = true;
+                        self.backend
+                            .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+                        self.discovery.status = gettext(
+                            self.locale,
+                            "Mix saved to Spotiurge. Sync to share it across your devices.",
+                        )
+                        .into();
+                    }
+                    Err(error) => self.discovery.status = error,
+                }
+            }
+            Action::DiscoveryRemoveMix(key) => {
+                if !self.discovery.ready
+                    || self.offline
+                    || !key.starts_with("mix:")
+                    || !self
+                        .discovery
+                        .replica
+                        .document
+                        .records
+                        .get(&key)
+                        .is_some_and(|record| {
+                            matches!(record.value, Some(crate::discovery::Value::Mix { .. }))
+                        })
+                {
+                    return;
+                }
+                match self.discovery.replica.edit(key, None) {
+                    Ok(()) => {
+                        self.discovery.dirty = true;
+                        self.backend
+                            .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+                    }
+                    Err(error) => self.discovery.status = error,
+                }
+            }
             Action::Open(page) => self.open(page),
             Action::PrepareTint(url) => {
                 if self.settings.accent_from_art {
@@ -8307,47 +8713,54 @@ impl App {
                 context,
                 uri,
                 index,
-            } => match context {
-                RowContext::Context {
-                    uri: context_uri, ..
-                } => {
-                    let request = PlayRequest::context(context_uri).starting_at_uri(uri);
-                    self.play_request(request, false);
+            } => {
+                if matches!(&context, RowContext::Discovery(_))
+                    && !self.discovery_playback_available()
+                {
+                    return;
                 }
-                RowContext::Uris(uris) => {
-                    // The click names a song. A row that plays a list of its
-                    // own, as each Recent row does, still hands over its
-                    // place in the list on screen; when that place holds
-                    // another song, the song wins, as it does in Next up.
-                    let index = if uris.get(index as usize).is_some_and(|held| *held == uri) {
-                        index
-                    } else {
-                        uris.iter()
-                            .position(|held| *held == uri)
-                            .map_or(index, |position| position as u32)
-                    };
-                    let (uris, index) = cap_uris(uris.as_ref(), index);
-                    let request = PlayRequest::tracks(uris).starting_at_index(index);
-                    self.play_request(request, false);
-                }
-                RowContext::Queue => self.play_queue_item(index as usize, uri),
-                RowContext::View {
-                    uris, context_uri, ..
-                } => {
-                    let (uris, index) = cap_uris(uris.as_ref(), index);
-                    if let Some(uri) = uris.get(index as usize) {
-                        self.cache_track_from_context(&context_uri, uri);
+                match context {
+                    RowContext::Context {
+                        uri: context_uri, ..
+                    } => {
+                        let request = PlayRequest::context(context_uri).starting_at_uri(uri);
+                        self.play_request(request, false);
                     }
-                    let request = PlayRequest::tracks(uris).starting_at_index(index);
-                    self.play_request(request, false);
-                    self.note_recent_context(&context_uri);
-                    self.assumed_context = Some(AssumedContext {
-                        uri: context_uri,
-                        shuffle: self.shuffle_wanted.then_some(true),
-                        at: Instant::now(),
-                    });
+                    RowContext::Uris(uris) | RowContext::Discovery(uris) => {
+                        // The click names a song. A row that plays a list of its
+                        // own, as each Recent row does, still hands over its
+                        // place in the list on screen; when that place holds
+                        // another song, the song wins, as it does in Next up.
+                        let index = if uris.get(index as usize).is_some_and(|held| *held == uri) {
+                            index
+                        } else {
+                            uris.iter()
+                                .position(|held| *held == uri)
+                                .map_or(index, |position| position as u32)
+                        };
+                        let (uris, index) = cap_uris(uris.as_ref(), index);
+                        let request = PlayRequest::tracks(uris).starting_at_index(index);
+                        self.play_request(request, false);
+                    }
+                    RowContext::Queue => self.play_queue_item(index as usize, uri),
+                    RowContext::View {
+                        uris, context_uri, ..
+                    } => {
+                        let (uris, index) = cap_uris(uris.as_ref(), index);
+                        if let Some(uri) = uris.get(index as usize) {
+                            self.cache_track_from_context(&context_uri, uri);
+                        }
+                        let request = PlayRequest::tracks(uris).starting_at_index(index);
+                        self.play_request(request, false);
+                        self.note_recent_context(&context_uri);
+                        self.assumed_context = Some(AssumedContext {
+                            uri: context_uri,
+                            shuffle: self.shuffle_wanted.then_some(true),
+                            at: Instant::now(),
+                        });
+                    }
                 }
-            },
+            }
             Action::ShufflePlay(uri) => {
                 // The random starting song is picked in `play_request`,
                 // which every shuffled play goes through.
@@ -9159,7 +9572,7 @@ impl App {
                 } else if !self.local_ready
                     && !matches!(
                         self.local_playback,
-                        LocalPlayback::Authorizing | LocalPlayback::Connecting
+                        LocalPlayback::Authorizing { .. } | LocalPlayback::Connecting
                     )
                 {
                     self.settings.playback_authorized = true;
@@ -9489,8 +9902,82 @@ impl App {
         self.toast_error(error);
     }
 
+    fn invalidate_discovery_request(&mut self) {
+        if self.discovery.busy {
+            // Keep the worker occupied until completion, but never apply a
+            // response generated from taste, feedback or exploration we changed.
+            self.discovery.request += 1;
+        }
+    }
+
+    fn finish_discovery_request(&mut self, request: u64) {
+        if self.discovery.in_flight_request == Some(request) {
+            self.discovery.in_flight_request = None;
+            self.discovery.busy = false;
+        }
+    }
+
+    fn discovery_request_failed(&mut self, error: crate::discovery::RecommendationError) {
+        self.discovery.automatic.failed(error.kind, Instant::now());
+        self.checkpoint_discovery_throttle();
+        self.backend
+            .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+        self.discovery.last_error = Some(error.kind);
+        self.discovery.status = error.message;
+    }
+
+    fn request_discovery(&mut self, automatic: bool) {
+        if self.offline || !self.discovery.ready || self.discovery.busy || !self.is_connected() {
+            return;
+        }
+        let now = Instant::now();
+        if self.discovery.automatic.retry_after(now).is_some() {
+            return;
+        }
+        if !automatic && self.discovery.draft != self.discovery.replica.document.taste() {
+            let value = crate::discovery::Value::Taste {
+                text: self.discovery.draft.clone(),
+            };
+            if let Err(error) = self.discovery.replica.edit("taste".into(), Some(value)) {
+                self.discovery.status = error;
+                return;
+            }
+            self.discovery.dirty = true;
+            self.backend
+                .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+        }
+        if !self.discovery.replica.document.has_inputs() {
+            self.discovery.editing_taste = true;
+            return;
+        }
+        if !automatic
+            && self.discovery.last_error == Some(crate::discovery::RecommendationErrorKind::Pairing)
+        {
+            self.discovery.automatic.rearm();
+        }
+        self.discovery.automatic.attempted(now);
+        self.checkpoint_discovery_throttle();
+        self.discovery.last_error = None;
+        self.discovery.request += 1;
+        self.discovery.busy = true;
+        self.discovery.in_flight_request = Some(self.discovery.request);
+        self.backend.send(Command::RecommendDiscovery {
+            request: self.discovery.request,
+            replica: self.discovery.replica.clone(),
+            exploration: self.settings.discovery.exploration,
+        });
+    }
+
+    fn checkpoint_discovery_throttle(&mut self) {
+        self.discovery.replica.recommendation_throttle = self
+            .discovery
+            .automatic
+            .checkpoint(Instant::now(), crate::discovery::unix_now());
+    }
+
     fn check_for_updates(&mut self, manual: bool) {
-        if self.update_checking
+        if !crate::updates::ENABLED
+            || self.update_checking
             || (self.offline && self.update_source.is_github())
             || !matches!(
                 self.update_download,
@@ -9800,7 +10287,12 @@ impl App {
                 repeat: now.repeat,
             }
         });
-        crate::notch::sync_state(enabled, is_background, track_info.as_ref());
+        crate::notch::sync_state(
+            enabled,
+            is_background,
+            self.settings.reduce_motion || crate::ui::motion::system_prefers_reduced(_ctx),
+            track_info.as_ref(),
+        );
         // Only schedule a fast repaint while the card is actively expanded or
         // animating. Hover and state-change callbacks already call notch::wake()
         // which triggers a repaint via the waker, so idle frames are not needed.
@@ -9812,9 +10304,9 @@ impl App {
     /// Keeps the current track in the window and taskbar title (#94).
     fn sync_window_title(&mut self, ctx: &egui::Context) {
         let title = match self.now_playing().filter(|now| now.playing) {
-            Some(now) if now.subtitle.is_empty() => format!("{} - Spotifast", now.title),
+            Some(now) if now.subtitle.is_empty() => format!("{} - Spotiurge", now.title),
             Some(now) => format!("{} - {}", now.subtitle, now.title),
-            None => "Spotifast".to_string(),
+            None => "Spotiurge".to_string(),
         };
         if title != self.window_title {
             ctx.send_viewport_cmd(egui::ViewportCommand::Title(title.clone()));
@@ -9864,6 +10356,10 @@ impl App {
         if self.settings.winamp_window && needs_sign_in && !self.switch_intent {
             self.actions.push(Action::ToggleWinampWindow);
         }
+        crate::ui::motion::set_reduced(
+            ctx,
+            self.settings.reduce_motion || crate::ui::motion::system_prefers_reduced(ctx),
+        );
         if self.settings.winamp_window {
             crate::ui::winamp::show(self, ui);
         } else {
@@ -15106,6 +15602,900 @@ mod tests {
         app
     }
 
+    #[test]
+    fn discovery_load_failures_replace_the_loading_notice_without_resetting_state() {
+        let mut app = test_app("discovery-load-failures");
+        app.backend.set_offline(true);
+        app.auth = AuthStatus::Connected {
+            username: "fixture".into(),
+        };
+        let ctx = egui::Context::default();
+        theme::install(&ctx);
+        ctx.enable_accesskit();
+        let draw = |app: &mut App, size: egui::Vec2| {
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, size)),
+                    ..Default::default()
+                },
+                |ui| crate::ui::discovery::show(app, ui),
+            );
+            output.textures_delta.clear();
+            output.platform_output.accesskit_update.unwrap()
+        };
+        let contains = |tree: &egui::accesskit::TreeUpdate, text: &str| {
+            tree.nodes
+                .iter()
+                .any(|(_, node)| node.label() == Some(text) || node.value() == Some(text))
+        };
+        const OPENING: &str = "Opening your personal discovery workspace…";
+        draw(&mut app, egui::vec2(600.0, 800.0));
+        let opening = draw(&mut app, egui::vec2(600.0, 800.0));
+        assert!(contains(&opening, OPENING));
+        for label in ["Familiar", "Balanced", "Adventurous"] {
+            assert!(
+                opening
+                    .nodes
+                    .iter()
+                    .any(|(_, node)| { node.label() == Some(label) && node.is_disabled() })
+            );
+        }
+        app.apply(
+            Action::DiscoveryExploration(crate::discovery::Exploration::Adventurous),
+            &ctx,
+        );
+        assert_eq!(app.settings.discovery.exploration, Default::default());
+
+        std::fs::create_dir_all(&app.dirs.state).unwrap();
+        let corrupt = app.dirs.state.join("corrupt.json");
+        let oversized = app.dirs.state.join("oversized.json");
+        let unreadable = app.dirs.state.join("directory.json");
+        std::fs::write(&corrupt, b"not json").unwrap();
+        std::fs::write(&oversized, vec![b' '; crate::discovery::MAX_BYTES * 2 + 1]).unwrap();
+        std::fs::create_dir(&unreadable).unwrap();
+        for path in [&corrupt, &oversized, &unreadable] {
+            let error = crate::discovery::Replica::load(path).unwrap_err();
+            app.handle_backend_events(vec![Event::DiscoveryLoaded(Err(error.clone()))]);
+            assert!(!app.discovery.ready, "failed storage cannot enable edits");
+            let settings = app.settings.discovery.clone();
+            let replica = serde_json::to_vec(&app.discovery.replica).unwrap();
+            app.apply(
+                Action::DiscoveryExploration(crate::discovery::Exploration::Adventurous),
+                &ctx,
+            );
+            assert_eq!(app.settings.discovery, settings);
+            assert_eq!(serde_json::to_vec(&app.discovery.replica).unwrap(), replica);
+            assert!(!app.settings_dirty);
+            for dark in [true, false] {
+                app.palette = if dark {
+                    Palette::dark()
+                } else {
+                    Palette::light()
+                };
+                for width in [360.0, 960.0] {
+                    draw(&mut app, egui::vec2(width, 800.0));
+                    let tree = draw(&mut app, egui::vec2(width, 800.0));
+                    assert!(contains(&tree, &error), "the complete failure is drawn");
+                    assert!(!contains(&tree, OPENING), "a failure is not still opening");
+                    assert!(
+                        tree.nodes.iter().any(|(_, node)| {
+                            node.label() == Some("Find new picks") && node.is_disabled()
+                        }),
+                        "failed storage keeps recommendations disabled"
+                    );
+                    for label in ["Familiar", "Balanced", "Adventurous"] {
+                        assert!(tree.nodes.iter().any(|(_, node)| {
+                            node.label() == Some(label) && node.is_disabled()
+                        }));
+                    }
+                }
+            }
+        }
+        assert_eq!(std::fs::read(&corrupt).unwrap(), b"not json");
+        assert_eq!(
+            std::fs::metadata(&oversized).unwrap().len(),
+            (crate::discovery::MAX_BYTES * 2 + 1) as u64
+        );
+        assert!(unreadable.is_dir());
+        assert!(
+            app.actions.is_empty(),
+            "drawing a failure cannot replace the file"
+        );
+
+        app.handle_backend_events(vec![Event::DiscoveryLoaded(Ok(Default::default()))]);
+        assert!(app.discovery.ready);
+        assert!(app.discovery.status.is_empty());
+        draw(&mut app, egui::vec2(600.0, 800.0));
+        let tree = draw(&mut app, egui::vec2(600.0, 800.0));
+        assert!(!contains(&tree, OPENING));
+        assert!(!contains(
+            &tree,
+            "Cannot read discovery state. Fix its file permissions and restart."
+        ));
+        assert!(
+            tree.nodes
+                .iter()
+                .any(|(_, node)| { node.label() == Some("Find new picks") && !node.is_disabled() }),
+            "a successful load restores recommendations"
+        );
+        for label in ["Familiar", "Balanced", "Adventurous"] {
+            assert!(
+                tree.nodes
+                    .iter()
+                    .any(|(_, node)| { node.label() == Some(label) && !node.is_disabled() })
+            );
+        }
+        app.backend.shutdown();
+        std::fs::remove_dir_all(app.dirs.state.parent().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn discovery_sync_preserves_new_local_records_and_unsaved_drafts() {
+        let mut app = test_app("discovery-sync-race");
+        app.discovery.ready = true;
+        app.discovery
+            .replica
+            .edit(
+                "taste".into(),
+                Some(crate::discovery::Value::Taste { text: "old".into() }),
+            )
+            .unwrap();
+        let remote = app.discovery.replica.document.clone();
+        app.discovery.sync_snapshot = Some(remote.clone());
+        app.discovery
+            .replica
+            .edit(
+                "mix:new".into(),
+                Some(crate::discovery::Value::Mix {
+                    title: "new mix".into(),
+                    uris: vec![],
+                }),
+            )
+            .unwrap();
+        app.discovery.draft = "still typing".into();
+        app.handle_backend_events(vec![Event::DiscoverySynced(Ok(remote))]);
+        assert_eq!(app.discovery.draft, "still typing");
+        assert!(
+            app.discovery
+                .replica
+                .document
+                .records
+                .contains_key("mix:new")
+        );
+        assert!(app.discovery.dirty);
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn discovery_sync_cannot_undo_taste_saved_while_remote_response_is_pending() {
+        let mut app = test_app("discovery-sync-saved-taste");
+        app.backend.set_offline(true);
+        app.discovery.ready = true;
+        app.discovery
+            .replica
+            .edit(
+                "taste".into(),
+                Some(crate::discovery::Value::Taste {
+                    text: "before sync".into(),
+                }),
+            )
+            .unwrap();
+        app.discovery.draft = "before sync".into();
+        let ctx = egui::Context::default();
+        app.apply(Action::DiscoverySync, &ctx);
+        assert!(app.discovery.syncing);
+        let mut remote = app.discovery.sync_snapshot.clone().unwrap();
+        let record = remote.records.get_mut("taste").unwrap();
+        record.stamp.counter = 50;
+        record.stamp.device = "b".repeat(32);
+        record.value = Some(crate::discovery::Value::Taste {
+            text: "remote taste".into(),
+        });
+        app.discovery.draft = "just saved here".into();
+        app.apply(Action::DiscoverySaveTaste, &ctx);
+        app.discovery.draft = "unfinished draft".into();
+        app.handle_backend_events(vec![Event::DiscoverySynced(Ok(remote.clone()))]);
+        assert_eq!(app.discovery.replica.document.taste(), "just saved here");
+        assert_eq!(app.discovery.draft, "unfinished draft");
+        assert!(
+            app.discovery.replica.document.records["taste"]
+                .stamp
+                .counter
+                > 50
+        );
+        assert!(
+            app.discovery.dirty,
+            "the preserved edit still needs synchronization"
+        );
+        assert!(app.discovery.sync_snapshot.is_none());
+        assert!(!app.discovery.syncing);
+        remote.merge(&app.discovery.replica.document).unwrap();
+        assert_eq!(remote, app.discovery.replica.document);
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn remote_sign_in_link_is_only_published_while_waiting_for_browser() {
+        let mut app = test_app("remote-sign-in-link");
+        let slot = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+        app.control_sign_in_url = Some(slot.clone());
+        let ctx = egui::Context::default();
+        let url = "https://accounts.spotify.com/authorize?state=dummy";
+        app.auth = AuthStatus::WaitingForBrowser { url: url.into() };
+        app.sync_media_controls(&ctx);
+        assert_eq!(*slot.lock().unwrap(), url);
+        app.apply(Action::CancelSignIn, &ctx);
+        app.sync_media_controls(&ctx);
+        assert!(slot.lock().unwrap().is_empty());
+        app.auth = AuthStatus::Connecting;
+        app.sync_media_controls(&ctx);
+        assert!(slot.lock().unwrap().is_empty());
+        app.local_playback = LocalPlayback::Authorizing { url: url.into() };
+        app.sync_media_controls(&ctx);
+        assert_eq!(*slot.lock().unwrap(), url);
+        app.local_playback = LocalPlayback::Connecting;
+        app.sync_media_controls(&ctx);
+        assert!(slot.lock().unwrap().is_empty());
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn demo_cannot_start_a_discovery_network_request() {
+        let mut app = test_app("discovery-demo-request");
+        app.offline = true;
+        app.discovery.ready = true;
+        app.discovery.draft = "jazz".into();
+        let request = app.discovery.request;
+        app.apply(Action::DiscoveryRecommend, &egui::Context::default());
+        assert!(!app.discovery.busy);
+        assert_eq!(app.discovery.request, request);
+        assert!(app.discovery.replica.document.records.is_empty());
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn discovery_uri_lists_never_issue_a_remote_play_request() {
+        let mut app = test_app("discovery-playback-target");
+        app.backend.set_offline(true);
+        app.local_ready = true;
+        app.local_device_id = Some("local-device".into());
+        app.local.playback = Playback::Playing;
+        app.local.track = Some(crate::player::LocalTrack {
+            uri: "spotify:track:0123456789ABCDEFGHIJKL".into(),
+            ..Default::default()
+        });
+        app.transfer("remote-device".into());
+        let ctx = egui::Context::default();
+        let action = Action::PlayFromRow {
+            context: RowContext::Discovery(
+                vec!["spotify:track:0123456789ABCDEFGHIJKL".into()].into(),
+            ),
+            uri: "spotify:track:0123456789ABCDEFGHIJKL".into(),
+            index: 0,
+        };
+        assert!(!app.discovery_playback_available());
+        app.apply(action.clone(), &ctx);
+        assert!(app.intent_track.is_none());
+        assert!(app.queued_play.is_none());
+        let uri = "spotify:track:0123456789ABCDEFGHIJKL";
+        app.discovery.picks.push(crate::discovery::Pick {
+            suggestion: crate::discovery::Suggestion {
+                title: "Fixture".into(),
+                artist: "Fixture artist".into(),
+                reason: String::new(),
+            },
+            track: Some(Track {
+                uri: uri.into(),
+                ..Default::default()
+            }),
+            checked: true,
+        });
+        app.discovery
+            .replica
+            .edit(
+                "mix:fixture".into(),
+                Some(crate::discovery::Value::Mix {
+                    title: "Fixture mix".into(),
+                    uris: vec![uri.into()],
+                }),
+            )
+            .unwrap();
+        app.apply(Action::DiscoveryPlayAll { shuffle: false }, &ctx);
+        app.apply(Action::DiscoveryPlayAll { shuffle: true }, &ctx);
+        app.apply(Action::DiscoveryPlayMix("mix:fixture".into()), &ctx);
+        assert!(app.intent_track.is_none());
+        assert!(app.queued_play.is_none());
+        assert!(app.backend.take_remote_play_requests().is_empty());
+        app.selected_device = None;
+        assert!(app.discovery_playback_available());
+        app.apply(action, &ctx);
+        assert_eq!(
+            app.intent_track.as_ref().map(|intent| intent.uri.as_str()),
+            Some("spotify:track:0123456789ABCDEFGHIJKL")
+        );
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn discovery_stays_blocked_while_an_active_local_player_transfers_remotely() {
+        for playback in [Playback::Loading, Playback::Playing, Playback::Paused] {
+            let mut app = test_app("discovery-active-local-transfer");
+            app.backend.set_offline(true);
+            app.local_ready = true;
+            app.local_device_id = Some("local-device".into());
+            app.local.playback = playback;
+            app.local.track = Some(crate::player::LocalTrack {
+                uri: "spotify:track:0123456789ABCDEFGHIJKL".into(),
+                ..Default::default()
+            });
+            assert!(app.discovery_playback_available());
+            app.transfer("remote-device".into());
+            assert_eq!(
+                app.target(),
+                Target::Local,
+                "the old player is still active"
+            );
+            assert!(!app.discovery_playback_available());
+            let ctx = egui::Context::default();
+            app.apply(
+                Action::PlayFromRow {
+                    context: RowContext::Discovery(
+                        vec!["spotify:track:0123456789ABCDEFGHIJKL".into()].into(),
+                    ),
+                    uri: "spotify:track:0123456789ABCDEFGHIJKL".into(),
+                    index: 0,
+                },
+                &ctx,
+            );
+            app.apply(Action::DiscoveryPlayAll { shuffle: false }, &ctx);
+            app.apply(Action::DiscoveryPlayMix("mix:fixture".into()), &ctx);
+            assert!(app.intent_track.is_none());
+            assert!(app.queued_play.is_none());
+            assert!(app.backend.take_remote_play_requests().is_empty());
+            app.transfer("local-device".into());
+            assert!(app.discovery_playback_available());
+            app.backend.shutdown();
+        }
+    }
+
+    #[test]
+    fn changed_discovery_inputs_discard_in_flight_results_without_overlapping_work() {
+        for mutation in 0..4 {
+            for success in [true, false] {
+                let mut app = test_app("discovery-changed-inputs");
+                app.backend.set_offline(true);
+                app.auth = AuthStatus::Connected {
+                    username: "fixture".into(),
+                };
+                app.discovery.ready = true;
+                app.settings.discovery.automatic = false;
+                app.discovery
+                    .replica
+                    .edit(
+                        "taste".into(),
+                        Some(crate::discovery::Value::Taste {
+                            text: "original taste".into(),
+                        }),
+                    )
+                    .unwrap();
+                app.discovery.draft = "original taste".into();
+                let cached = crate::discovery::Pick {
+                    suggestion: crate::discovery::Suggestion {
+                        title: "Kept cached pick".into(),
+                        artist: "Fixture artist".into(),
+                        reason: String::new(),
+                    },
+                    track: None,
+                    checked: false,
+                };
+                app.discovery.picks = vec![cached.clone()];
+                app.discovery.replica.cached_picks = vec![cached.clone()];
+                let ctx = egui::Context::default();
+                app.apply(Action::DiscoveryRecommend, &ctx);
+                let request = app.discovery.request;
+                app.apply(Action::DiscoveryDraft("unfinished draft".into()), &ctx);
+                assert_eq!(app.discovery.request, request);
+                app.apply(Action::DiscoveryDraft("original taste".into()), &ctx);
+                match mutation {
+                    0 => {
+                        app.apply(Action::DiscoveryDraft("changed taste".into()), &ctx);
+                        app.apply(Action::DiscoverySaveTaste, &ctx);
+                    }
+                    1 => app.apply(
+                        Action::DiscoveryRate {
+                            uri: "spotify:track:0123456789ABCDEFGHIJKL".into(),
+                            title: "Fixture".into(),
+                            artist: "Fixture artist".into(),
+                            rating: Some(crate::discovery::Rating::Less),
+                        },
+                        &ctx,
+                    ),
+                    2 => app.apply(
+                        Action::DiscoveryExploration(crate::discovery::Exploration::Adventurous),
+                        &ctx,
+                    ),
+                    _ => {
+                        // This fixture represents an already-uploaded taste.
+                        // A clock import must preserve a genuinely pending edit.
+                        app.discovery.replica.pending_edits.clear();
+                        let mut remote = app.discovery.replica.document.clone();
+                        let taste = remote.records.get_mut("taste").unwrap();
+                        taste.stamp.counter = 10;
+                        taste.stamp.device = "b".repeat(32);
+                        taste.value = Some(crate::discovery::Value::Taste {
+                            text: "imported taste".into(),
+                        });
+                        app.handle_backend_events(vec![Event::DiscoverySynced(Ok(remote))]);
+                    }
+                }
+                assert!(app.discovery.request > request);
+                assert!(
+                    app.discovery.busy,
+                    "superseded work still occupies the worker"
+                );
+                let generation = app.discovery.request;
+                let status = app.discovery.status.clone();
+                app.apply(Action::DiscoveryRecommend, &ctx);
+                assert_eq!(app.discovery.request, generation);
+                let result = if success {
+                    Ok(crate::discovery::ResolvedDiscovery {
+                        picks: vec![],
+                        outcome: crate::discovery::CatalogueOutcome::Unavailable,
+                    })
+                } else {
+                    Err("stale error".into())
+                };
+                app.handle_backend_events(vec![Event::DiscoveryRecommended {
+                    request,
+                    prompt: "original taste".into(),
+                    result,
+                }]);
+                assert!(!app.discovery.busy);
+                assert_eq!(app.discovery.picks, vec![cached.clone()]);
+                assert_eq!(app.discovery.replica.cached_picks, vec![cached]);
+                assert!(app.discovery.replica.document.recent_history().is_empty());
+                assert!(app.settings.discovery.refreshed_at.is_none());
+                if success {
+                    assert_eq!(app.discovery.status, status);
+                    assert!(app.discovery.last_error.is_none());
+                } else {
+                    assert_eq!(app.discovery.status, "stale error");
+                    assert_eq!(
+                        app.discovery.last_error,
+                        Some(crate::discovery::RecommendationErrorKind::Unavailable)
+                    );
+                    assert!(
+                        app.discovery.automatic.retry_after(Instant::now()).unwrap()
+                            > Duration::from_secs(590)
+                    );
+                    app.apply(Action::DiscoveryRecommend, &ctx);
+                    assert_eq!(app.discovery.request, generation);
+                    assert!(!app.discovery.busy);
+                    // Make retry eligible for the duplicate-completion check.
+                    app.discovery.automatic.rearm();
+                }
+
+                app.apply(Action::DiscoveryRecommend, &ctx);
+                assert!(app.discovery.busy);
+                let current = app.discovery.request;
+                app.handle_backend_events(vec![Event::DiscoveryRecommended {
+                    request,
+                    prompt: "duplicate old completion".into(),
+                    result: Err("stale error".into()),
+                }]);
+                assert!(app.discovery.busy, "old completions cannot clear new work");
+                app.handle_backend_events(vec![Event::DiscoveryRecommended {
+                    request: current,
+                    prompt: "current taste".into(),
+                    result: Err("current error".into()),
+                }]);
+                assert!(!app.discovery.busy);
+                assert_eq!(app.discovery.status, "current error");
+                app.backend.shutdown();
+            }
+        }
+    }
+
+    #[test]
+    fn manual_update_checks_remain_disabled_in_the_fork_preview() {
+        let mut app = test_app("fork-updates-disabled");
+        app.apply(Action::CheckForUpdates, &egui::Context::default());
+        assert!(!app.update_checking);
+        assert!(app.last_update_check.is_none());
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn manual_refresh_cannot_bypass_an_ai_cooldown() {
+        let mut app = test_app("discovery-manual-cooldown");
+        app.backend.set_offline(true);
+        app.discovery.ready = true;
+        app.auth = AuthStatus::Connected {
+            username: "fixture".into(),
+        };
+        app.discovery
+            .replica
+            .edit(
+                "taste".into(),
+                Some(crate::discovery::Value::Taste {
+                    text: "Jazz".into(),
+                }),
+            )
+            .unwrap();
+        app.discovery.draft = "Jazz".into();
+        let ctx = egui::Context::default();
+        app.apply(Action::DiscoveryRecommend, &ctx);
+        let request = app.discovery.request;
+        app.handle_backend_events(vec![Event::DiscoveryRecommended {
+            request,
+            prompt: "Jazz".into(),
+            result: Err(crate::discovery::RecommendationError {
+                kind: crate::discovery::RecommendationErrorKind::RateLimited,
+                message: "Retry later".into(),
+            }),
+        }]);
+        let before = app.discovery.automatic.retry_after(Instant::now()).unwrap();
+        for _ in 0..3 {
+            app.apply(Action::DiscoveryRecommend, &ctx);
+        }
+        assert_eq!(app.discovery.request, request);
+        assert!(!app.discovery.busy);
+        assert_eq!(app.discovery.status, "Retry later");
+        let after = app.discovery.automatic.retry_after(Instant::now()).unwrap();
+        assert!(after <= before && after > Duration::from_secs(590));
+        let stored =
+            serde_json::from_slice(&serde_json::to_vec(&app.discovery.replica).unwrap()).unwrap();
+        let mut reopened = test_app("discovery-reopened-cooldown");
+        reopened.backend.set_offline(true);
+        reopened.auth = app.auth.clone();
+        reopened.handle_backend_events(vec![Event::DiscoveryLoaded(Ok(stored))]);
+        reopened.apply(Action::DiscoveryRecommend, &ctx);
+        assert_eq!(reopened.discovery.request, 0);
+        assert!(!reopened.discovery.busy);
+        assert!(
+            reopened
+                .discovery
+                .automatic
+                .retry_after(Instant::now())
+                .unwrap()
+                > Duration::from_secs(590)
+        );
+        reopened.backend.shutdown();
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn superseded_ai_requests_keep_service_throttles_without_accepting_content() {
+        use crate::discovery::{Exploration, RecommendationError, RecommendationErrorKind};
+        for exploration in [false, true] {
+            for kind in [
+                RecommendationErrorKind::Busy,
+                RecommendationErrorKind::RateLimited,
+                RecommendationErrorKind::Pairing,
+                RecommendationErrorKind::Unavailable,
+                RecommendationErrorKind::InvalidResponse,
+            ] {
+                let mut app = test_app("discovery-superseded-throttle");
+                app.backend.set_offline(true);
+                app.discovery.ready = true;
+                app.auth = AuthStatus::Connected {
+                    username: "fixture".into(),
+                };
+                app.discovery.draft = "Jazz".into();
+                let ctx = egui::Context::default();
+                app.apply(Action::DiscoveryRecommend, &ctx);
+                let request = app.discovery.request;
+                if exploration {
+                    app.apply(Action::DiscoveryExploration(Exploration::Adventurous), &ctx);
+                } else {
+                    app.apply(Action::DiscoveryDraft("Soul".into()), &ctx);
+                    app.apply(Action::DiscoverySaveTaste, &ctx);
+                }
+                let generation = app.discovery.request;
+                assert!(generation > request && app.discovery.busy);
+                let inputs = app.discovery.replica.document.clone();
+                let refreshed = app.settings.discovery.refreshed_at;
+                app.handle_backend_events(vec![Event::DiscoveryRecommended {
+                    request,
+                    prompt: "old prompt".into(),
+                    result: Err(RecommendationError {
+                        kind,
+                        message: "Service throttle".into(),
+                    }),
+                }]);
+                assert!(!app.discovery.busy);
+                assert_eq!(app.discovery.replica.document, inputs);
+                assert_eq!(app.settings.discovery.refreshed_at, refreshed);
+                assert_eq!(app.discovery.last_error, Some(kind));
+                assert_eq!(app.discovery.status, "Service throttle");
+                let now = Instant::now();
+                let restored = crate::discovery::AutoRecommendations::restore(
+                    &app.discovery.replica.recommendation_throttle,
+                    now,
+                    crate::discovery::unix_now(),
+                );
+                if kind == RecommendationErrorKind::Pairing {
+                    assert!(app.discovery.automatic.suspended && restored.suspended);
+                    assert!(
+                        app.discovery
+                            .automatic
+                            .due(
+                                now,
+                                crate::discovery::unix_now(),
+                                &app.settings.discovery,
+                                true,
+                                true,
+                                true
+                            )
+                            .is_none()
+                    );
+                } else {
+                    let minimum = if kind == RecommendationErrorKind::Busy {
+                        10
+                    } else {
+                        590
+                    };
+                    assert!(
+                        app.discovery.automatic.retry_after(now).unwrap()
+                            > Duration::from_secs(minimum)
+                    );
+                    assert!(restored.retry_after(now).unwrap() > Duration::from_secs(minimum));
+                    for automatic in [false, true] {
+                        app.request_discovery(automatic);
+                        assert_eq!(app.discovery.request, generation);
+                        assert!(!app.discovery.busy);
+                    }
+                }
+                // A duplicate old completion cannot throttle or clear newer work.
+                app.discovery.automatic.rearm();
+                app.discovery.last_error = None;
+                app.request_discovery(false);
+                assert!(app.discovery.busy);
+                let current = app.discovery.request;
+                app.handle_backend_events(vec![Event::DiscoveryRecommended {
+                    request,
+                    prompt: "duplicate old prompt".into(),
+                    result: Err(RecommendationError {
+                        kind: RecommendationErrorKind::RateLimited,
+                        message: "Duplicate throttle".into(),
+                    }),
+                }]);
+                assert!(app.discovery.busy);
+                assert_eq!(app.discovery.in_flight_request, Some(current));
+                assert!(
+                    app.discovery
+                        .automatic
+                        .retry_after(Instant::now())
+                        .is_none()
+                );
+                assert!(app.discovery.last_error.is_none());
+                app.backend.shutdown();
+            }
+        }
+    }
+
+    #[test]
+    fn removing_a_mix_is_optimistic_and_a_stale_sync_cannot_restore_it() {
+        let mut app = test_app("discovery-remove-mix");
+        app.backend.set_offline(true);
+        app.discovery.ready = true;
+        app.discovery
+            .replica
+            .edit(
+                "mix:fixture".into(),
+                Some(crate::discovery::Value::Mix {
+                    title: "Mix".into(),
+                    uris: vec![],
+                }),
+            )
+            .unwrap();
+        let remote = app.discovery.replica.document.clone();
+        app.discovery.sync_snapshot = Some(remote.clone());
+        app.apply(
+            Action::DiscoveryRemoveMix("mix:fixture".into()),
+            &egui::Context::default(),
+        );
+        assert!(app.discovery.dirty);
+        assert!(
+            app.discovery.replica.document.records["mix:fixture"]
+                .value
+                .is_none()
+        );
+        app.handle_backend_events(vec![Event::DiscoverySynced(Ok(remote))]);
+        assert!(
+            app.discovery.replica.document.records["mix:fixture"]
+                .value
+                .is_none()
+        );
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn automatic_discovery_uses_saved_taste_and_starts_only_one_request() {
+        let mut app = test_app("discovery-automatic");
+        app.backend.set_offline(true);
+        app.discovery.ready = true;
+        app.auth = AuthStatus::Connected {
+            username: "fixture".into(),
+        };
+        app.discovery
+            .replica
+            .edit(
+                "taste".into(),
+                Some(crate::discovery::Value::Taste {
+                    text: "saved taste".into(),
+                }),
+            )
+            .unwrap();
+        app.discovery.draft = "unfinished draft".into();
+        let ctx = egui::Context::default();
+        app.apply(Action::DiscoveryAutoRecommend, &ctx);
+        assert!(app.discovery.busy);
+        assert_eq!(app.discovery.replica.document.taste(), "saved taste");
+        assert_eq!(app.discovery.draft, "unfinished draft");
+        let request = app.discovery.request;
+        app.apply(Action::DiscoveryAutoRecommend, &ctx);
+        assert_eq!(app.discovery.request, request);
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn feedback_alone_is_enough_for_automatic_discovery() {
+        let mut app = test_app("discovery-feedback-input");
+        app.backend.set_offline(true);
+        app.discovery.ready = true;
+        app.auth = AuthStatus::Connected {
+            username: "fixture".into(),
+        };
+        let uri = "spotify:track:0123456789ABCDEFGHIJKL";
+        app.discovery
+            .replica
+            .edit(
+                format!("feedback:{uri}"),
+                Some(crate::discovery::Value::Feedback {
+                    uri: uri.into(),
+                    title: "Fixture".into(),
+                    artist: "Artist".into(),
+                    rating: crate::discovery::Rating::Love,
+                }),
+            )
+            .unwrap();
+        app.apply(Action::DiscoveryAutoRecommend, &egui::Context::default());
+        assert!(app.discovery.busy);
+        assert!(app.discovery.replica.document.taste().is_empty());
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn full_discovery_storage_still_saves_the_latest_picks() {
+        let mut app = test_app("discovery-full-history");
+        app.discovery.ready = true;
+        app.discovery
+            .replica
+            .edit(
+                "taste".into(),
+                Some(crate::discovery::Value::Taste {
+                    text: "saved taste".into(),
+                }),
+            )
+            .unwrap();
+        crate::discovery::tests::fill_with_mixes(&mut app.discovery.replica.document, 0);
+        let document = app.discovery.replica.document.clone();
+        app.discovery.request = 3;
+        app.discovery.busy = true;
+        app.discovery.in_flight_request = Some(3);
+        let pick = crate::discovery::Pick {
+            suggestion: crate::discovery::Suggestion {
+                title: "Latest pick".into(),
+                artist: "Fixture artist".into(),
+                reason: "fits".into(),
+            },
+            track: None,
+            checked: false,
+        };
+        app.handle_backend_events(vec![Event::DiscoveryRecommended {
+            request: 3,
+            prompt: "saved taste".into(),
+            result: Ok(crate::discovery::ResolvedDiscovery {
+                picks: vec![pick.clone()],
+                outcome: crate::discovery::CatalogueOutcome::Complete,
+            }),
+        }]);
+        assert_eq!(
+            app.discovery.status,
+            "Discovery storage is full. Export and remove old mixes or history."
+        );
+        assert_eq!(app.discovery.picks, vec![pick.clone()]);
+        assert_eq!(app.discovery.replica.document, document);
+        assert!(app.settings.discovery.refreshed_at.is_some());
+        assert!(app.settings_dirty);
+        app.backend.shutdown();
+        let saved =
+            crate::discovery::Replica::load(&app.dirs.state.join("spotiurge-discovery.json"))
+                .unwrap();
+        assert_eq!(saved.cached_picks, vec![pick]);
+        assert_eq!(saved.document, document);
+    }
+
+    #[test]
+    fn discovery_retry_respects_cooldown_and_never_writes_ai_history() {
+        let mut app = test_app("discovery-retry");
+        app.backend.set_offline(true);
+        app.discovery.ready = true;
+        let ctx = egui::Context::default();
+        app.discovery.retry_after = Some(Instant::now() + Duration::from_secs(30));
+        app.apply(Action::DiscoveryRetryMatches, &ctx);
+        assert!(!app.discovery.busy);
+        app.discovery.retry_after = None;
+        app.apply(Action::DiscoveryRetryMatches, &ctx);
+        assert!(app.discovery.busy);
+        let request = app.discovery.request;
+        app.handle_backend_events(vec![Event::DiscoveryResolved {
+            request: request - 1,
+            result: crate::discovery::ResolvedDiscovery {
+                picks: vec![],
+                outcome: crate::discovery::CatalogueOutcome::Complete,
+            },
+        }]);
+        assert!(app.discovery.busy);
+        app.handle_backend_events(vec![Event::DiscoveryResolved {
+            request,
+            result: crate::discovery::ResolvedDiscovery {
+                picks: vec![],
+                outcome: crate::discovery::CatalogueOutcome::Complete,
+            },
+        }]);
+        assert!(!app.discovery.busy);
+        assert!(app.discovery.replica.document.records.is_empty());
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn syncing_does_not_save_an_unfinished_taste_editor() {
+        let mut app = test_app("discovery-sync-draft");
+        app.backend.set_offline(true);
+        app.discovery.ready = true;
+        app.discovery
+            .replica
+            .edit(
+                "taste".into(),
+                Some(crate::discovery::Value::Taste {
+                    text: "saved".into(),
+                }),
+            )
+            .unwrap();
+        app.discovery.draft = "unfinished".into();
+        app.apply(Action::DiscoverySync, &egui::Context::default());
+        assert_eq!(app.discovery.replica.document.taste(), "saved");
+        assert_eq!(app.discovery.draft, "unfinished");
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn late_discovery_requests_cannot_replace_the_current_results() {
+        let mut app = test_app("discovery-request-race");
+        app.discovery.request = 2;
+        app.discovery.busy = true;
+        app.handle_backend_events(vec![Event::DiscoveryRecommended {
+            request: 1,
+            prompt: "old".into(),
+            result: Ok(crate::discovery::ResolvedDiscovery {
+                picks: vec![],
+                outcome: crate::discovery::CatalogueOutcome::Complete,
+            }),
+        }]);
+        assert!(app.discovery.busy);
+        assert!(app.discovery.replica.document.records.is_empty());
+        app.handle_backend_events(vec![Event::DiscoveryRecommended {
+            request: 2,
+            prompt: "new".into(),
+            result: Err("offline".into()),
+        }]);
+        assert!(!app.discovery.busy);
+        assert_eq!(app.discovery.status, "offline");
+        app.backend.shutdown();
+    }
+
     /// With Random on, each switch to the mini player shows a skin other
     /// than the last one, and choosing a skin turns Random off.
     #[test]
@@ -18132,7 +19522,7 @@ mod tests {
         assert_eq!(app.update, None);
         assert_eq!(
             app.toasts.last().map(|toast| toast.message.as_str()),
-            Some("Spotifast is up to date")
+            Some("Spotiurge is up to date")
         );
 
         app.toasts.clear();
@@ -18181,7 +19571,7 @@ mod tests {
         );
         assert_eq!(
             app.toasts.last().map(|toast| toast.message.as_str()),
-            Some("Spotifast 1.2.3 is available")
+            Some("Spotiurge 1.2.3 is available")
         );
     }
 
@@ -22177,7 +23567,7 @@ mod tests {
                 "unknown",
                 // Local playback is this computer, which Spotify has not
                 // named because it is not a remote device.
-                "Spotifast",
+                "Spotiurge",
             ]
         );
         // No devices seen yet is an empty array, not an empty string, so a
@@ -22491,7 +23881,7 @@ mod tests {
             .unwrap();
         let call = |uri: &str| {
             client.call_method(
-                Some("org.mpris.MediaPlayer2.spotifast"),
+                Some("org.mpris.MediaPlayer2.spotiurge"),
                 "/org/mpris/MediaPlayer2",
                 Some("org.mpris.MediaPlayer2.Player"),
                 "OpenUri",
@@ -22518,7 +23908,7 @@ mod tests {
         assert!(matches!(app.actions.as_slice(), [Action::OpenLink(_)]));
         let schemes: Vec<String> = zbus::blocking::Proxy::new(
             &client,
-            "org.mpris.MediaPlayer2.spotifast",
+            "org.mpris.MediaPlayer2.spotiurge",
             "/org/mpris/MediaPlayer2",
             "org.mpris.MediaPlayer2",
         )

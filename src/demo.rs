@@ -522,6 +522,18 @@ pub fn populate(app: &mut App) {
     app.home.top_songs = Loadable::Loaded(tracks.iter().skip(10).cloned().collect());
     app.home.top_songs_complete = true;
     app.home.recommendations = Loadable::Loaded(tracks.iter().skip(20).take(10).cloned().collect());
+    app.discovery.ready = true;
+    app.discovery.draft = "Warm textures, spacious electronics, a few surprises. Give me something for a late-night walk.".into();
+    app.discovery
+        .replica
+        .edit(
+            "taste".into(),
+            Some(crate::discovery::Value::Taste {
+                text: app.discovery.draft.clone(),
+            }),
+        )
+        .expect("valid demo taste");
+    app.discovery.picks = demo_discovery_picks(4, 0, 0);
     for term in DISCOVER_TERMS {
         let matching: Vec<Playlist> = playlists
             .iter()
@@ -560,7 +572,7 @@ pub fn populate(app: &mut App) {
     app.devices = vec![
         Device {
             id: Some("local-demo".into()),
-            name: "Spotifast".into(),
+            name: "Spotiurge".into(),
             is_active: false,
             is_restricted: false,
             volume_percent: Some(70),
@@ -748,6 +760,37 @@ fn demo_sound() -> Vec<f64> {
         .collect()
 }
 
+/// Synthetic discovery picks for visual review: `ready` matched demo tracks,
+/// then `missing` looked up without a match, then `unchecked` never looked up.
+/// All titles, artists and reasons are fixtures; none describe the live catalogue.
+fn demo_discovery_picks(
+    ready: usize,
+    missing: usize,
+    unchecked: usize,
+) -> Vec<crate::discovery::Pick> {
+    const REASONS: [&str; 4] = [
+        "Demo reason: a patient groove with room to breathe.",
+        "Demo reason: warm textures close to your saved taste.",
+        "Demo reason: one step further out, still spacious.",
+        "Demo reason: a late-night pulse with a soft edge.",
+    ];
+    (0..ready + missing + unchecked)
+        .map(|index| {
+            let mut track = track(3 + index);
+            track.uri = format!("spotify:track:{index:022}");
+            crate::discovery::Pick {
+                suggestion: crate::discovery::Suggestion {
+                    title: track.name.clone(),
+                    artist: track.artist_names(),
+                    reason: REASONS[index % REASONS.len()].into(),
+                },
+                track: (index < ready).then_some(track),
+                checked: index < ready + missing,
+            }
+        })
+        .collect()
+}
+
 #[cfg(feature = "demo")]
 pub fn apply_flags(app: &mut App, page: Option<&str>, show: Option<&str>) {
     // Default screenshots to the main window regardless of saved settings.
@@ -756,6 +799,11 @@ pub fn apply_flags(app: &mut App, page: Option<&str>, show: Option<&str>) {
         app.open(page);
     }
     for surface in show.unwrap_or("").split(',').map(str::trim) {
+        if surface.starts_with("discovery-") && surface != "discovery-remote" {
+            play_here(app);
+            app.local.playback = crate::player::Playback::Paused;
+            app.selected_device = None;
+        }
         match surface {
             "library-list"
             | "library-list-narrow"
@@ -772,6 +820,104 @@ pub fn apply_flags(app: &mut App, page: Option<&str>, show: Option<&str>) {
                 } else {
                     380.0
                 };
+            }
+            "discovery-remote" => {
+                app.local.playback = crate::player::Playback::Stopped;
+                app.selected_device = Some("remote-demo".into());
+                let uris = (0..app.discovery.picks.len())
+                    .map(|index| format!("spotify:track:{index:022}"))
+                    .collect();
+                app.discovery
+                    .replica
+                    .edit(
+                        "mix:demo".into(),
+                        Some(crate::discovery::Value::Mix {
+                            title: "Demo discovery mix".into(),
+                            uris,
+                        }),
+                    )
+                    .expect("valid demo mix");
+            }
+            "discovery-empty" => {
+                app.discovery.picks.clear();
+            }
+            "discovery-onboarding" => {
+                app.discovery.picks.clear();
+                app.discovery.draft.clear();
+                app.discovery.replica = Default::default();
+            }
+            "discovery-matched" => app.discovery.picks = demo_discovery_picks(12, 0, 0),
+            "discovery-partial" => {
+                app.discovery.picks = demo_discovery_picks(5, 0, 7);
+                app.discovery.catalogue = crate::discovery::CatalogueOutcome::RateLimited;
+                app.discovery.retry_after =
+                    Some(Instant::now() + std::time::Duration::from_secs(30));
+            }
+            "discovery-not-found" => app.discovery.picks = demo_discovery_picks(8, 3, 0),
+            "discovery-loading" | "discovery-busy" => app.discovery.busy = true,
+            "discovery-opening" | "discovery-load-error" => {
+                app.discovery.ready = false;
+                app.discovery.picks.clear();
+                app.discovery.replica = Default::default();
+                app.discovery.status = if surface == "discovery-load-error" {
+                    "Cannot read discovery state. Fix its file permissions and restart.".into()
+                } else {
+                    String::new()
+                };
+            }
+            "discovery-error" | "discovery-offline" => {
+                app.discovery.last_error =
+                    Some(crate::discovery::RecommendationErrorKind::Unavailable);
+            }
+            "discovery-pairing" => {
+                app.discovery.last_error = Some(crate::discovery::RecommendationErrorKind::Pairing);
+            }
+            "discovery-taste" => app.discovery.editing_taste = true,
+            "discovery-history" => {
+                app.discovery.show_history = true;
+                let suggestions = app
+                    .discovery
+                    .picks
+                    .iter()
+                    .map(|pick| pick.suggestion.clone())
+                    .collect();
+                app.discovery
+                    .replica
+                    .edit(
+                        "history:demo".into(),
+                        Some(crate::discovery::Value::History {
+                            prompt: app.discovery.draft.clone(),
+                            suggestions,
+                        }),
+                    )
+                    .expect("valid demo history");
+            }
+            "discovery-feedback" => {
+                if let Some(track) = app.discovery.picks.first().and_then(|p| p.track.as_ref()) {
+                    // Valid Spotify-shaped fixture URI, never sent to a service.
+                    let mut track = track.clone();
+                    track.uri = "spotify:track:0123456789012345678901".into();
+                    let value = crate::discovery::Value::Feedback {
+                        uri: track.uri.clone(),
+                        title: track.name.clone(),
+                        artist: track.artist_names(),
+                        rating: crate::discovery::Rating::Love,
+                    };
+                    let _ = app
+                        .discovery
+                        .replica
+                        .edit(format!("feedback:{}", track.uri), Some(value));
+                    app.discovery.picks[0].track = Some(track);
+                }
+            }
+            "discovery-focus" => {
+                app.discovery.editing_taste = true;
+                app.discovery.status = "DEMO_FOCUS".into();
+            }
+            "discovery-menu" => app.discovery.status = "DEMO_MENU".into(),
+            "discovery-unmatched" => {
+                app.discovery.picks = demo_discovery_picks(3, 2, 0);
+                app.discovery.status = "DEMO_UNMATCHED".into();
             }
             "queue" => app.show_queue_panel = true,
             "playing-next" => {
@@ -1669,14 +1815,29 @@ mod tests {
                 ("Save to Liked Songs", "Remove from Liked Songs"),
             ] {
                 let tree = accessible_frame(&ctx, &mut app, vec![]);
-                let button = accessible_node(&tree, &gettext(locale, source), Role::Button);
+                let player_button = |tree: &egui::accesskit::TreeUpdate, label: &str| {
+                    tree.nodes
+                        .iter()
+                        .find_map(|(id, node)| {
+                            (node.role() == Role::Button
+                                && node.label() == Some(label)
+                                && node.bounds().is_some_and(|bounds| {
+                                    bounds.y0 >= 800.0 - f64::from(crate::theme::PLAYER_BAR_HEIGHT)
+                                }))
+                            .then_some(*id)
+                        })
+                        .unwrap_or_else(|| {
+                            panic!("missing player-bar control {label:?} for {locale:?}")
+                        })
+                };
+                let button = player_button(&tree, &gettext(locale, source));
                 accessible_frame(
                     &ctx,
                     &mut app,
                     vec![accessible_action(button, AccessibleAction::Click, None)],
                 );
                 let tree = accessible_frame(&ctx, &mut app, vec![]);
-                accessible_node(&tree, &gettext(locale, next), Role::Button);
+                player_button(&tree, &gettext(locale, next));
             }
 
             app.remote = None;
@@ -1748,7 +1909,18 @@ mod tests {
             assert!(app.manual_queue.is_empty());
             assert_eq!(app.queue.get().unwrap().queue, rows[2..]);
             let tree = accessible_frame(&ctx, &mut app, vec![]);
-            let recent = accessible_node(&tree, &gettext(locale, "Recent"), Role::Button);
+            // The tab is a toggle, which tells it apart from a sidebar
+            // button some languages give the same words.
+            let recent = tree
+                .nodes
+                .iter()
+                .find(|(_, node)| {
+                    node.label() == Some(gettext(locale, "Recent").as_ref())
+                        && node.role() == Role::Button
+                        && node.toggled().is_some()
+                })
+                .map(|(id, _)| *id)
+                .expect("the Recent tab");
             accessible_frame(
                 &ctx,
                 &mut app,
@@ -2487,6 +2659,8 @@ mod tests {
         use egui::accesskit::Role;
         let (ctx, mut app) = accessible_app("library-grid-drop-highlight");
         app.settings.sidebar_grid = true;
+        // The second frame is laid out in the installed fonts.
+        accessible_frame(&ctx, &mut app, vec![]);
         let tree = accessible_frame(&ctx, &mut app, vec![]);
         let liked = tree
             .nodes
@@ -3002,8 +3176,8 @@ mod tests {
             .collect()
     }
 
-    /// The About card ends with the author's credit, and the name opens
-    /// the author's website.
+    /// The About card ends with the upstream credit, and the author's
+    /// name opens the author's website.
     #[test]
     fn the_about_card_credits_the_author() {
         let (ctx, mut app) = accessible_app("about-credit");
@@ -3012,7 +3186,11 @@ mod tests {
         assert!(
             texts
                 .iter()
-                .any(|(text, _)| text.contains("Built with love by")),
+                .any(|(text, _)| text.contains("Based on Spotifast by")),
+            "{texts:?}"
+        );
+        assert!(
+            texts.iter().any(|(text, _)| text.contains("MIT License")),
             "{texts:?}"
         );
         let name = texts
@@ -4493,18 +4671,24 @@ mod tests {
             output.textures_delta.clear();
             output
         };
+        // The visualizer paints inside its stage, clear of the console's
+        // rounded corners; the console's own glass is clipped to the bar.
+        let stage = |shape: &egui::epaint::ClippedShape| {
+            shape.clip_rect.width() < 1280.0 - 2.0 * crate::ui::material::GAP - 1.0
+        };
         // Both draw an untextured mesh; the waveform also strokes its line
         // in many short runs.
         let lines = |output: &egui::FullOutput| {
             output
                 .shapes
                 .iter()
-                .filter(|shape| matches!(&shape.shape, egui::Shape::Path(_)))
+                .filter(|shape| stage(shape) && matches!(&shape.shape, egui::Shape::Path(_)))
                 .count()
         };
         let drawn = |output: &egui::FullOutput| {
             output.shapes.iter().any(|shape| {
-                matches!(&shape.shape, egui::Shape::Mesh(mesh)
+                stage(shape)
+                    && matches!(&shape.shape, egui::Shape::Mesh(mesh)
                     if mesh.texture_id == egui::TextureId::default() && !mesh.vertices.is_empty())
             })
         };
@@ -5369,7 +5553,7 @@ mod tests {
     #[test]
     fn home_json_hides_only_the_chosen_recommendation_shelves() {
         let (ctx, mut app) = accessible_app("home-json-visibility");
-        let view = crate::ui::home::show;
+        let view = crate::ui::home::library_shelves;
         for (made_for_you, recommendations) in
             [(true, true), (false, true), (true, false), (false, false)]
         {
@@ -5434,7 +5618,7 @@ mod tests {
             check_card_menu(
                 &mut app,
                 &ctx,
-                crate::ui::home::show,
+                crate::ui::home::library_shelves,
                 &section,
                 &title,
                 &uri,
@@ -7401,7 +7585,7 @@ mod tests {
             &mut app,
             vec![egui::Event::PointerMoved(egui::pos2(
                 start.x,
-                800.0 - crate::theme::PLAYER_BAR_HEIGHT - 14.0,
+                800.0 - crate::theme::PLAYER_BAR_HEIGHT - 2.0 * crate::ui::material::GAP - 14.0,
             ))],
         );
         for _ in 0..400 {
@@ -7843,7 +8027,7 @@ mod tests {
         // right under Liked Songs, between what were the first two
         // unpinned playlists.
         let mut dropped = false;
-        for step in 0..40 {
+        for step in 0..60 {
             let pos = egui::pos2(120.0, 100.0 + step as f32 * 10.0);
             egui::DragAndDrop::set_payload(
                 &ctx,
@@ -8127,7 +8311,13 @@ mod tests {
                     let end = egui::pos2(
                         row.left() + 130.0,
                         if position == 4 {
-                            row.bottom() - 1.0
+                            // The last row's lower edge, or as low on it as
+                            // the page shows above the player.
+                            row.bottom().min(
+                                800.0
+                                    - crate::theme::PLAYER_BAR_HEIGHT
+                                    - 2.0 * crate::ui::material::GAP,
+                            ) - 1.0
                         } else {
                             row.top() + 1.0
                         },
@@ -8565,7 +8755,7 @@ mod tests {
                 &mut app,
                 vec![egui::Event::PointerMoved(egui::pos2(
                     112.0,
-                    800.0 - crate::theme::PLAYER_BAR_HEIGHT - 14.0,
+                    800.0 - crate::theme::PLAYER_BAR_HEIGHT - 2.0 * crate::ui::material::GAP - 14.0,
                 ))],
             );
             for _ in 0..400 {

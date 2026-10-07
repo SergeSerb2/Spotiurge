@@ -16,7 +16,7 @@ finish-args:
   # Platform storage for this application's Spotify grants.
   - --talk-name=org.freedesktop.secrets
   - --talk-name=org.kde.StatusNotifierWatcher
-  - --own-name=org.mpris.MediaPlayer2.spotifast
+  - --own-name=org.mpris.MediaPlayer2.spotiurge
   - --persist=.local/state
 modules:
   - name: spotifast

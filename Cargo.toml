@@ -6,7 +6,7 @@ edition = "2024"
 rust-version = "1.98"
 license = "MIT"
 description = "A native Spotify client"
-repository = "https://github.com/crmne/spotifast"
+repository = "https://github.com/SergeSerb2/Spotiurge"
 keywords = ["spotify", "music", "egui", "librespot", "player"]
 categories = ["multimedia::audio"]
 
@@ -151,6 +151,12 @@ urlencoding = "2"
 jiff = "0.2"
 mdns-sd = "0.21"
 unicode-bidi = "0.3"
+# Canonical title/artist normalization for exact discovery matches. ICU's
+# normalizer and data already compile for URL/IDNA handling.
+icu_normalizer = { version = "2.3", default-features = false, features = ["compiled_data"] }
+# Full Unicode case folding for catalogue identity; shares the ICU provider
+# already used by normalization, without stripping accents or versions.
+icu_casemap = { version = "2.3", default-features = false, features = ["compiled_data"] }
 hmac = "0.12"
 pbkdf2 = "0.12"
 aes = "0.8"

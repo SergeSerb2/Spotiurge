@@ -1,0 +1,71 @@
+{
+  "phase": "before",
+  "platform": "macOS arm64",
+  "source_commit": "b96095dac6995075806932b90ffcf30001d095fb",
+  "source_dirty": true,
+  "source_files": {
+    "src/demo.rs": "3c23eed8d0105bb274e91c71671bfe6ccb4ade09a0ebaf58b7feadbc97e814af",
+    "src/entrypoint.rs": "329a69b33c93675fac8a8b78a16e3295438209df22785141f847f043ac4517ee"
+  },
+  "binary_sha256": "24918e5f74ff4fbc34379e825a1330edeab4190a4be0b627c777b92d76216265",
+  "build_flags": "--locked --no-default-features --features demo --bin spotifast",
+  "captures": [
+    {
+      "surface": "load-error",
+      "page": "home",
+      "flags": "discovery-load-error",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "pixels": [
+        1440,
+        900
+      ],
+      "filename": "before-load-error-dark-normal.png",
+      "sha256": "05d5108ed8495a4a02763073055cdc727c915cf67f0b5987d3d240868d918553"
+    },
+    {
+      "surface": "load-error",
+      "page": "home",
+      "flags": "discovery-load-error",
+      "theme": "dark",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "pixels": [
+        900,
+        760
+      ],
+      "filename": "before-load-error-dark-narrow.png",
+      "sha256": "044da4fd89304d384f35f3bb1420f2cacdac5aa797c0363baf2651a279fa22ff"
+    },
+    {
+      "surface": "load-error",
+      "page": "home",
+      "flags": "discovery-load-error,light",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "pixels": [
+        1440,
+        900
+      ],
+      "filename": "before-load-error-light-normal.png",
+      "sha256": "661c68596a7b4e9cd65052ce975a671da61af81cd8473630a8ec7986da196101"
+    },
+    {
+      "surface": "load-error",
+      "page": "home",
+      "flags": "discovery-load-error,light",
+      "theme": "light",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "pixels": [
+        900,
+        760
+      ],
+      "filename": "before-load-error-light-narrow.png",
+      "sha256": "d32f6012cec683cfce466b5519e48914f5673152d5be3e681429fea7725a3860"
+    }
+  ],
+  "source_closure_sha256": "cb684091b49b36fac4f91817bb08c293eba15bd270bf25d550d250ba7b6219c2"
+}

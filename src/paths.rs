@@ -17,11 +17,11 @@ pub struct AppDirs {
 
 impl AppDirs {
     pub fn discover() -> Self {
-        Self::for_name("spotifast")
+        Self::for_name("spotiurge")
     }
 
     fn for_name(name: &str) -> Self {
-        let project = ProjectDirs::from("me", "paolino", name);
+        let project = ProjectDirs::from("com", "sergeserbinenko", name);
         match project {
             Some(project) => Self {
                 config: project.config_dir().to_path_buf(),

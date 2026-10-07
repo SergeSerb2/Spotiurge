@@ -1,0 +1,73 @@
+{
+  "phase": "after",
+  "platform": "macOS arm64",
+  "source_commit": "b96095dac6995075806932b90ffcf30001d095fb",
+  "source_dirty": true,
+  "source_files": {
+    "src/app.rs": "845078186fa8dab70dc25c4c5afbaf6f1016d4b1977bc5d7b2ebbf5fb5723461",
+    "src/ui/discovery.rs": "c467b80cb3177703e450b86a7042d110fc5031143c86bf4df87c7fcf92bae9b5",
+    "src/demo.rs": "3c23eed8d0105bb274e91c71671bfe6ccb4ade09a0ebaf58b7feadbc97e814af",
+    "src/entrypoint.rs": "329a69b33c93675fac8a8b78a16e3295438209df22785141f847f043ac4517ee"
+  },
+  "binary_sha256": "544619c731e1f6d3b4d1ef730e41112106b384028f17b74516792b3334a4873b",
+  "build_flags": "--locked --no-default-features --features demo --bin spotifast",
+  "captures": [
+    {
+      "surface": "load-error",
+      "page": "home",
+      "flags": "discovery-load-error",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "pixels": [
+        1440,
+        900
+      ],
+      "filename": "after-load-error-dark-normal.png",
+      "sha256": "427f931a6e227fe42a7b66eeaf9a567c112da26f6cecd5fbbdd5c9110fa00a21"
+    },
+    {
+      "surface": "load-error",
+      "page": "home",
+      "flags": "discovery-load-error",
+      "theme": "dark",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "pixels": [
+        900,
+        760
+      ],
+      "filename": "after-load-error-dark-narrow.png",
+      "sha256": "704153dc65533970ab9160f38135f6c1be365012d367679761042613f13fe4dc"
+    },
+    {
+      "surface": "load-error",
+      "page": "home",
+      "flags": "discovery-load-error,light",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "pixels": [
+        1440,
+        900
+      ],
+      "filename": "after-load-error-light-normal.png",
+      "sha256": "25740f9956468e81a735588e9d62425db2cc0204fdc972d5dd36380380c160c4"
+    },
+    {
+      "surface": "load-error",
+      "page": "home",
+      "flags": "discovery-load-error,light",
+      "theme": "light",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "pixels": [
+        900,
+        760
+      ],
+      "filename": "after-load-error-light-narrow.png",
+      "sha256": "248c020857237e30bcab6f03eaa0c50dea3fb45865364ebe85424dfd60838a9e"
+    }
+  ],
+  "source_closure_sha256": "9024fb90fc78c601e9b14cae02bb43aa27bad1430ec61cbac1129832f0bdd3f2"
+}

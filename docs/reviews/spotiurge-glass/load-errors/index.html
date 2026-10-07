@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spotiurge discovery load-error review</title>
+<style>
+:root{color-scheme:light dark;font:14px system-ui;background:#14181e;color:#edf1f7}
+body{margin:0;padding:20px}h1{font-size:22px;margin:0 0 8px}p{color:#aeb8c8;margin:8px 0}
+a{color:#9bcaff}.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:20px 0}
+select,button{font:inherit;padding:8px 12px;color:inherit;background:#222b37;border:1px solid #465369;border-radius:7px}
+button[aria-pressed=true]{background:#edf1f7;color:#14181e}label{display:flex;align-items:center;gap:6px}
+.images{display:grid;grid-template-columns:1fr 1fr;gap:16px}.images.single{grid-template-columns:1fr}
+figure{margin:0;min-width:0}figcaption{font-weight:600;margin:0 0 8px}img{display:block;width:100%;height:auto;border:1px solid #465369;border-radius:6px}
+.meta{font-size:12px;overflow-wrap:anywhere}nav{display:flex;gap:12px;margin:16px 0}
+@media(max-width:900px){.images{grid-template-columns:1fr}body{padding:12px}}
+</style>
+<h1>Spotiurge: visible discovery load failures</h1>
+<p>Actual native macOS captures of the same synthetic failed file load. Matching data, page, theme and logical window size. The alert replaces the misleading opening notice; original state is preserved.</p>
+<nav><a href="../review-followups.md">Test evidence and limits</a><a href="../design-review.md">Independent design review</a><a href="https://github.com/SergeSerb2/Spotiurge/pull/2">Pull request #2</a></nav>
+<div class="controls">
+<button id="prev">Previous</button><label>Screen <select id="surface"></select></label><button id="next">Next</button>
+<label>Theme <select id="theme"><option>dark</option><option>light</option></select></label>
+<label>Window <select id="size"><option>normal</option><option>narrow</option></select></label>
+<button data-view="both" aria-pressed="true">Compare</button><button data-view="before" aria-pressed="false">Before</button><button data-view="after" aria-pressed="false">After</button>
+</div>
+<div class="images" id="images"><figure id="before"><figcaption>Before</figcaption><img alt="Native baseline"><p class="meta"></p></figure><figure id="after"><figcaption>After</figcaption><img alt="Native redesigned app"><p class="meta"></p></figure></div>
+<p class="meta">The page loads only the selected captures. It displays screenshots; the app continues to use Rust and native rendering.</p>
+<script>
+const data={"before": {"phase": "before", "platform": "macOS arm64", "source_commit": "b96095dac6995075806932b90ffcf30001d095fb", "source_dirty": true, "source_files": {"src/demo.rs": "3c23eed8d0105bb274e91c71671bfe6ccb4ade09a0ebaf58b7feadbc97e814af", "src/entrypoint.rs": "329a69b33c93675fac8a8b78a16e3295438209df22785141f847f043ac4517ee"}, "binary_sha256": "24918e5f74ff4fbc34379e825a1330edeab4190a4be0b627c777b92d76216265", "build_flags": "--locked --no-default-features --features demo --bin spotifast", "captures": [{"surface": "load-error", "page": "home", "flags": "discovery-load-error", "theme": "dark", "size": "normal", "dimensions": "1440x900", "pixels": [1440, 900], "filename": "before-load-error-dark-normal.png", "sha256": "05d5108ed8495a4a02763073055cdc727c915cf67f0b5987d3d240868d918553"}, {"surface": "load-error", "page": "home", "flags": "discovery-load-error", "theme": "dark", "size": "narrow", "dimensions": "900x760", "pixels": [900, 760], "filename": "before-load-error-dark-narrow.png", "sha256": "044da4fd89304d384f35f3bb1420f2cacdac5aa797c0363baf2651a279fa22ff"}, {"surface": "load-error", "page": "home", "flags": "discovery-load-error,light", "theme": "light", "size": "normal", "dimensions": "1440x900", "pixels": [1440, 900], "filename": "before-load-error-light-normal.png", "sha256": "661c68596a7b4e9cd65052ce975a671da61af81cd8473630a8ec7986da196101"}, {"surface": "load-error", "page": "home", "flags": "discovery-load-error,light", "theme": "light", "size": "narrow", "dimensions": "900x760", "pixels": [900, 760], "filename": "before-load-error-light-narrow.png", "sha256": "d32f6012cec683cfce466b5519e48914f5673152d5be3e681429fea7725a3860"}], "source_closure_sha256": "cb684091b49b36fac4f91817bb08c293eba15bd270bf25d550d250ba7b6219c2"}, "after": {"phase": "after", "platform": "macOS arm64", "source_commit": "b96095dac6995075806932b90ffcf30001d095fb", "source_dirty": true, "source_files": {"src/app.rs": "845078186fa8dab70dc25c4c5afbaf6f1016d4b1977bc5d7b2ebbf5fb5723461", "src/ui/discovery.rs": "c467b80cb3177703e450b86a7042d110fc5031143c86bf4df87c7fcf92bae9b5", "src/demo.rs": "3c23eed8d0105bb274e91c71671bfe6ccb4ade09a0ebaf58b7feadbc97e814af", "src/entrypoint.rs": "329a69b33c93675fac8a8b78a16e3295438209df22785141f847f043ac4517ee"}, "binary_sha256": "544619c731e1f6d3b4d1ef730e41112106b384028f17b74516792b3334a4873b", "build_flags": "--locked --no-default-features --features demo --bin spotifast", "captures": [{"surface": "load-error", "page": "home", "flags": "discovery-load-error", "theme": "dark", "size": "normal", "dimensions": "1440x900", "pixels": [1440, 900], "filename": "after-load-error-dark-normal.png", "sha256": "427f931a6e227fe42a7b66eeaf9a567c112da26f6cecd5fbbdd5c9110fa00a21"}, {"surface": "load-error", "page": "home", "flags": "discovery-load-error", "theme": "dark", "size": "narrow", "dimensions": "900x760", "pixels": [900, 760], "filename": "after-load-error-dark-narrow.png", "sha256": "704153dc65533970ab9160f38135f6c1be365012d367679761042613f13fe4dc"}, {"surface": "load-error", "page": "home", "flags": "discovery-load-error,light", "theme": "light", "size": "normal", "dimensions": "1440x900", "pixels": [1440, 900], "filename": "after-load-error-light-normal.png", "sha256": "25740f9956468e81a735588e9d62425db2cc0204fdc972d5dd36380380c160c4"}, {"surface": "load-error", "page": "home", "flags": "discovery-load-error,light", "theme": "light", "size": "narrow", "dimensions": "900x760", "pixels": [900, 760], "filename": "after-load-error-light-narrow.png", "sha256": "248c020857237e30bcab6f03eaa0c50dea3fb45865364ebe85424dfd60838a9e"}], "source_closure_sha256": "9024fb90fc78c601e9b14cae02bb43aa27bad1430ec61cbac1129832f0bdd3f2"}, "surfaces": ["load-error"]};
+const surface=document.querySelector('#surface'),theme=document.querySelector('#theme'),size=document.querySelector('#size');
+for(const name of data.surfaces)surface.add(new Option(name.replaceAll('-',' '),name));
+function update(){
+ const choices=data.after.captures.filter(c=>c.surface===surface.value&&c.theme===theme.value);
+ size.options[1].disabled=!choices.some(c=>c.size==='narrow');
+ if(size.options[1].disabled)size.value='normal';
+ for(const phase of ['before','after']){
+  const proof=data[phase],case_=proof.captures.find(c=>c.surface===surface.value&&c.theme===theme.value&&c.size===size.value),figure=document.querySelector('#'+phase);
+  figure.querySelector('img').src=case_.filename;
+  figure.querySelector('img').alt=`${phase}: ${surface.value}, ${theme.value}, ${case_.dimensions}, native macOS`;
+  figure.querySelector('.meta').textContent=`${proof.platform} · ${case_.dimensions} · source ${proof.source_commit.slice(0,7)}${proof.source_dirty?' + working changes '+proof.source_closure_sha256.slice(0,12):''} · binary ${proof.binary_sha256.slice(0,12)}`;
+ }
+}
+for(const control of [surface,theme,size])control.addEventListener('change',update);
+for(const [id,step] of [['prev',-1],['next',1]])document.querySelector('#'+id).onclick=()=>{surface.selectedIndex=(surface.selectedIndex+step+surface.options.length)%surface.options.length;update()};
+for(const button of document.querySelectorAll('[data-view]'))button.onclick=()=>{
+ const view=button.dataset.view;document.querySelector('#images').classList.toggle('single',view!=='both');
+ for(const phase of ['before','after'])document.querySelector('#'+phase).hidden=view!=='both'&&view!==phase;
+ for(const other of document.querySelectorAll('[data-view]'))other.setAttribute('aria-pressed',String(other===button));
+};
+const initial=new URLSearchParams(location.search);for(const c of [surface,theme,size])if(initial.has(c.id))c.value=initial.get(c.id);
+update();
+</script></html>

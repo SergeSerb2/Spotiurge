@@ -6,11 +6,14 @@ pub mod artist;
 pub mod collection;
 pub(crate) mod devices;
 mod dialogs;
+pub mod discovery;
 pub mod home;
 mod keys;
 pub mod library;
 pub mod login;
 mod lyrics;
+pub mod material;
+pub mod motion;
 pub mod player_bar;
 pub mod queue;
 pub mod radio;
@@ -23,9 +26,8 @@ mod update;
 pub mod widgets;
 pub mod winamp;
 
-use egui::{Align2, Color32, Context, CornerRadius, Frame, Id, Margin, Rect, Stroke, vec2};
+use egui::{Align2, Color32, Context, Frame, Id, Margin, Rect, vec2};
 
-use crate::api::models::pick_image;
 use crate::app::App;
 use crate::backend::AuthStatus;
 use crate::model::{Action, Loadable, Page, ToastKind};
@@ -41,6 +43,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let signed_in = app.is_connected() && app.user.is_some();
     let connecting = matches!(app.auth, AuthStatus::Connecting | AuthStatus::Starting)
         || (app.is_connected() && app.user.is_none());
+    material::paint_scenery(ui.painter(), ui.max_rect(), &app.palette);
     if !signed_in {
         player_bar::end_tint_session(ctx);
         login::show(app, ui, connecting);
@@ -209,132 +212,99 @@ where
     }
 }
 
-fn page_tint(app: &mut App) -> Option<Color32> {
-    let page = app.page().clone();
-    let image = match &page {
-        Page::Playlist(id) => app
-            .playlist_pages
-            .get(id)
-            .and_then(|page| page.playlist.get())
-            .or_else(|| app.known_playlist(id))
-            .and_then(|playlist| pick_image(&playlist.images, 64))
-            .map(str::to_string),
-        Page::Album(id) => app
-            .album_pages
-            .get(id)
-            .and_then(|page| page.album.get())
-            .or_else(|| app.known_album(id))
-            .and_then(|album| pick_image(&album.images, 64))
-            .map(str::to_string),
-        Page::Artist(id) => app
-            .artist_pages
-            .get(id)
-            .and_then(|page| page.artist.get())
-            .or_else(|| app.known_artist(id))
-            .and_then(|artist| pick_image(&artist.images, 64))
-            .map(str::to_string),
-        Page::Show(id) => app
-            .show_pages
-            .get(id)
-            .and_then(|page| page.show.get())
-            .or_else(|| app.known_show(id))
-            .and_then(|show| pick_image(&show.images, 64))
-            .map(str::to_string),
-        Page::Radio(seed) => pick_image(&app.radio_images(seed), 64).map(str::to_string),
-        Page::LikedSongs => return Some(Color32::from_rgb(0x50, 0x38, 0xc8)),
-        _ => None,
-    };
-    if !app.settings.accent_from_art && image.is_some() {
-        return None;
-    }
-    match image {
-        Some(url) => app.tint_for(Some(&url)).or_else(|| app.now_playing_tint()),
-        None => app.now_playing_tint(),
-    }
-}
-
 fn central(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
-    let tint = page_tint(app);
+    let right_panel = app.show_queue_panel || app.show_lyrics_panel;
+    let gap = material::GAP as i8;
     egui::CentralPanel::default()
-        .frame(Frame::new().fill(palette.window))
+        .frame(Frame::new().inner_margin(Margin {
+            left: gap,
+            right: if right_panel { 0 } else { gap },
+            top: gap,
+            bottom: 0,
+        }))
         .show(ui, |ui| {
-            let rect = ui.max_rect();
-            if let Some(tint) = tint {
-                let strength = if matches!(
-                    app.page(),
-                    Page::Home | Page::Search | Page::Settings | Page::Queue
-                ) {
-                    0.45
-                } else {
-                    0.85
-                };
-                let top = blend(palette.window, tint, strength);
-                let header = Rect::from_min_size(rect.min, vec2(rect.width(), 340.0));
-                widgets::paint_vertical_gradient(ui, header, top, palette.window);
-            }
+            let pane = ui.max_rect();
+            ui.set_clip_rect(pane.intersect(ui.clip_rect()));
             ui.spacing_mut().item_spacing = vec2(8.0, 6.0);
-            // egui fades a scrolled page's edge into the panel's plain
-            // colour, which shows as a pale band over a cover's tint; the
-            // page casts a shadow under the header instead.
+            // Keep egui's opaque edge fade off over scenery; a flat chrome
+            // strip marks the scrolled edge below the header instead.
             ui.spacing_mut().scroll.fade.strength = 0.0;
             topbar::show(app, ui);
             let page = app.page().clone();
+            let encoded = page.encode();
+            // The page settles in after navigation: it fades up and rises a
+            // few points into place, without delaying any click.
+            let entrance = motion::entrance(
+                ui.ctx(),
+                Id::new("page-entrance"),
+                egui::util::hash(&encoded),
+                motion::PAGE,
+            );
             let scroll = crate::autoscroll::show(
                 ui,
                 egui::ScrollArea::vertical()
-                    .id_salt(("page", page.encode()))
+                    .id_salt(("page", encoded))
                     .auto_shrink([false, false]),
                 egui::Vec2b::new(false, true),
                 |ui| {
-                    Frame::new()
-                        .inner_margin(Margin {
-                            left: widgets::PAGE_PADDING as i8,
-                            right: widgets::PAGE_PADDING as i8,
-                            top: 4,
-                            bottom: 48,
-                        })
-                        .show(ui, |ui| {
-                            ui.set_min_width(ui.available_width());
-                            match page {
-                                Page::Home => home::show(app, ui),
-                                Page::TopSongs => collection::top_songs(app, ui),
-                                Page::Search => search::show(app, ui),
-                                Page::LikedSongs => collection::liked(app, ui),
-                                Page::Albums | Page::Artists | Page::Podcasts | Page::Episodes => {
-                                    library::show(app, ui, page)
+                    if entrance < 1.0 {
+                        ui.multiply_opacity(0.35 + 0.65 * entrance);
+                    }
+                    let rise = (1.0 - entrance) * motion::PAGE_RISE;
+                    let body = |ui: &mut egui::Ui| {
+                        Frame::new()
+                            .inner_margin(Margin {
+                                left: widgets::PAGE_PADDING as i8,
+                                right: widgets::PAGE_PADDING as i8,
+                                top: 4,
+                                bottom: 48,
+                            })
+                            .show(ui, |ui| {
+                                ui.set_min_width(ui.available_width());
+                                match page {
+                                    Page::Home => home::show(app, ui),
+                                    Page::TopSongs => collection::top_songs(app, ui),
+                                    Page::Search => search::show(app, ui),
+                                    Page::LikedSongs => collection::liked(app, ui),
+                                    Page::Albums
+                                    | Page::Artists
+                                    | Page::Podcasts
+                                    | Page::Episodes => library::show(app, ui, page),
+                                    Page::Playlist(id) => collection::playlist(app, ui, &id),
+                                    Page::Album(id) => collection::album(app, ui, &id),
+                                    Page::Artist(id) => artist::show(app, ui, &id),
+                                    Page::Show(id) => show::show(app, ui, &id),
+                                    Page::Radio(seed) => radio::radio(app, ui, &seed),
+                                    Page::Queue => queue::page(app, ui),
+                                    Page::Settings => settings::show(app, ui),
                                 }
-                                Page::Playlist(id) => collection::playlist(app, ui, &id),
-                                Page::Album(id) => collection::album(app, ui, &id),
-                                Page::Artist(id) => artist::show(app, ui, &id),
-                                Page::Show(id) => show::show(app, ui, &id),
-                                Page::Radio(seed) => radio::radio(app, ui, &seed),
-                                Page::Queue => queue::page(app, ui),
-                                Page::Settings => settings::show(app, ui),
-                            }
-                        });
+                            });
+                    };
+                    if rise > 0.0 {
+                        ui.with_visual_transform(
+                            egui::emath::TSTransform::from_translation(vec2(0.0, rise)),
+                            body,
+                        );
+                    } else {
+                        body(ui);
+                    }
                 },
             );
-            header_shadow(ui, scroll.inner_rect, scroll.state.offset.y, palette.dark);
+            header_shadow(ui, scroll.inner_rect, scroll.state.offset.y, &palette);
         });
 }
 
-/// The shadow the header casts on a page scrolled under it, deepening over
-/// the first few points of scrolling. Dark in both themes, lighter over a
-/// light page.
-fn header_shadow(ui: &egui::Ui, page: Rect, scrolled: f32, dark: bool) {
-    let depth = (scrolled / 24.0).clamp(0.0, 1.0);
-    if depth <= 0.0 {
-        return;
+/// A flat chrome strip keeps the scrolled edge quiet without a gradient.
+fn header_shadow(ui: &egui::Ui, page: Rect, scrolled: f32, palette: &theme::Palette) {
+    let opacity = 0.68 * (scrolled / 24.0).clamp(0.0, 1.0);
+    if opacity > 0.0 {
+        ui.painter().rect_filled(
+            Rect::from_min_size(page.min, vec2(page.width(), 14.0)),
+            0.0,
+            palette.panel.gamma_multiply(opacity),
+        );
     }
-    let strength = if dark { 110.0 } else { 36.0 };
-    let rect = Rect::from_min_size(page.min, vec2(page.width(), 14.0));
-    widgets::paint_vertical_gradient(
-        ui,
-        rect,
-        egui::Color32::from_black_alpha((strength * depth) as u8),
-        egui::Color32::TRANSPARENT,
-    );
 }
 
 /// Makes `rect` drag the borderless window. Register it before child widgets so
@@ -578,27 +548,13 @@ fn toasts(app: &mut App, ctx: &egui::Context, bottom_offset: f32) {
         .interactable(false)
         .show(ctx, |ui| {
             ui.spacing_mut().item_spacing.y = 8.0;
+            let reduced = motion::reduced(ctx);
             for toast in &app.toasts {
                 let age = toast.created.elapsed().as_secs_f32();
-                let alpha = if age < 0.15 {
-                    age / 0.15
-                } else if age > 2.8 {
-                    ((3.2 - age) / 0.4).clamp(0.0, 1.0)
-                } else {
-                    1.0
-                };
+                let alpha = toast_opacity(age, reduced);
                 ui.set_opacity(alpha);
-                Frame::new()
-                    .fill(palette.overlay)
-                    .stroke(Stroke::new(1.0, palette.outline))
-                    .corner_radius(CornerRadius::same(theme::RADIUS))
+                material::popover_frame(&palette)
                     .inner_margin(Margin::symmetric(14, 10))
-                    .shadow(egui::epaint::Shadow {
-                        offset: [0, 4],
-                        blur: 16,
-                        spread: 0,
-                        color: palette.shadow,
-                    })
                     .show(ui, |ui| {
                         ui.horizontal(|ui| {
                             let (icon, color) = match toast.kind {
@@ -621,6 +577,21 @@ fn toasts(app: &mut App, ctx: &egui::Context, bottom_offset: f32) {
                     });
             }
         });
+}
+
+/// How visible a toast is `age` seconds after it appeared: it fades in,
+/// holds, and fades out before it is removed at 3.2 seconds. Reduced motion
+/// shows it whole for its whole life.
+fn toast_opacity(age: f32, reduced: bool) -> f32 {
+    if reduced {
+        if age < 3.2 { 1.0 } else { 0.0 }
+    } else if age < 0.15 {
+        motion::ease_out(age / 0.15)
+    } else if age > 2.8 {
+        ((3.2 - age) / 0.4).clamp(0.0, 1.0)
+    } else {
+        1.0
+    }
 }
 
 #[cfg(test)]
@@ -729,39 +700,48 @@ mod window_chrome_tests {
 mod tests {
     use super::*;
 
-    /// The header casts a shadow only on a page scrolled under it, and it
-    /// is black in both themes, never the page's own colour.
     #[test]
-    fn the_header_shadow_appears_once_the_page_scrolls() {
+    fn toasts_fade_unless_motion_is_reduced() {
+        assert_eq!(toast_opacity(0.0, false), 0.0);
+        assert_eq!(toast_opacity(1.0, false), 1.0);
+        assert!(toast_opacity(3.0, false) < 1.0);
+        assert_eq!(toast_opacity(0.0, true), 1.0, "appears whole");
+        assert_eq!(toast_opacity(3.0, true), 1.0, "and stays whole");
+        assert_eq!(toast_opacity(3.3, true), 0.0);
+    }
+
+    /// A scroll plate appears gradually and stays flat in either theme.
+    #[test]
+    fn the_header_plate_appears_once_the_page_scrolls() {
         let ctx = egui::Context::default();
         let page = Rect::from_min_size(egui::pos2(0.0, 80.0), vec2(800.0, 600.0));
-        let shadows = |scrolled: f32, dark: bool| {
-            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
-                header_shadow(ui, page, scrolled, dark);
-            });
-            output.textures_delta.clear();
-            output
-                .shapes
-                .iter()
-                .filter_map(|shape| match &shape.shape {
-                    egui::Shape::Mesh(mesh) => Some(mesh.vertices.clone()),
-                    _ => None,
-                })
-                .flatten()
-                .collect::<Vec<_>>()
-        };
-        assert!(
-            shadows(0.0, true).is_empty(),
-            "nothing at the top of the page"
-        );
-        for dark in [true, false] {
-            let vertices = shadows(40.0, dark);
-            let top = vertices
-                .iter()
-                .find(|vertex| vertex.pos.y == page.top())
-                .expect("a shadow along the page's top edge");
-            assert!(top.color.a() > 0);
-            assert_eq!((top.color.r(), top.color.g(), top.color.b()), (0, 0, 0));
+        for palette in [theme::Palette::dark(), theme::Palette::light()] {
+            for scrolled in [0.0, 12.0, 40.0] {
+                let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+                    header_shadow(ui, page, scrolled, &palette);
+                });
+                output.textures_delta.clear();
+                let plates = output
+                    .shapes
+                    .iter()
+                    .filter_map(|s| match &s.shape {
+                        egui::Shape::Rect(rect) => Some(rect),
+                        _ => None,
+                    })
+                    .collect::<Vec<_>>();
+                if scrolled == 0.0 {
+                    assert!(plates.is_empty());
+                } else {
+                    assert_eq!(plates.len(), 1);
+                    assert_eq!(plates[0].rect.top(), page.top());
+                    assert_eq!(
+                        plates[0].fill,
+                        palette
+                            .panel
+                            .gamma_multiply(0.68 * (scrolled / 24.0).clamp(0.0, 1.0))
+                    );
+                }
+            }
         }
     }
 }

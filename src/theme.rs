@@ -35,48 +35,83 @@ pub struct Palette {
 }
 
 impl Palette {
-    pub fn dark() -> Self {
-        Self {
-            dark: true,
-            window: Color32::from_rgb(0x0f, 0x11, 0x14),
-            panel: Color32::from_rgb(0x15, 0x18, 0x1c),
-            surface: Color32::from_rgb(0x1d, 0x21, 0x27),
-            surface_hover: Color32::from_rgb(0x26, 0x2b, 0x33),
-            surface_active: Color32::from_rgb(0x2f, 0x35, 0x3f),
-            outline: Color32::from_rgb(0x2a, 0x30, 0x38),
-            text: Color32::from_rgb(0xf2, 0xf4, 0xf6),
-            secondary: Color32::from_rgb(0xa9, 0xb1, 0xbc),
-            dim: Color32::from_rgb(0x6e, 0x77, 0x84),
-            accent: Color32::from_rgb(0x1e, 0xd7, 0x60),
-            accent_hover: Color32::from_rgb(0x3c, 0xe8, 0x7a),
-            on_accent: Color32::from_rgb(0x0a, 0x14, 0x0e),
-            danger: Color32::from_rgb(0xf5, 0x71, 0x7f),
-            warning: Color32::from_rgb(0xf2, 0xb8, 0x5c),
-            overlay: Color32::from_rgb(0x22, 0x27, 0x2e),
-            shadow: Color32::from_black_alpha(140),
+    /// Inactive controls have their own ink; dim text still carries information.
+    pub fn disabled_text(&self) -> Color32 {
+        if self.dark {
+            Color32::from_rgb(0x84, 0x98, 0x8b)
+        } else {
+            Color32::from_rgb(0x59, 0x69, 0x5e)
         }
     }
 
+    /// T3 Pretty's night forest palette, with moss for live controls.
+    pub fn dark() -> Self {
+        Self {
+            dark: true,
+            window: Color32::from_rgb(0x0e, 0x11, 0x10),
+            panel: Color32::from_rgb(0x14, 0x1a, 0x17),
+            surface: Color32::from_rgb(0x1a, 0x22, 0x1e),
+            surface_hover: Color32::from_rgb(0x20, 0x2a, 0x25),
+            surface_active: Color32::from_rgb(0x2c, 0x3a, 0x32),
+            outline: Color32::from_rgb(0x2e, 0x3b, 0x34),
+            text: Color32::from_rgb(0xf3, 0xf6, 0xf3),
+            secondary: Color32::from_rgb(0xc5, 0xcf, 0xc8),
+            dim: Color32::from_rgb(0xb8, 0xc5, 0xbb),
+            accent: Color32::from_rgb(0x98, 0xd2, 0xac),
+            accent_hover: Color32::from_rgb(0xb7, 0xe6, 0xc8),
+            on_accent: Color32::from_rgb(0x07, 0x14, 0x0c),
+            danger: Color32::from_rgb(0xff, 0xb0, 0xb8),
+            warning: Color32::from_rgb(0xff, 0xb0, 0x20),
+            overlay: Color32::from_rgb(0x20, 0x2a, 0x25),
+            shadow: Color32::from_black_alpha(115),
+        }
+    }
+
+    /// T3 Pretty's mist palette, with a deep forest accent for contrast.
     pub fn light() -> Self {
         Self {
             dark: false,
-            window: Color32::from_rgb(0xf8, 0xf9, 0xfb),
+            window: Color32::from_rgb(0xf4, 0xf6, 0xf4),
             panel: Color32::from_rgb(0xff, 0xff, 0xff),
-            surface: Color32::from_rgb(0xee, 0xf0, 0xf3),
-            surface_hover: Color32::from_rgb(0xe3, 0xe6, 0xeb),
-            surface_active: Color32::from_rgb(0xd7, 0xdb, 0xe1),
-            outline: Color32::from_rgb(0xdd, 0xe1, 0xe6),
-            text: Color32::from_rgb(0x14, 0x17, 0x1a),
-            secondary: Color32::from_rgb(0x53, 0x5b, 0x66),
-            dim: Color32::from_rgb(0x8b, 0x93, 0x9e),
-            accent: Color32::from_rgb(0x15, 0xa6, 0x4a),
-            accent_hover: Color32::from_rgb(0x12, 0x8f, 0x40),
+            surface: Color32::from_rgb(0xea, 0xf0, 0xeb),
+            surface_hover: Color32::from_rgb(0xe3, 0xe9, 0xe4),
+            surface_active: Color32::from_rgb(0xc9, 0xd1, 0xca),
+            outline: Color32::from_rgb(0xd8, 0xde, 0xd9),
+            text: Color32::from_rgb(0x16, 0x1a, 0x17),
+            secondary: Color32::from_rgb(0x4b, 0x52, 0x4c),
+            dim: Color32::from_rgb(0x47, 0x50, 0x4a),
+            accent: Color32::from_rgb(0x27, 0x63, 0x3f),
+            accent_hover: Color32::from_rgb(0x22, 0x57, 0x38),
             on_accent: Color32::WHITE,
-            danger: Color32::from_rgb(0xd6, 0x3b, 0x4c),
-            warning: Color32::from_rgb(0xb8, 0x7a, 0x14),
+            danger: Color32::from_rgb(0x95, 0x15, 0x24),
+            warning: Color32::from_rgb(0x7b, 0x36, 0x05),
             overlay: Color32::from_rgb(0xff, 0xff, 0xff),
-            shadow: Color32::from_black_alpha(50),
+            shadow: Color32::from_rgba_unmultiplied(16, 24, 18, 36),
         }
+    }
+
+    /// The lamp's colour for small text: playing titles, the Connect pill,
+    /// the active device. Fills keep the accent. Where the accent reads at
+    /// 4.5:1 it is used as it is; otherwise it deepens (on dark glass,
+    /// brightens) in steps that keep its hue until it does. It is measured
+    /// against a conservative shaded `surface_active`. Custom palettes keep
+    /// this guard beyond the built-in scenery contrast tests.
+    pub fn accent_text(&self) -> Color32 {
+        let toward = if self.dark {
+            Color32::WHITE
+        } else {
+            Color32::BLACK
+        };
+        let shade = if self.dark { 0.1 } else { 0.2 };
+        let ground = self.surface_active.lerp_to_gamma(toward, shade);
+        let mut colour = self.accent;
+        for _ in 0..40 {
+            if contrast(colour, ground) >= 4.5 {
+                break;
+            }
+            colour = colour.lerp_to_gamma(toward, 0.05);
+        }
+        colour
     }
 
     /// A colour derived from album art, softened so it can sit behind text.
@@ -98,6 +133,16 @@ impl Palette {
         };
         Color32::from_rgb((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8)
     }
+}
+
+/// The WCAG contrast ratio between two opaque colours, from 1 to 21.
+pub fn contrast(a: Color32, b: Color32) -> f32 {
+    let luminance = |colour: Color32| {
+        let linear = egui::Rgba::from(colour);
+        0.2126 * linear.r() + 0.7152 * linear.g() + 0.0722 * linear.b()
+    };
+    let (a, b) = (luminance(a), luminance(b));
+    (a.max(b) + 0.05) / (a.min(b) + 0.05)
 }
 
 impl fastframe_theme::Palette for Palette {
@@ -256,16 +301,17 @@ pub fn install(ctx: &egui::Context) {
 /// fields agree with the custom views.
 pub fn apply(ctx: &egui::Context, palette: &Palette) {
     let mut style = (*ctx.global_style()).clone();
-    apply_to_style(&mut style, palette);
+    apply_to_style(&mut style, palette, crate::ui::motion::reduced(ctx));
     ctx.set_global_style(style);
 }
 
 /// Applies a palette to this view and children without changing global style.
 pub fn apply_local(ui: &mut egui::Ui, palette: &Palette) {
-    apply_to_style(ui.style_mut(), palette);
+    let reduced = crate::ui::motion::reduced(ui.ctx());
+    apply_to_style(ui.style_mut(), palette, reduced);
 }
 
-fn apply_to_style(style: &mut egui::Style, palette: &Palette) {
+fn apply_to_style(style: &mut egui::Style, palette: &Palette, reduced: bool) {
     let visuals = &mut style.visuals;
     *visuals = if palette.dark {
         egui::Visuals::dark()
@@ -278,7 +324,8 @@ fn apply_to_style(style: &mut egui::Style, palette: &Palette) {
     // (2c - c²) made text heavier than GTK's.
     text_rendering().apply_to_visuals(visuals);
     visuals.panel_fill = palette.panel;
-    visuals.window_fill = palette.overlay;
+    let popover = crate::ui::material::glass(palette, crate::ui::material::Kind::Popover);
+    visuals.window_fill = popover.fill;
     visuals.extreme_bg_color = palette.surface;
     visuals.faint_bg_color = palette.surface;
     visuals.code_bg_color = palette.surface;
@@ -287,18 +334,14 @@ fn apply_to_style(style: &mut egui::Style, palette: &Palette) {
     visuals.hyperlink_color = palette.text;
     visuals.selection.bg_fill = palette.accent.gamma_multiply(0.35);
     visuals.selection.stroke = Stroke::new(1.0, palette.accent);
-    visuals.window_stroke = Stroke::new(1.0, palette.outline);
-    visuals.window_corner_radius = CornerRadius::same(RADIUS + 2);
-    visuals.menu_corner_radius = CornerRadius::same(RADIUS);
-    visuals.window_shadow = egui::epaint::Shadow {
-        offset: [0, 6],
-        blur: 24,
-        spread: 0,
-        color: palette.shadow,
-    };
+    visuals.window_stroke = Stroke::new(1.0, crate::ui::material::rim_colour(palette));
+    let popover_radius = crate::ui::material::POPOVER_RADIUS as u8;
+    visuals.window_corner_radius = CornerRadius::same(popover_radius);
+    visuals.menu_corner_radius = CornerRadius::same(popover_radius);
+    visuals.window_shadow = popover.shadow.unwrap_or_default();
     visuals.popup_shadow = egui::epaint::Shadow {
-        offset: [0, 4],
-        blur: 16,
+        offset: [0, 8],
+        blur: 24,
         spread: 0,
         color: palette.shadow,
     };
@@ -363,8 +406,8 @@ fn apply_to_style(style: &mut egui::Style, palette: &Palette) {
     };
     style.interaction.selectable_labels = false;
     style.interaction.tooltip_delay = 0.4;
-    style.animation_time = 0.12;
     style.url_in_tooltip = false;
+    crate::ui::motion::apply_to_style(style, reduced);
 }
 
 /// Inter at its four weights with the monochrome emoji face right behind it
@@ -463,6 +506,8 @@ fastframe_icons::icons! {
         SquarePen => lucide "square-pen",
         Sun => lucide "sun",
         Tablet => "tablet",
+        ThumbsDown => "thumbs-down",
+        ThumbsUp => "thumbs-up",
         Trash => lucide "trash-2",
         TrendingUp => "trending-up",
         Tv => "tv",
@@ -522,15 +567,24 @@ pub fn icon_button(
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), tooltip)
     });
     if ui.is_rect_visible(rect) {
-        let tint = if response.hovered() || response.has_focus() {
-            hover
-        } else {
-            color
-        };
+        let lift = crate::ui::motion::toggle(
+            ui.ctx(),
+            response.id.with("lift"),
+            response.hovered() || response.has_focus(),
+            crate::ui::motion::FEEDBACK,
+        );
+        let tint = color.lerp_to_gamma(hover, lift);
+        // Pressing sinks the icon at once; letting go eases it back.
         let scale = if response.is_pointer_button_down_on() {
-            0.92
+            crate::ui::motion::snap(ui.ctx(), response.id.with("press"), 0.9);
+            0.9
         } else {
-            1.0
+            crate::ui::motion::value(
+                ui.ctx(),
+                response.id.with("press"),
+                1.0,
+                crate::ui::motion::FEEDBACK,
+            )
         };
         paint_icon(ui, icon, rect, size * scale, tint);
     }
@@ -554,25 +608,23 @@ pub fn play_glyph_offset(icon: Icon, icon_size: f32) -> Vec2 {
     }
 }
 
-/// The app's mark, the same picture as the app icon: the polished green
-/// disc with the play triangle, rasterised once per size by
-/// `util::app_icon_rgba` and drawn wherever the app shows its logo.
-pub fn logo(ui: &egui::Ui, center: egui::Pos2, diameter: f32) {
+/// The flat ridge glyph, tinted by the current palette like T3 Pretty's mark.
+pub fn logo(ui: &egui::Ui, center: egui::Pos2, diameter: f32, palette: &Palette) {
     let ppp = ui.ctx().pixels_per_point();
-    // The raster keeps two pixels of margin on each side of the disc.
-    let pixels = (diameter * ppp).round() as usize + 4;
-    let id = egui::Id::new(("spotifast-logo", pixels));
+    // A little raster oversampling keeps the bare glyph crisp on Retina.
+    let pixels = (diameter * ppp).round() as usize + 2;
+    let id = egui::Id::new(("spotiurge-logo", pixels));
     let texture = ui
         .ctx()
         .data(|data| data.get_temp::<egui::TextureHandle>(id))
         .unwrap_or_else(|| {
             let image = egui::ColorImage::from_rgba_unmultiplied(
                 [pixels, pixels],
-                &crate::util::app_icon_rgba(pixels),
+                &crate::util::glyph_rgba(pixels),
             );
             let texture =
                 ui.ctx()
-                    .load_texture("spotifast-logo", image, egui::TextureOptions::LINEAR);
+                    .load_texture("spotiurge-logo", image, egui::TextureOptions::LINEAR);
             ui.ctx()
                 .data_mut(|data| data.insert_temp(id, texture.clone()));
             texture
@@ -583,7 +635,7 @@ pub fn logo(ui: &egui::Ui, center: egui::Pos2, diameter: f32) {
         texture.id(),
         rect,
         egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
-        Color32::WHITE,
+        palette.accent,
     );
 }
 
@@ -601,12 +653,29 @@ pub fn circle_button(
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), tooltip)
     });
     if ui.is_rect_visible(rect) {
-        let hovered = response.hovered();
-        let grow = if hovered { 1.05 } else { 1.0 };
-        let radius = diameter / 2.0 * grow;
-        let fill = if hovered { fill_hover } else { fill };
+        let hovered = response.hovered() || response.has_focus();
+        let lift = crate::ui::motion::toggle(
+            ui.ctx(),
+            response.id.with("lift"),
+            hovered,
+            crate::ui::motion::FEEDBACK,
+        );
+        // Pressed, the disc sinks at once; released, it eases back up.
+        let press = if response.is_pointer_button_down_on() {
+            crate::ui::motion::snap(ui.ctx(), response.id.with("press"), 0.94);
+            0.94
+        } else {
+            crate::ui::motion::value(
+                ui.ctx(),
+                response.id.with("press"),
+                1.0,
+                crate::ui::motion::FEEDBACK,
+            )
+        };
+        let radius = diameter / 2.0 * (1.0 + 0.05 * lift) * press;
+        let fill = fill.lerp_to_gamma(fill_hover, lift);
         ui.painter().circle_filled(rect.center(), radius, fill);
-        let icon_size = diameter * 0.46;
+        let icon_size = diameter * 0.46 * press;
         let offset = play_glyph_offset(icon, icon_size);
         let icon_rect =
             egui::Rect::from_center_size(rect.center() + offset, Vec2::splat(icon_size));
@@ -655,7 +724,10 @@ pub fn circle_spinner(
 /// A pill-shaped text button: filled for the primary action, outlined otherwise.
 pub fn pill_button(ui: &mut egui::Ui, palette: &Palette, label: &str, primary: bool) -> Response {
     let font = semibold(13.0);
-    let color = if primary {
+    let enabled = ui.is_enabled();
+    let color = if !enabled {
+        palette.disabled_text()
+    } else if primary {
         palette.on_accent
     } else {
         palette.text
@@ -667,27 +739,45 @@ pub fn pill_button(ui: &mut egui::Ui, palette: &Palette, label: &str, primary: b
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label)
     });
+    let mut painter = ui.painter().clone();
+    if !enabled {
+        painter.set_opacity(1.0);
+    }
     if ui.is_rect_visible(rect) {
-        let hovered = response.hovered();
+        let lift = crate::ui::motion::toggle(
+            ui.ctx(),
+            response.id.with("lift"),
+            enabled && response.hovered(),
+            crate::ui::motion::FEEDBACK,
+        );
         let radius = rect.height() / 2.0;
         if primary {
-            let fill = if hovered {
-                palette.accent_hover
+            let fill = if enabled {
+                palette.accent.lerp_to_gamma(palette.accent_hover, lift)
+            } else if palette.dark {
+                Color32::WHITE.gamma_multiply(0.08)
             } else {
-                palette.accent
+                palette.surface_active
             };
-            ui.painter().rect_filled(rect, radius, fill);
+            painter.rect_filled(rect, radius, fill);
         } else {
-            let stroke_color = if hovered { palette.text } else { palette.dim };
-            ui.painter().rect_stroke(
+            // A clear glass key: a faint fill that brightens under the
+            // pointer, inside a rim that lights with it.
+            painter.rect_filled(
                 rect,
                 radius,
-                Stroke::new(1.0, stroke_color),
+                crate::ui::material::hover_fill(palette).gamma_multiply(0.6 + 0.9 * lift),
+            );
+            let stroke_color = palette.dim.lerp_to_gamma(palette.text, lift);
+            painter.rect_stroke(
+                rect,
+                radius,
+                Stroke::new(1.0, stroke_color.gamma_multiply(0.7 + 0.3 * lift)),
                 egui::StrokeKind::Inside,
             );
         }
         let pos = rect.center() - galley.size() / 2.0;
-        ui.painter().galley(pos, galley, color);
+        painter.galley(pos, galley, color);
     }
     focus_ring(ui, &response);
     response
@@ -767,12 +857,16 @@ fn soft_button_inner(
         .is_some_and(|dismiss| dismiss.hovered() || dismiss.has_focus());
     if ui.is_rect_visible(rect) {
         let hovered = response.hovered() || over_dismiss;
+        let lift = crate::ui::motion::toggle(
+            ui.ctx(),
+            response.id.with("lift"),
+            hovered,
+            crate::ui::motion::FEEDBACK,
+        );
         let fill = if active {
             palette.text
-        } else if hovered {
-            palette.surface_hover
         } else {
-            palette.surface
+            palette.surface.lerp_to_gamma(palette.surface_hover, lift)
         };
         ui.painter().rect_filled(rect, rect.height() / 2.0, fill);
         let mut x = rect.left() + padding.x;
@@ -793,6 +887,116 @@ fn soft_button_inner(
         focus_ring(ui, &dismiss);
     }
     (response, dismissed)
+}
+
+/// A row of mutually exclusive choices drawn as soft buttons, whose
+/// selected fill glides from the old choice to the new one. Returns the
+/// choice clicked this frame. Wraps onto more lines when `wrap` is set.
+pub fn choice_chips<T: Copy + PartialEq>(
+    ui: &mut egui::Ui,
+    palette: &Palette,
+    id: egui::Id,
+    choices: &[(T, &str)],
+    selected: T,
+    wrap: bool,
+) -> Option<T> {
+    let font = medium(13.0);
+    let padding = Vec2::new(12.0, 7.0);
+    let mut chips = Vec::with_capacity(choices.len());
+    let mut add = |ui: &mut egui::Ui| {
+        ui.spacing_mut().item_spacing = Vec2::splat(6.0);
+        for &(value, label) in choices {
+            let galley = crate::bidi::layout_line(ui.painter(), label, font.clone(), palette.text);
+            let (rect, response) =
+                ui.allocate_exact_size(galley.size() + padding * 2.0, Sense::click());
+            response.widget_info(|| {
+                egui::WidgetInfo::selected(
+                    egui::WidgetType::Button,
+                    ui.is_enabled(),
+                    value == selected,
+                    label,
+                )
+            });
+            chips.push((value, label, rect, response));
+        }
+    };
+    if wrap {
+        ui.horizontal_wrapped(&mut add);
+    } else {
+        ui.horizontal(&mut add);
+    }
+    // The selected fill's rect glides; the chips it passes over turn their
+    // text to match while it covers them. A value none of the choices
+    // holds (a custom curve, say) leaves every chip unselected.
+    let pill = chips
+        .iter()
+        .position(|chip| chip.0 == selected)
+        .map(|selected_index| {
+            let target = chips[selected_index].2;
+            let key = id.with("selected");
+            // The same choice somewhere else means the layout moved it (a
+            // wrap, a resize): the fill follows at once instead of gliding.
+            let relaid = ui
+                .ctx()
+                .data(|data| data.get_temp::<(usize, egui::Rect)>(key))
+                .is_some_and(|(index, rect)| index == selected_index && rect != target);
+            ui.ctx()
+                .data_mut(|data| data.insert_temp(key, (selected_index, target)));
+            let axes = [
+                ("left", target.left()),
+                ("top", target.top()),
+                ("right", target.right()),
+                ("bottom", target.bottom()),
+            ];
+            let [left, top, right, bottom] = axes.map(|(axis, value)| {
+                if relaid {
+                    crate::ui::motion::snap(ui.ctx(), id.with(axis), value);
+                }
+                crate::ui::motion::value(ui.ctx(), id.with(axis), value, crate::ui::motion::STATE)
+            });
+            egui::Rect::from_min_max(egui::pos2(left, top), egui::pos2(right, bottom))
+        });
+    let ctx = ui.ctx().clone();
+    let painter = ui.painter();
+    let mut clicked = None;
+    for (value, _, rect, response) in &chips {
+        let lift = crate::ui::motion::toggle(
+            &ctx,
+            response.id.with("lift"),
+            response.hovered(),
+            crate::ui::motion::FEEDBACK,
+        );
+        painter.rect_filled(
+            *rect,
+            rect.height() / 2.0,
+            if palette.dark {
+                Color32::WHITE.gamma_multiply(0.08 + 0.04 * lift)
+            } else {
+                palette.surface.lerp_to_gamma(palette.surface_hover, lift)
+            },
+        );
+        if response.clicked() && *value != selected {
+            clicked = Some(*value);
+        }
+    }
+    if let Some(pill) = pill {
+        painter.rect_filled(pill, pill.height() / 2.0, palette.text);
+    }
+    for (_, label, rect, response) in &chips {
+        let covered = pill.map_or(0.0, |pill| {
+            let overlap = rect.intersect(pill);
+            if overlap.is_positive() {
+                (overlap.width() / rect.width()).clamp(0.0, 1.0)
+            } else {
+                0.0
+            }
+        });
+        let color = palette.text.lerp_to_gamma(palette.window, covered);
+        let galley = crate::bidi::layout_line(painter, *label, font.clone(), color);
+        painter.galley(rect.center() - galley.size() / 2.0, galley, color);
+        focus_ring(ui, response);
+    }
+    clicked
 }
 
 /// An animated busy indicator paced independently of the graphics driver.
@@ -899,15 +1103,14 @@ pub fn subtle(ui: &mut egui::Ui, palette: &Palette, label: &str) -> Response {
 mod tests {
     use super::*;
 
-    /// The logo drawn in the app is the app icon's own picture, not a
-    /// disc in the theme's accent colour: it uploads the icon's pixels.
+    /// The header uploads the shared alpha mask; the palette supplies its colour.
     #[test]
-    fn the_logo_in_the_app_is_the_app_icon() {
+    fn the_logo_uses_the_shared_ridge_mask() {
         // #given the logo drawn 40 points wide at twice the pixel density
         let ctx = egui::Context::default();
         ctx.set_pixels_per_point(2.0);
         let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
-            logo(ui, egui::pos2(40.0, 40.0), 40.0);
+            logo(ui, egui::pos2(40.0, 40.0), 40.0, &Palette::dark());
         });
 
         // #then the frame uploads the icon rasterised at that size
@@ -917,17 +1120,34 @@ mod tests {
             .values()
             .flat_map(|deltas| deltas.iter())
             .find_map(|delta| match &delta.image {
-                egui::ImageData::Color(image) if image.size == [84, 84] => Some(image.clone()),
+                egui::ImageData::Color(image) if image.size == [82, 82] => Some(image.clone()),
                 _ => None,
             })
             .expect("the logo's texture");
-        let icon = crate::util::app_icon_rgba(84);
-        for (x, y) in [(42, 10), (47, 42), (42, 4)] {
-            let expected = &icon[(y * 84 + x) * 4..(y * 84 + x) * 4 + 4];
-            let got = uploaded.pixels[y * 84 + x].to_srgba_unmultiplied();
+        let icon = crate::util::glyph_rgba(82);
+        for (x, y) in [(41, 10), (46, 41), (41, 4)] {
+            let expected = &icon[(y * 82 + x) * 4..(y * 82 + x) * 4 + 4];
+            let got = uploaded.pixels[y * 82 + x].to_srgba_unmultiplied();
             assert_eq!(&got[..], expected, "pixel {x},{y}");
         }
         output.textures_delta.clear();
+    }
+
+    /// Custom pale accents still deepen to readable small text.
+    #[test]
+    fn custom_accent_text_keeps_its_contrast_guard() {
+        for mut palette in [Palette::dark(), Palette::light()] {
+            palette.accent = Color32::from_rgb(170, 190, 160);
+            let toward = if palette.dark {
+                Color32::WHITE
+            } else {
+                Color32::BLACK
+            };
+            let ground = palette
+                .surface_active
+                .lerp_to_gamma(toward, if palette.dark { 0.1 } else { 0.2 });
+            assert!(contrast(palette.accent_text(), ground) >= 4.5);
+        }
     }
 
     /// Palette files name the sixteen colours every app shares, and only
@@ -1029,6 +1249,71 @@ mod tests {
         assert_eq!(over_button, egui::CursorIcon::Default);
         let (_, over_link) = draw(&ctx, Some(link_rect.center()));
         assert_eq!(over_link, egui::CursorIcon::PointingHand);
+    }
+
+    /// A click on another choice reports it at once, while the selected
+    /// fill still sets off from the old choice, so the change reads as a
+    /// glide rather than a jump.
+    #[test]
+    fn choice_chips_report_the_click_and_glide_the_fill() {
+        let ctx = egui::Context::default();
+        install(&ctx);
+        let palette = Palette::dark();
+        let id = egui::Id::new("chips");
+        let frame = |time: f64, selected: u8, events: Vec<egui::Event>| {
+            let mut picked = None;
+            let mut fill = None;
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    time: Some(time),
+                    events,
+                    ..Default::default()
+                },
+                |ui| {
+                    picked = choice_chips(
+                        ui,
+                        &palette,
+                        id,
+                        &[(0, "Familiar"), (1, "Bold")],
+                        selected,
+                        false,
+                    );
+                },
+            );
+            output.textures_delta.clear();
+            for shape in &output.shapes {
+                if let egui::Shape::Rect(rect) = &shape.shape
+                    && rect.fill == palette.text
+                {
+                    fill = Some(rect.rect);
+                }
+            }
+            (picked, fill)
+        };
+        let (_, first) = frame(0.0, 0, vec![]);
+        let first = first.expect("the selected fill");
+        let second_chip = first
+            .translate(egui::vec2(first.width() + 20.0, 0.0))
+            .center();
+        frame(0.1, 0, vec![egui::Event::PointerMoved(second_chip)]);
+        let click = |pressed| egui::Event::PointerButton {
+            pos: second_chip,
+            button: egui::PointerButton::Primary,
+            pressed,
+            modifiers: egui::Modifiers::NONE,
+        };
+        let (picked, _) = frame(0.2, 0, vec![click(true), click(false)]);
+        assert_eq!(picked, Some(1));
+        let (_, start) = frame(1.0, 1, vec![]);
+        assert_eq!(
+            start.unwrap().left(),
+            first.left(),
+            "sets off from the old chip"
+        );
+        let (_, middle) = frame(1.1, 1, vec![]);
+        assert!(middle.unwrap().left() > first.left());
+        let (_, end) = frame(2.0, 1, vec![]);
+        assert!(end.unwrap().left() > first.right(), "lands on the new chip");
     }
 
     #[test]

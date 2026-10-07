@@ -375,8 +375,8 @@ fn sort_menu(app: &mut App, ui: &mut egui::Ui, shelf: Filter, selected: LibraryS
             egui::RichText::new(label.as_ref()).font(theme::medium(13.0)),
         )
         .wrap()
-        .fill(app.palette.surface)
-        .corner_radius(12)
+        .fill(super::material::key_fill(&app.palette, 0.0))
+        .corner_radius(14)
         .min_size(vec2(0.0, 28.0)),
     );
     egui::Popup::menu(&response)
@@ -475,9 +475,16 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     let expanded_art = has_expanded_art(app);
     let floating_art = app.settings.sidebar_grid && expanded_art;
-    // The traffic lights float over the top-left of the sidebar now, so the
-    // first nav row has to start below them.
-    let top = 12 + theme::titlebar_inset(ui.ctx()) as i8;
+    // The sidebar is a pane of glass floating a gap from the window's edges.
+    // The traffic lights float over its top-left, so the first row starts
+    // below them.
+    let gap = super::material::GAP;
+    let inside = Margin {
+        left: 8,
+        right: 8,
+        top: 10 + theme::titlebar_inset(ui.ctx()) as i8,
+        bottom: 10,
+    };
     let beside = if app.show_queue_panel || app.show_lyrics_panel {
         theme::SIDE_PANEL_MIN_WIDTH
     } else {
@@ -495,13 +502,25 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         .default_size(app.settings.sidebar_width)
         .size_range(fit.range.clone())
         .show_separator_line(false)
-        .frame(Frame::new().fill(palette.panel).inner_margin(Margin {
-            left: 12,
-            right: 8,
-            top,
-            bottom: if expanded_art { 0 } else { 8 },
+        .frame(Frame::new().inner_margin(Margin {
+            left: inside.left + gap as i8,
+            right: inside.right,
+            top: inside.top + gap as i8,
+            bottom: inside.bottom,
         }));
     let response = panel.show(ui, |ui| {
+        let inner = ui.max_rect();
+        let pane = Rect::from_min_max(
+            inner.min - vec2(f32::from(inside.left), f32::from(inside.top)),
+            inner.max + vec2(f32::from(inside.right), f32::from(inside.bottom)),
+        );
+        super::material::paint(
+            ui.painter(),
+            pane,
+            super::material::PANE_RADIUS,
+            &palette,
+            super::material::Kind::Pane,
+        );
         let art_rect = expanded_art.then(|| expanded_art_rect(ui));
         if let Some(rect) = art_rect.filter(|_| !floating_art) {
             reserve_expanded_art(ui, rect);
@@ -549,11 +568,14 @@ fn paint_grid_art_mask(app: &App, ui: &egui::Ui, rect: Rect) {
         pos2(ui.max_rect().left(), rect.bottom() - 64.0),
         pos2(ui.max_rect().right(), rect.bottom()),
     );
+    // The glass as it reads over the room, opaque so the shelf behind the
+    // artwork does not show through.
+    let glass = super::blend(app.palette.window, app.palette.panel, 0.72);
     super::widgets::paint_vertical_gradient(
         ui,
         bottom_fade_rect,
         egui::Color32::TRANSPARENT,
-        app.palette.panel,
+        glass,
     );
     ui.painter().rect_filled(
         Rect::from_min_max(
@@ -561,7 +583,7 @@ fn paint_grid_art_mask(app: &App, ui: &egui::Ui, rect: Rect) {
             ui.max_rect().right_bottom(),
         ),
         0.0,
-        app.palette.panel,
+        glass,
     );
 }
 
@@ -798,21 +820,40 @@ fn nav_row(
     label: &str,
     active: bool,
 ) -> egui::Response {
-    let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), 40.0), Sense::click());
+    let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), 38.0), Sense::click());
     if ui.is_rect_visible(rect) {
+        // The selection is the gliding lamp behind the rows; the pointer
+        // brings up a quiet fill of its own.
+        let hover = super::motion::toggle(
+            ui.ctx(),
+            response.id.with("hover"),
+            response.hovered() && !active,
+            super::motion::FEEDBACK,
+        );
+        if hover > 0.0 {
+            ui.painter().rect_filled(
+                rect,
+                CornerRadius::same(8),
+                super::material::hover_fill(palette).gamma_multiply(hover),
+            );
+        }
         let color = if active || response.hovered() {
             palette.text
         } else {
             palette.secondary
         };
         let icon_rect =
-            Rect::from_center_size(pos2(rect.left() + 22.0, rect.center().y), Vec2::splat(22.0));
-        icon.image(color, 22.0).paint_at(ui, icon_rect);
+            Rect::from_center_size(pos2(rect.left() + 22.0, rect.center().y), Vec2::splat(20.0));
+        icon.image(color, 20.0).paint_at(ui, icon_rect);
         ui.painter().text(
-            pos2(rect.left() + 46.0, rect.center().y),
+            pos2(rect.left() + 44.0, rect.center().y),
             egui::Align2::LEFT_CENTER,
             label,
-            theme::bold(15.0),
+            if active {
+                theme::bold(14.5)
+            } else {
+                theme::semibold(14.5)
+            },
             color,
         );
     }
@@ -823,38 +864,62 @@ fn nav_row(
     response
 }
 
+/// The mark and the wordmark at the top of the sidebar.
+fn brand(ui: &mut egui::Ui, palette: &Palette) {
+    let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), 34.0), Sense::hover());
+    if !ui.is_rect_visible(rect) {
+        return;
+    }
+    let mark = pos2(rect.left() + 18.0, rect.center().y);
+    theme::logo(ui, mark, 24.0, palette);
+    let painter = ui.painter().with_clip_rect(rect);
+    painter.text(
+        pos2(mark.x + 18.0, rect.center().y),
+        egui::Align2::LEFT_CENTER,
+        "Spotiurge",
+        theme::bold(16.0),
+        palette.text,
+    );
+}
+
 fn contents(app: &mut App, ui: &mut egui::Ui, grid_art: Option<Rect>) {
     let palette = app.palette;
     let page = app.page().clone();
     let locale = app.locale;
-    ui.add_space(4.0);
-    if nav_row(
+    brand(ui, &palette);
+    ui.add_space(6.0);
+    let glide = super::material::Glide::begin(ui, egui::Id::new("sidebar-nav-lamp"));
+    let home = nav_row(
         ui,
         &palette,
         Icon::House,
         &gettext(locale, "Home"),
         page == Page::Home,
-    )
-    .clicked()
-    {
+    );
+    if home.clicked() {
         app.actions.push(Action::Open(Page::Home));
     }
-    if nav_row(
+    let search = nav_row(
         ui,
         &palette,
         Icon::Search,
         &gettext(locale, "Search"),
         page == Page::Search,
-    )
-    .clicked()
-    {
+    );
+    if search.clicked() {
         app.actions.push(Action::FocusSearch);
     }
+    let selected = match page {
+        Page::Home => Some((0, home.rect)),
+        Page::Search => Some((1, search.rect)),
+        _ => None,
+    };
+    glide.end(ui, selected, 8.0, &palette);
     ui.add_space(10.0);
     ui.painter().hline(
         ui.max_rect().x_range().shrink(4.0),
         ui.cursor().top(),
-        egui::Stroke::new(1.0, palette.outline),
+        egui::Stroke::new(1.0, super::material::rim_colour(&palette)),
     );
     ui.add_space(10.0);
 
@@ -870,7 +935,7 @@ fn contents(app: &mut App, ui: &mut egui::Ui, grid_art: Option<Rect>) {
     let mut focus_search = false;
 
     ui.horizontal(|ui| {
-        ui.add_space(6.0);
+        ui.add_space(4.0);
         theme::icon(ui, Icon::Library, 22.0, palette.secondary);
         ui.add_space(2.0);
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -956,19 +1021,26 @@ fn contents(app: &mut App, ui: &mut egui::Ui, grid_art: Option<Rect>) {
     });
     ui.add_space(6.0);
 
-    ui.horizontal_wrapped(|ui| {
-        ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
-        for (value, label) in [
-            (Filter::Playlists, gettext(locale, "Playlists")),
-            (Filter::Albums, gettext(locale, "Albums")),
-            (Filter::Artists, gettext(locale, "Artists")),
-            (Filter::Podcasts, gettext(locale, "Podcasts")),
-        ] {
-            if theme::soft_button(ui, &palette, None, &label, filter == value).clicked() {
-                filter = value;
-            }
-        }
-    });
+    let shelves = [
+        (Filter::Playlists, gettext(locale, "Playlists")),
+        (Filter::Albums, gettext(locale, "Albums")),
+        (Filter::Artists, gettext(locale, "Artists")),
+        (Filter::Podcasts, gettext(locale, "Podcasts")),
+    ];
+    let choices: Vec<(Filter, &str)> = shelves
+        .iter()
+        .map(|(value, label)| (*value, label.as_ref()))
+        .collect();
+    if let Some(value) = theme::choice_chips(
+        ui,
+        &palette,
+        egui::Id::new("sidebar-shelves"),
+        &choices,
+        filter,
+        true,
+    ) {
+        filter = value;
+    }
     let sort = selected_sort(app, filter);
     sort_menu(app, ui, filter, sort);
     ui.data_mut(|data| {
@@ -1311,16 +1383,15 @@ fn contents(app: &mut App, ui: &mut egui::Ui, grid_art: Option<Rect>) {
                 // click on it does not also play from the row.
                 let mut cover_took_click = false;
                 if ui.is_rect_visible(rect) {
-                    if active {
-                        ui.painter()
-                            .rect_filled(rect, CornerRadius::same(6), palette.surface);
-                    } else if response.hovered() {
-                        ui.painter().rect_filled(
-                            rect,
-                            CornerRadius::same(6),
-                            palette.surface_hover.gamma_multiply(0.6),
-                        );
-                    }
+                    super::material::row_highlight(
+                        ui,
+                        id,
+                        rect,
+                        8.0,
+                        &palette,
+                        response.hovered(),
+                        active,
+                    );
                     if drop_hover {
                         ui.painter().rect_filled(
                             rect,
@@ -1335,7 +1406,7 @@ fn contents(app: &mut App, ui: &mut egui::Ui, grid_art: Option<Rect>) {
                         );
                     }
                     let name_color = if playing {
-                        palette.accent
+                        palette.accent_text()
                     } else {
                         palette.text
                     };
@@ -1417,7 +1488,7 @@ fn contents(app: &mut App, ui: &mut egui::Ui, grid_art: Option<Rect>) {
                             Vec2::splat(44.0),
                         );
                         if entry.liked {
-                            liked_cover(ui, cover_rect, 6.0);
+                            liked_cover(ui, cover_rect, 6.0, &palette);
                         } else {
                             super::widgets::paint_cover(
                                 ui,
@@ -1661,18 +1732,17 @@ fn library_grid(
                     );
                     let mut cover_took_click = false;
                     if ui.is_rect_visible(rect) {
-                        if active {
-                            ui.painter()
-                                .rect_filled(rect, CornerRadius::same(6), palette.surface);
-                        } else if response.hovered() {
-                            ui.painter().rect_filled(
-                                rect,
-                                CornerRadius::same(6),
-                                palette.surface_hover.gamma_multiply(0.6),
-                            );
-                        }
+                        super::material::row_highlight(
+                            ui,
+                            response.id,
+                            rect,
+                            10.0,
+                            &palette,
+                            response.hovered(),
+                            active,
+                        );
                         if entry.liked {
-                            liked_cover(ui, cover_rect, 6.0);
+                            liked_cover(ui, cover_rect, 6.0, &palette);
                         } else if entry.folder.is_some() {
                             ui.painter().rect_filled(
                                 cover_rect,
@@ -1718,7 +1788,7 @@ fn library_grid(
                             &entry.name,
                             theme::medium(13.5),
                             if playing {
-                                palette.accent
+                                palette.accent_text()
                             } else {
                                 palette.text
                             },
@@ -2001,58 +2071,19 @@ fn drop_row(app: &mut App, entries: &[Entry], pinned_rows: usize, slot: usize, k
     });
 }
 
-/// The purple-to-blue Liked Songs tile.
-pub fn liked_cover(ui: &egui::Ui, rect: Rect, radius: f32) {
-    let texture_id = egui::Id::new("liked-cover-gradient");
-    let texture = ui
-        .data(|data| data.get_temp::<egui::TextureHandle>(texture_id))
-        .unwrap_or_else(|| {
-            let size = 64;
-            let lerp = |a: u8, b: u8, t: f32| (a as f32 + (b as f32 - a as f32) * t) as u8;
-            let top_left = [0x45, 0x0a, 0xf5];
-            let top_right = [0x6a, 0x3a, 0xe8];
-            let bottom_left = [0x8e, 0x9f, 0xe5];
-            let bottom_right = [0xc4, 0xef, 0xd9];
-            let pixels = (0..size)
-                .flat_map(|y| {
-                    let y = y as f32 / (size - 1) as f32;
-                    (0..size).map(move |x| {
-                        let x = x as f32 / (size - 1) as f32;
-                        egui::Color32::from_rgb(
-                            lerp(
-                                lerp(top_left[0], top_right[0], x),
-                                lerp(bottom_left[0], bottom_right[0], x),
-                                y,
-                            ),
-                            lerp(
-                                lerp(top_left[1], top_right[1], x),
-                                lerp(bottom_left[1], bottom_right[1], x),
-                                y,
-                            ),
-                            lerp(
-                                lerp(top_left[2], top_right[2], x),
-                                lerp(bottom_left[2], bottom_right[2], x),
-                                y,
-                            ),
-                        )
-                    })
-                })
-                .collect();
-            let texture = ui.ctx().load_texture(
-                "liked-cover-gradient",
-                egui::ColorImage::new([size, size], pixels),
-                egui::TextureOptions::LINEAR,
-            );
-            ui.data_mut(|data| data.insert_temp(texture_id, texture.clone()));
-            texture
-        });
-    egui::Image::new(&texture)
-        .corner_radius(CornerRadius::same(radius.min(127.0) as u8))
-        .paint_at(ui, rect);
+/// A flat forest tile, with the same moss heart used by live controls.
+pub fn liked_cover(ui: &egui::Ui, rect: Rect, radius: f32, palette: &Palette) {
+    let fill = if palette.dark {
+        egui::Color32::from_rgb(0x3c, 0x5d, 0x4b)
+    } else {
+        egui::Color32::from_rgb(0xe3, 0xef, 0xe6)
+    };
+    ui.painter()
+        .rect_filled(rect, CornerRadius::same(radius.min(127.0) as u8), fill);
     let size = rect.width() * 0.45;
     let icon_rect = Rect::from_center_size(rect.center(), Vec2::splat(size));
     Icon::HeartFilled
-        .image(egui::Color32::WHITE, size)
+        .image(palette.accent, size)
         .paint_at(ui, icon_rect);
 }
 

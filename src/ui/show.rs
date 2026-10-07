@@ -11,7 +11,7 @@ use crate::model::{Action, Loadable, Page, RowContext};
 use crate::theme::{self, Icon};
 use crate::util;
 
-use super::collection::{Hero, hero, hero_images};
+use super::collection::{Hero, glass_key, hero, hero_images};
 use super::widgets;
 
 pub const EPISODE_ROW_HEIGHT: f32 = 128.0;
@@ -165,7 +165,7 @@ fn show_actions(app: &mut App, ui: &mut egui::Ui, show: &Show, latest: Option<&E
         let (icon, color, tooltip) = if saved {
             (
                 Icon::CircleCheck,
-                palette.accent,
+                palette.text,
                 gettext(locale, "Remove from Your Library"),
             )
         } else {
@@ -175,7 +175,7 @@ fn show_actions(app: &mut App, ui: &mut egui::Ui, show: &Show, latest: Option<&E
                 gettext(locale, "Follow podcast"),
             )
         };
-        if theme::icon_button(ui, icon, 26.0, color, palette.text, &tooltip).clicked() {
+        if glass_key(ui, &palette, icon, color, &tooltip).clicked() {
             app.actions.push(Action::ToggleSaved(show.uri.clone()));
         }
         let more = theme::icon_button(
@@ -209,14 +209,19 @@ pub fn episode_row(
     if !ui.is_rect_visible(rect) {
         return;
     }
-    let hovered = ui.rect_contains_pointer(rect);
-    if hovered {
+    let hovered = ui.rect_contains_pointer(rect) || response.has_focus();
+    // The pointer's fill eases in and out, as on a song row.
+    let lift = super::motion::toggle(
+        ui.ctx(),
+        response.id.with("lift"),
+        hovered,
+        super::motion::FEEDBACK,
+    );
+    if lift > 0.0 {
         ui.painter().rect_filled(
             rect,
-            CornerRadius::same(6),
-            palette
-                .surface_hover
-                .gamma_multiply(if palette.dark { 0.7 } else { 1.0 }),
+            CornerRadius::same(8),
+            super::material::hover_fill(&palette).gamma_multiply(1.3 * lift),
         );
     }
     let inner = rect.shrink2(vec2(12.0, 12.0));
@@ -242,7 +247,7 @@ pub fn episode_row(
         .as_ref()
         .is_some_and(|now| now.uri == episode.uri);
     let title_color = if is_current {
-        palette.accent
+        palette.accent_text()
     } else {
         palette.text
     };
@@ -353,7 +358,7 @@ pub fn episode_row(
         if resume.fully_played {
             let check = Rect::from_center_size(pos2(x + 8.0, footer_y), Vec2::splat(14.0));
             Icon::CircleCheck
-                .image(palette.accent, 14.0)
+                .image(palette.secondary, 14.0)
                 .paint_at(ui, check);
             ui.painter().text(
                 pos2(x + 20.0, footer_y),
@@ -364,11 +369,18 @@ pub fn episode_row(
             );
         } else if resume.resume_position_ms > 0 && episode.duration_ms > 0 {
             let bar = Rect::from_min_size(pos2(x, footer_y - 2.0), vec2(72.0, 4.0));
-            ui.painter().rect_filled(bar, 2.0, palette.surface_active);
+            ui.painter()
+                .rect_filled(bar, 2.0, palette.secondary.gamma_multiply(0.3));
             let fraction = resume.resume_position_ms as f32 / episode.duration_ms as f32;
             let filled =
                 Rect::from_min_size(bar.min, vec2(bar.width() * fraction.clamp(0.0, 1.0), 4.0));
-            ui.painter().rect_filled(filled, 2.0, palette.accent);
+            // Progress stays neutral; only the episode playing lights it.
+            let fill = if playing_here {
+                palette.accent
+            } else {
+                palette.secondary
+            };
+            ui.painter().rect_filled(filled, 2.0, fill);
             x += 80.0;
         }
     }

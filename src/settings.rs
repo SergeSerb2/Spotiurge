@@ -223,6 +223,8 @@ fn proxy_mode_is_system(mode: &ProxyMode) -> bool {
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
+    /// Local refresh controls/cache age; taste and feedback synchronize separately.
+    pub discovery: crate::discovery::Preferences,
     /// The Spotify Connect name other devices see.
     pub device_name: String,
     /// 96, 160, or 320 kbps.
@@ -264,6 +266,9 @@ pub struct Settings {
     pub accent_from_art: bool,
     /// A spectrum or waveform of the playing song behind the player bar.
     pub player_bar_vis: PlayerBarVis,
+    /// Show interface changes at once instead of animating them. macOS's
+    /// own Reduce motion setting has the same effect while it is on.
+    pub reduce_motion: bool,
     /// Last local volume, 0..=65535.
     pub volume: u16,
     /// Whether the library sidebar is visible.
@@ -414,7 +419,8 @@ impl std::fmt::Debug for Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            device_name: "Spotifast".to_string(),
+            discovery: crate::discovery::Preferences::default(),
+            device_name: "Spotiurge".to_string(),
             bitrate: 320,
             normalisation: false,
             autoplay: true,
@@ -432,6 +438,7 @@ impl Default for Settings {
             home: HomeSettings::default(),
             accent_from_art: true,
             player_bar_vis: PlayerBarVis::Off,
+            reduce_motion: false,
             volume: (u16::MAX as u32 * 70 / 100) as u16,
             sidebar_visible: true,
             art_expanded: false,
@@ -1168,6 +1175,19 @@ mod tests {
     }
 
     #[test]
+    fn motion_is_on_for_older_settings_and_reducing_it_round_trips() {
+        let old: Settings = serde_json::from_str("{}").unwrap();
+        assert!(!old.reduce_motion);
+        let settings = Settings {
+            reduce_motion: true,
+            ..Settings::default()
+        };
+        let json = serde_json::to_string(&settings).unwrap();
+        let restored: Settings = serde_json::from_str(&json).unwrap();
+        assert!(restored.reduce_motion);
+    }
+
+    #[test]
     fn older_settings_default_to_standard_tracklist() {
         let settings: Settings = serde_json::from_str("{}").unwrap();
         assert!(!settings.tracklist_compact);
@@ -1458,6 +1478,23 @@ mod tests {
         );
         super::ManualProxy::parse(super::ManualKind::Http, "localhost", "8080", "", "").unwrap();
         super::ManualProxy::parse(super::ManualKind::Http, "::1", "8080", "", "").unwrap();
+    }
+
+    #[test]
+    fn discovery_preferences_default_for_old_profiles_and_round_trip() {
+        let older: Settings = serde_json::from_str("{}").unwrap();
+        assert_eq!(older.discovery, crate::discovery::Preferences::default());
+        let settings = Settings {
+            discovery: crate::discovery::Preferences {
+                automatic: false,
+                exploration: crate::discovery::Exploration::Adventurous,
+                refreshed_at: Some(100_000),
+            },
+            ..Default::default()
+        };
+        let restored: Settings =
+            serde_json::from_str(&serde_json::to_string(&settings).unwrap()).unwrap();
+        assert_eq!(restored.discovery, settings.discovery);
     }
 
     #[test]

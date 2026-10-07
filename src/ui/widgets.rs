@@ -326,11 +326,24 @@ fn menu_item_response(
         },
     );
     if ui.is_rect_visible(rect) {
-        if (response.hovered() || highlighted) && enabled {
-            ui.painter()
-                .rect_filled(rect, CornerRadius::same(6), palette.surface_hover);
+        let lift = super::motion::toggle(
+            ui.ctx(),
+            response.id.with("lift"),
+            (response.hovered() || highlighted) && enabled,
+            super::motion::FEEDBACK,
+        );
+        if lift > 0.0 {
+            ui.painter().rect_filled(
+                rect,
+                CornerRadius::same(8),
+                super::material::hover_fill(palette).gamma_multiply(1.6 * lift),
+            );
         }
-        let color = if enabled { palette.text } else { palette.dim };
+        let color = if enabled {
+            palette.text
+        } else {
+            palette.disabled_text()
+        };
         let mut x = rect.left() + 10.0;
         if let Some(icon) = icon {
             let icon_rect =
@@ -339,7 +352,7 @@ fn menu_item_response(
                 if enabled {
                     palette.secondary
                 } else {
-                    palette.dim
+                    palette.disabled_text()
                 },
                 16.0,
             )
@@ -433,9 +446,18 @@ fn submenu<R>(
     };
 
     if ui.is_rect_visible(rect) {
-        if response.hovered() || is_open {
-            ui.painter()
-                .rect_filled(rect, CornerRadius::same(6), palette.surface_hover);
+        let lift = super::motion::toggle(
+            ui.ctx(),
+            response.id.with("lift"),
+            response.hovered() || is_open,
+            super::motion::FEEDBACK,
+        );
+        if lift > 0.0 {
+            ui.painter().rect_filled(
+                rect,
+                CornerRadius::same(8),
+                super::material::hover_fill(palette).gamma_multiply(1.6 * lift),
+            );
         }
         let color = palette.text;
         let mut x = rect.left() + 10.0;
@@ -521,23 +543,13 @@ pub fn menu_separator(ui: &mut Ui, palette: &Palette) {
     ui.painter().hline(
         rect.x_range().shrink(6.0),
         rect.center().y,
-        Stroke::new(1.0, palette.outline),
+        Stroke::new(1.0, super::material::rim_colour(palette)),
     );
 }
 
-/// The frame every popup menu uses.
+/// The frame every popup menu uses: a popover of glass.
 pub fn menu_frame(palette: &Palette) -> egui::Frame {
-    egui::Frame::new()
-        .fill(palette.overlay)
-        .stroke(Stroke::new(1.0, palette.outline))
-        .corner_radius(CornerRadius::same(theme::RADIUS))
-        .inner_margin(egui::Margin::same(6))
-        .shadow(egui::epaint::Shadow {
-            offset: [0, 6],
-            blur: 20,
-            spread: 0,
-            color: palette.shadow,
-        })
+    super::material::popover_frame(palette).inner_margin(egui::Margin::same(6))
 }
 
 /// Context menu for actions on selected tracks.
@@ -1179,8 +1191,12 @@ fn columns(width: f32, row: &TrackRow<'_>) -> Columns {
     let extra_wide = width > 920.0;
     let wide = width > 760.0;
     let medium = width > 560.0;
+    // In a sliver of a list the cover identifies the row and shows its
+    // play state, so the number gives its room to the title, and so does
+    // the heart, which the row's menu still offers.
+    let sliver = width < 400.0 && row.show_cover;
     Columns {
-        number: if row.compact { 0.0 } else { 44.0 },
+        number: if row.compact || sliver { 0.0 } else { 44.0 },
         cover: if row.show_cover {
             if row.compact { 44.0 } else { 52.0 }
         } else {
@@ -1201,7 +1217,7 @@ fn columns(width: f32, row: &TrackRow<'_>) -> Columns {
         } else {
             0.0
         },
-        heart: if row.compact { 0.0 } else { 36.0 },
+        heart: if row.compact || sliver { 0.0 } else { 36.0 },
         duration: if row.compact { 44.0 } else { 56.0 },
         more: if row.compact { 0.0 } else { 36.0 },
     }
@@ -1317,23 +1333,25 @@ fn track_row_contents(
             .is_some_and(|uri| uri == row.item.uri());
     let playing = is_current && app.believed_playing();
     let hovered = ui.rect_contains_pointer(rect) || response.has_focus();
+    // The pointer's fill eases in and out; a picked row keeps a neutral
+    // selection so selecting a song does not mark it as playing.
+    let lift = super::motion::toggle(
+        ui.ctx(),
+        response.id.with("lift"),
+        hovered,
+        super::motion::FEEDBACK,
+    );
     if row.picked {
-        // Keep the existing translucent selection, using a neutral palette
-        // color so selecting a song does not mark it as playing.
         ui.painter().rect_filled(
             rect,
-            CornerRadius::same(6),
-            palette
-                .secondary
-                .gamma_multiply(if hovered { 0.30 } else { 0.20 }),
+            CornerRadius::same(8),
+            palette.secondary.gamma_multiply(0.20 + 0.10 * lift),
         );
-    } else if hovered {
+    } else if lift > 0.0 {
         ui.painter().rect_filled(
             rect,
-            CornerRadius::same(6),
-            palette
-                .surface_hover
-                .gamma_multiply(if palette.dark { 0.7 } else { 1.0 }),
+            CornerRadius::same(8),
+            super::material::hover_fill(&palette).gamma_multiply(1.3 * lift),
         );
     }
     // The row highlight also shows keyboard focus. Do not add an outline
@@ -1363,7 +1381,7 @@ fn track_row_contents(
             theme::paint_icon(ui, Icon::AudioLines, cell, 16.0, palette.accent);
         } else {
             let color = if is_current {
-                palette.accent
+                palette.accent_text()
             } else {
                 palette.secondary
             };
@@ -1442,7 +1460,7 @@ fn track_row_contents(
     let title_color = if unavailable {
         palette.dim
     } else if is_current {
-        palette.accent
+        palette.accent_text()
     } else {
         palette.text
     };
@@ -1716,8 +1734,10 @@ fn track_row_contents(
             {
                 child.set_opacity(0.0);
             }
+            // Saved is a lasting mark, not a live one: the filled heart
+            // says it in the text colour, leaving the lamp to what plays.
             let (icon, color) = if saved == Some(true) {
-                (Icon::HeartFilled, palette.accent)
+                (Icon::HeartFilled, palette.text)
             } else {
                 (Icon::Heart, palette.secondary)
             };
@@ -1939,17 +1959,8 @@ pub fn drag_ghost(ctx: &egui::Context, palette: &Palette, locale: Locale) {
         .fixed_pos(pos + vec2(16.0, 6.0))
         .show(ctx, |ui| {
             ui.set_opacity(0.9);
-            egui::Frame::new()
-                .fill(palette.overlay)
-                .stroke(Stroke::new(1.0, palette.outline))
-                .corner_radius(CornerRadius::same(theme::RADIUS))
+            super::material::popover_frame(palette)
                 .inner_margin(egui::Margin::symmetric(10, 6))
-                .shadow(egui::epaint::Shadow {
-                    offset: [0, 4],
-                    blur: 16,
-                    spread: 0,
-                    color: palette.shadow,
-                })
                 .show(ui, |ui| {
                     ui.horizontal(|ui| {
                         ui.set_max_width(280.0);
@@ -2220,7 +2231,7 @@ pub fn table_header(
     ui.painter().hline(
         rect.x_range().shrink(8.0),
         rect.bottom() - 0.5,
-        Stroke::new(1.0, palette.outline),
+        Stroke::new(1.0, super::material::rim_colour(palette)),
     );
     ui.add_space(6.0);
     clicked
@@ -2351,16 +2362,23 @@ pub fn card(
     let mut play = false;
     if ui.is_rect_visible(rect) {
         let hovered = ui.rect_contains_pointer(rect);
-        if hovered {
+        // Under the pointer the card brightens like glass catching light
+        // and its cover lifts a little toward the viewer.
+        let lift = super::motion::toggle(
+            ui.ctx(),
+            response.id.with("lift"),
+            hovered || response.has_focus(),
+            super::motion::STATE,
+        );
+        if lift > 0.0 {
             ui.painter().rect_filled(
                 rect,
-                CornerRadius::same(theme::RADIUS),
-                palette
-                    .surface_hover
-                    .gamma_multiply(if palette.dark { 0.8 } else { 1.0 }),
+                CornerRadius::same(12),
+                super::material::hover_fill(&palette).gamma_multiply(lift * 1.4),
             );
         }
-        let image_rect = Rect::from_min_size(rect.min + vec2(PAD, PAD), Vec2::splat(image_size));
+        let image_rect = Rect::from_min_size(rect.min + vec2(PAD, PAD), Vec2::splat(image_size))
+            .translate(vec2(0.0, -3.0 * lift));
         let radius = if circular { image_size / 2.0 } else { 6.0 };
         paint_shadow(ui, &palette, image_rect, radius);
         paint_cover(
@@ -2406,7 +2424,10 @@ pub fn card(
 
         if playable && hovered {
             let button_rect = Rect::from_center_size(
-                pos2(image_rect.right() - 26.0, image_rect.bottom() - 26.0),
+                pos2(
+                    image_rect.right() - 26.0,
+                    image_rect.bottom() - 26.0 + 6.0 * (1.0 - lift),
+                ),
                 Vec2::splat(44.0),
             );
             let mut child = ui.new_child(
@@ -2414,6 +2435,7 @@ pub fn card(
                     .max_rect(button_rect)
                     .layout(Layout::centered_and_justified(egui::Direction::LeftToRight)),
             );
+            child.multiply_opacity(lift);
             play = theme::circle_button(
                 &mut child,
                 if playing {
@@ -2504,8 +2526,11 @@ pub fn error_row(ui: &mut Ui, app: &mut App, message: &str, retry: Option<Page>)
 pub fn empty_state(ui: &mut Ui, palette: &Palette, icon: Icon, title: &str, body: &str) {
     ui.add_space(48.0);
     ui.vertical_centered(|ui| {
-        theme::icon(ui, icon, 40.0, palette.dim);
-        ui.add_space(8.0);
+        let (disc, _) = ui.allocate_exact_size(Vec2::splat(72.0), Sense::hover());
+        ui.painter()
+            .circle_filled(disc.center(), 36.0, super::material::key_fill(palette, 0.5));
+        theme::paint_icon(ui, icon, disc, 32.0, palette.secondary);
+        ui.add_space(12.0);
         theme::text(ui, title, theme::semibold(16.0), palette.text);
         ui.add_space(2.0);
         theme::text(ui, body, theme::regular(13.5), palette.secondary);
@@ -2666,11 +2691,18 @@ pub fn thin_slider(
             bar.min,
             pos2(bar.left() + bar.width() * shown.clamp(0.0, 1.0), bar.max.y),
         );
-        let fill = if active { palette.accent } else { palette.text };
+        // The fill warms to the lamp colour and the knob rises out of the
+        // track while the pointer or the keyboard holds the slider.
+        let lift =
+            super::motion::toggle(ui.ctx(), id.with("lift"), active, super::motion::FEEDBACK);
+        let fill = palette.text.lerp_to_gamma(palette.accent, lift);
         ui.painter().rect_filled(filled, 2.0, fill);
-        if active {
-            ui.painter()
-                .circle_filled(pos2(filled.right(), bar.center().y), 6.0, palette.text);
+        if lift > 0.0 {
+            ui.painter().circle_filled(
+                pos2(filled.right(), bar.center().y),
+                6.0 * lift,
+                palette.text,
+            );
         }
     }
     event
@@ -2683,16 +2715,8 @@ pub fn chips<T: PartialEq + Copy>(
     options: &[(T, &str)],
     current: T,
 ) -> Option<T> {
-    let mut selected = None;
-    ui.horizontal_wrapped(|ui| {
-        ui.spacing_mut().item_spacing.x = 8.0;
-        for (value, label) in options {
-            if theme::soft_button(ui, palette, None, label, *value == current).clicked() {
-                selected = Some(*value);
-            }
-        }
-    });
-    selected
+    let id = ui.id().with(("chips", options.len()));
+    theme::choice_chips(ui, palette, id, options, current, true)
 }
 
 /// A text input with the native clipboard actions and a selection-aware menu.
@@ -2768,6 +2792,47 @@ pub fn text_edit(ui: &mut Ui, locale: Locale, edit: egui::TextEdit<'_>) -> egui:
     output.response.response
 }
 
+/// Corner radius of a text well.
+pub const FIELD_RADIUS: u8 = 10;
+
+/// A text field set into the glass, as the search field is: the well's fill
+/// inside a hairline rim at the shared field radius, the rim brightening
+/// into a focus ring while the field holds the caret. `add` draws the
+/// field without a frame of its own.
+pub fn field_well(
+    ui: &mut Ui,
+    palette: &Palette,
+    add: impl FnOnce(&mut Ui) -> egui::Response,
+) -> egui::Response {
+    let framed = Frame::new()
+        .fill(super::material::glass(palette, super::material::Kind::Well).fill)
+        .corner_radius(CornerRadius::same(FIELD_RADIUS))
+        .inner_margin(Margin::symmetric(12, 8))
+        .show(ui, add);
+    let response = framed.inner;
+    let focus = super::motion::toggle(
+        ui.ctx(),
+        response.id.with("focus"),
+        response.has_focus(),
+        super::motion::FEEDBACK,
+    );
+    ui.painter().rect_stroke(
+        framed.response.rect,
+        f32::from(FIELD_RADIUS),
+        field_rim(palette, focus),
+        egui::StrokeKind::Inside,
+    );
+    response
+}
+
+/// The rim of a text well, from at rest (`focus` 0) to holding the caret (1).
+fn field_rim(palette: &Palette, focus: f32) -> Stroke {
+    Stroke::new(
+        1.0 + 0.5 * focus,
+        super::material::rim_colour(palette).lerp_to_gamma(palette.text.gamma_multiply(0.6), focus),
+    )
+}
+
 /// A text field with a leading search icon.
 pub fn search_field(
     ui: &mut Ui,
@@ -2781,20 +2846,21 @@ pub fn search_field(
     let height = 34.0;
     let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
     let has_focus = ui.memory(|memory| memory.has_focus(id));
-    let fill = if has_focus {
-        palette.surface_hover
-    } else {
-        palette.surface
-    };
-    ui.painter().rect_filled(rect, height / 2.0, fill);
-    if has_focus {
-        ui.painter().rect_stroke(
-            rect,
-            height / 2.0,
-            Stroke::new(1.5, palette.text.gamma_multiply(0.6)),
-            egui::StrokeKind::Inside,
-        );
-    }
+    // A well in the glass, its rim lighting up while it holds the caret.
+    let focus = super::motion::toggle(
+        ui.ctx(),
+        id.with("focus"),
+        has_focus,
+        super::motion::FEEDBACK,
+    );
+    let well = super::material::glass(palette, super::material::Kind::Well).fill;
+    ui.painter().rect_filled(rect, height / 2.0, well);
+    ui.painter().rect_stroke(
+        rect,
+        height / 2.0,
+        field_rim(palette, focus),
+        egui::StrokeKind::Inside,
+    );
     let icon_rect =
         Rect::from_center_size(pos2(rect.left() + 18.0, rect.center().y), Vec2::splat(16.0));
     Icon::Search
@@ -2874,7 +2940,7 @@ pub fn switch(ui: &mut Ui, palette: &Palette, label: &str, on: &mut bool) -> egu
         response.mark_changed();
     }
     if ui.is_rect_visible(rect) {
-        let t = ui.ctx().animate_bool(response.id, *on);
+        let t = super::motion::toggle(ui.ctx(), response.id, *on, super::motion::STATE);
         let fill = egui::lerp(
             egui::Rgba::from(palette.surface_active)..=egui::Rgba::from(palette.accent),
             t,
@@ -2882,8 +2948,20 @@ pub fn switch(ui: &mut Ui, palette: &Palette, label: &str, on: &mut bool) -> egu
         ui.painter()
             .rect_filled(rect, rect.height() / 2.0, Color32::from(fill));
         let knob_x = egui::lerp(rect.left() + 11.0..=rect.right() - 11.0, t);
-        ui.painter()
-            .circle_filled(pos2(knob_x, rect.center().y), 8.0, Color32::WHITE);
+        let knob = pos2(knob_x, rect.center().y);
+        ui.painter().add(
+            egui::epaint::Shadow {
+                offset: [0, 1],
+                blur: 4,
+                spread: 0,
+                color: Color32::from_black_alpha(60),
+            }
+            .as_shape(
+                Rect::from_center_size(knob, Vec2::splat(16.0)),
+                CornerRadius::same(8),
+            ),
+        );
+        ui.painter().circle_filled(knob, 8.0, Color32::WHITE);
     }
     response.widget_info(|| {
         egui::WidgetInfo::selected(egui::WidgetType::Checkbox, ui.is_enabled(), *on, label)
@@ -2894,27 +2972,6 @@ pub fn switch(ui: &mut Ui, palette: &Palette, label: &str, on: &mut bool) -> egu
 
 /// The author's website, linked from the credit line.
 pub const AUTHOR_URL: &str = "https://paolino.me";
-
-/// "Built with love by Carmine Paolino", with the name linking to
-/// [`AUTHOR_URL`]. Returns whether the name was clicked.
-pub fn credit(ui: &mut Ui, palette: &Palette, locale: Locale) -> bool {
-    // Translators: {name} is replaced by the author's name, shown as a link.
-    let sentence = gettext(locale, "Built with love by {name}");
-    let (before, after) = sentence.split_once("{name}").unwrap_or((&sentence, ""));
-    let mut clicked = false;
-    ui.horizontal_wrapped(|ui| {
-        ui.spacing_mut().item_spacing.x = 0.0;
-        theme::text(ui, "\u{2665}  ", theme::regular(13.0), palette.danger);
-        theme::text(ui, before, theme::regular(13.0), palette.secondary);
-        clicked = theme::link(ui, "Carmine Paolino", theme::medium(13.0), palette.text)
-            .on_hover_text(AUTHOR_URL)
-            .clicked();
-        if !after.is_empty() {
-            theme::text(ui, after, theme::regular(13.0), palette.secondary);
-        }
-    });
-    clicked
-}
 
 /// The width a settings row keeps for its control: switches, fields and
 /// buttons fit in it.
@@ -2999,23 +3056,18 @@ pub fn labeled_field(
         .vertical(|ui| {
             theme::text(ui, label, theme::medium(13.0), palette.text);
             ui.add_space(6.0);
-            Frame::new()
-                .fill(palette.surface)
-                .corner_radius(CornerRadius::same(8))
-                .inner_margin(Margin::symmetric(12, 10))
-                .show(ui, |ui| {
-                    text_edit(
-                        ui,
-                        locale,
-                        egui::TextEdit::singleline(value)
-                            .hint_text(egui::RichText::new(hint).color(palette.dim))
-                            .font(theme::regular(14.0))
-                            .password(password)
-                            .frame(egui::Frame::NONE)
-                            .desired_width(ui.available_width()),
-                    )
-                })
-                .inner
+            field_well(ui, palette, |ui| {
+                text_edit(
+                    ui,
+                    locale,
+                    egui::TextEdit::singleline(value)
+                        .hint_text(egui::RichText::new(hint).color(palette.dim))
+                        .font(theme::regular(14.0))
+                        .password(password)
+                        .frame(egui::Frame::NONE)
+                        .desired_width(ui.available_width()),
+                )
+            })
         })
         .inner;
     ui.ctx()
@@ -3133,6 +3185,68 @@ mod tests {
     use crate::model::{Action, Page};
     use crate::paths::AppDirs;
     use crate::settings::Settings;
+
+    /// A text well wears the search field's rim at rest, at the shared
+    /// radius, and its focus ring while it holds the caret, and the field
+    /// inside still takes typing.
+    #[test]
+    fn a_text_well_has_a_rim_and_a_focus_ring_and_still_types() {
+        for palette in [Palette::dark(), Palette::light()] {
+            let ctx = egui::Context::default();
+            theme::install(&ctx);
+            theme::apply(&ctx, &palette);
+            let id = egui::Id::new("well");
+            let mut value = String::new();
+            let mut time = 0.0;
+            let mut draw = |events: Vec<egui::Event>, focus: bool| {
+                time += 1.0;
+                let mut output = ctx.run_ui(
+                    egui::RawInput {
+                        time: Some(time),
+                        events,
+                        ..Default::default()
+                    },
+                    |ui| {
+                        let response = field_well(ui, &palette, |ui| {
+                            text_edit(
+                                ui,
+                                Locale::English,
+                                egui::TextEdit::singleline(&mut value)
+                                    .id(id)
+                                    .frame(egui::Frame::NONE),
+                            )
+                        });
+                        if focus {
+                            response.request_focus();
+                        }
+                    },
+                );
+                output.textures_delta.clear();
+                output
+                    .shapes
+                    .into_iter()
+                    .filter_map(|clipped| match clipped.shape {
+                        egui::Shape::Rect(rect)
+                            if rect.stroke.width > 0.0
+                                && rect.corner_radius == CornerRadius::same(FIELD_RADIUS) =>
+                        {
+                            Some(rect.stroke)
+                        }
+                        _ => None,
+                    })
+                    .collect::<Vec<_>>()
+            };
+            let rest = draw(Vec::new(), false);
+            assert_eq!(rest, vec![field_rim(&palette, 0.0)]);
+            draw(Vec::new(), true);
+            draw(Vec::new(), false);
+            let focused = draw(vec![egui::Event::Text("Late night".into())], false);
+            assert_eq!(focused, vec![field_rim(&palette, 1.0)]);
+            assert_eq!(focused[0].width, 1.5);
+            assert_ne!(focused[0].color, rest[0].color);
+            assert_eq!(value, "Late night");
+        }
+    }
 
     #[test]
     fn editing_a_proxy_endpoint_clears_its_password_but_password_entry_is_preserved() {
@@ -3698,9 +3812,12 @@ mod tests {
                 let context = RowContext::Queue;
                 let mut rect = Rect::NOTHING;
                 let mut id = egui::Id::NULL;
+                let mut time = 0.0;
                 let mut draw = || {
+                    time += 0.5;
                     let mut output = ctx.run_ui(
                         egui::RawInput {
+                            time: Some(time),
                             screen_rect: Some(Rect::from_min_size(
                                 egui::Pos2::ZERO,
                                 vec2(760.0, 520.0),
@@ -3739,6 +3856,9 @@ mod tests {
                     output.textures_delta.clear();
                     output
                 };
+                // Focus lands on the second frame and its highlight eases
+                // in; the third shows it settled.
+                draw();
                 draw();
                 let output = draw();
                 let fills: Vec<_> = output
@@ -3756,9 +3876,7 @@ mod tests {
                             .secondary
                             .gamma_multiply(if focused { 0.30 } else { 0.20 })
                     } else {
-                        palette
-                            .surface_hover
-                            .gamma_multiply(if palette.dark { 0.7 } else { 1.0 })
+                        super::super::material::hover_fill(&palette).gamma_multiply(1.3)
                     }]
                 );
                 if focused {
@@ -3771,7 +3889,7 @@ mod tests {
                         {
                             shape.stroke == Stroke::NONE
                                 && (shape.rect != rect
-                                    || shape.corner_radius == CornerRadius::same(6))
+                                    || shape.corner_radius == CornerRadius::same(8))
                         }
                         _ => true,
                     }),

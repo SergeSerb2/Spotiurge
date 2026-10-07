@@ -47,6 +47,8 @@ jobs:
         run: python3 packaging/flatpak/test-metainfo.py
       - name: Linux launcher packaging regressions
         run: python3 packaging/test-launchers.py
+      - name: Private cloud authentication and state regressions
+        run: python3 -m unittest discover -s services/private-cloud -v
       - name: Release name migration regressions
         run: python3 packaging/test-release-names.py
       - name: Clippy (default features)
@@ -104,9 +106,15 @@ jobs:
       - name: Native credential store (dummy grants)
         if: runner.os == 'Windows' || runner.os == 'macOS'
         timeout-minutes: 2
-        run: mbx test --locked --lib credentials::tests::native_store_round_trip -- --ignored --exact
+        run: |
+          mbx test --locked --lib credentials::tests::native_store_round_trip -- --ignored --exact
+          mbx test --locked --lib discovery_cloud::tests::native_bootstrap_round_trip -- --ignored --exact
       - name: Documentation tests
         run: mbx test --locked --all-features --doc
+      - name: Cloud token bootstrap isolation
+        env:
+          SPOTIURGE_CLOUD_TOKEN: spotiurge-dummy-bootstrap-token-for-regression-only
+        run: mbx run --locked --example cloud-bootstrap-check
       # A build can pass while importing Microsoft's C++ runtime, then fail on
       # a clean user's machine. Inspect the executable CI actually produced.
       - name: Standalone Windows runtime
@@ -138,13 +146,15 @@ jobs:
           bash packaging/macos/bundle.sh target/debug/spotifast "$app" "$version"
           executable=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")
           "$app/Contents/MacOS/$executable" --version
-          # A missing job must reach our error handler, not die during launch.
+          # Fork updates are disabled. Reject the helper flag at the parser
+          # before reading a job or loading installation code.
           set +e
           "$app/Contents/MacOS/$executable" --apply-update "$RUNNER_TEMP/spotifast-missing-job.json" 2> "$RUNNER_TEMP/spotifast-helper-check.log"
           status=$?
           set -e
-          test "$status" -eq 1
+          test "$status" -eq 2
           test -s "$RUNNER_TEMP/spotifast-helper-check.log"
+          grep -F "unexpected argument '--apply-update'" "$RUNNER_TEMP/spotifast-helper-check.log"
 
   nix:
     name: Nix package

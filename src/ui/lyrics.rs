@@ -47,12 +47,17 @@ pub fn side_panel(app: &mut App, ui: &mut egui::Ui) {
         .default_size(app.settings.lyrics_width)
         .size_range(fit.range.clone())
         .show_separator_line(false)
-        .frame(
-            Frame::new()
-                .fill(palette.panel)
-                .inner_margin(Margin::symmetric(12, 12)),
-        );
+        .frame(super::material::panel_frame(
+            Margin {
+                left: super::material::GAP as i8,
+                right: super::material::GAP as i8,
+                top: super::material::GAP as i8,
+                bottom: 0,
+            },
+            Margin::same(12),
+        ));
     let response = panel.show(ui, |ui| {
+        super::material::paint_panel_pane(ui, Margin::same(12), &palette);
         let window_controls = super::window_controls_reservation(
             ui.ctx(),
             app.show_queue_panel,
@@ -179,10 +184,11 @@ fn contents(app: &mut App, ui: &mut egui::Ui) {
 
     let active = lyrics.active_line(now.position_ms);
     let follow = app.lyrics_following && app.lyrics_line_shown != Some(active);
-    // The line being sung is bold and in the accent colour; every other
-    // line is quiet, regular text, the same before and after it has been
-    // sung. A line takes 220 ms to light up or fade, as in omarchy-lyrics.
-    let quiet = palette.text.gamma_multiply(0.45);
+    // The line being sung is bold, in the text colour; every other line is
+    // quiet, regular secondary text, the same before and after it has been
+    // sung. A line takes 220 ms to light up or fade, as in omarchy-lyrics,
+    // and lights at once when motion is reduced.
+    let quiet = palette.secondary;
     let scroll = crate::autoscroll::show(
         ui,
         egui::ScrollArea::vertical()
@@ -202,12 +208,13 @@ fn contents(app: &mut App, ui: &mut egui::Ui) {
             ui.add_space(12.0);
             for (index, line) in lyrics.lines.iter().enumerate() {
                 let is_active = active == Some(index);
-                let lit = ui.ctx().animate_bool_with_time(
+                let lit = super::motion::toggle(
+                    ui.ctx(),
                     egui::Id::new("lyric-line").with(index),
                     is_active,
                     LIGHT_UP_SECONDS,
                 );
-                let color = blend(quiet, palette.accent, lit);
+                let color = blend(quiet, palette.text, lit);
                 let font = if lit > 0.5 {
                     theme::bold(LINE_SIZE)
                 } else {
@@ -287,7 +294,8 @@ fn contents(app: &mut App, ui: &mut egui::Ui) {
 
 pub fn fullscreen(app: &mut App, ui: &mut egui::Ui) {
     egui::CentralPanel::default()
-        .frame(Frame::new().fill(theme::Palette::dark().window))
+        // The backdrop paints the whole view.
+        .frame(Frame::new())
         .show(ui, |ui| {
             let rect = ui.max_rect();
             background(app, ui, rect);
@@ -495,6 +503,10 @@ fn background(app: &mut App, ui: &mut egui::Ui, rect: Rect) {
             cover_uv(rect.size(), texture.size_vec2()),
             Color32::from_gray(180),
         );
+    } else {
+        // No cover to fill the view: the flat night-forest plate.
+        let dark = theme::Palette::dark();
+        painter.rect_filled(rect, 0.0, dark.window);
     }
     painter.rect_filled(rect, 0.0, Color32::from_black_alpha(120));
     widgets::paint_vertical_gradient(
@@ -698,7 +710,8 @@ fn fullscreen_contents(app: &mut App, ui: &mut egui::Ui) {
             ui.add_space(padding);
             for (index, line) in lyrics.lines.iter().enumerate() {
                 let is_active = active == Some(index);
-                let lit = ui.ctx().animate_bool_with_time(
+                let lit = super::motion::toggle(
+                    ui.ctx(),
                     egui::Id::new("lyric-line").with(("fullscreen", &now.uri, index)),
                     is_active,
                     0.3,

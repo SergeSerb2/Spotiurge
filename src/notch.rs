@@ -119,10 +119,12 @@ pub fn is_track_metadata_different(
 /// Transitions are only animated when the notch widget is currently expanded and visible.
 pub fn should_animate_track_transition(
     is_expanded: bool,
+    reduce_motion: bool,
     cached: Option<&NotchTrackInfo>,
     incoming: Option<&NotchTrackInfo>,
 ) -> bool {
     is_expanded
+        && !reduce_motion
         && cached.is_some()
         && incoming.is_some()
         && is_track_metadata_different(cached, incoming)
@@ -260,7 +262,13 @@ pub use crate::mac_notch::{init, is_active, sync_state};
 pub fn init() {}
 
 #[cfg(not(target_os = "macos"))]
-pub fn sync_state(_enabled: bool, _is_background: bool, _track: Option<&NotchTrackInfo>) {}
+pub fn sync_state(
+    _enabled: bool,
+    _is_background: bool,
+    _reduce_motion: bool,
+    _track: Option<&NotchTrackInfo>,
+) {
+}
 
 #[cfg(not(target_os = "macos"))]
 pub fn is_active() -> bool {
@@ -467,8 +475,14 @@ mod tests {
 
         // Identical track info
         assert!(!is_track_metadata_different(Some(&t1), Some(&t2)));
-        assert!(!should_animate_track_transition(true, Some(&t1), Some(&t2)));
         assert!(!should_animate_track_transition(
+            true,
+            false,
+            Some(&t1),
+            Some(&t2)
+        ));
+        assert!(!should_animate_track_transition(
+            false,
             false,
             Some(&t1),
             Some(&t2)
@@ -477,8 +491,20 @@ mod tests {
         // Difference in title triggers metadata difference, but only animates when expanded
         t2.title = "Song B".into();
         assert!(is_track_metadata_different(Some(&t1), Some(&t2)));
-        assert!(should_animate_track_transition(true, Some(&t1), Some(&t2)));
+        assert!(should_animate_track_transition(
+            true,
+            false,
+            Some(&t1),
+            Some(&t2)
+        ));
         assert!(!should_animate_track_transition(
+            true,
+            true,
+            Some(&t1),
+            Some(&t2)
+        ));
+        assert!(!should_animate_track_transition(
+            false,
             false,
             Some(&t1),
             Some(&t2)
@@ -488,17 +514,32 @@ mod tests {
         t2 = t1.clone();
         t2.art_path = Some("/tmp/new_art.jpg".into());
         assert!(!is_track_metadata_different(Some(&t1), Some(&t2)));
-        assert!(!should_animate_track_transition(true, Some(&t1), Some(&t2)));
+        assert!(!should_animate_track_transition(
+            true,
+            false,
+            Some(&t1),
+            Some(&t2)
+        ));
 
         // None to None has no difference
         assert!(!is_track_metadata_different(None, None));
-        assert!(!should_animate_track_transition(true, None, None));
+        assert!(!should_animate_track_transition(true, false, None, None));
 
         // None to Some (initial track load) or Some to None (stop) differs, but does not crossfade animate
         assert!(is_track_metadata_different(None, Some(&t1)));
-        assert!(!should_animate_track_transition(true, None, Some(&t1)));
+        assert!(!should_animate_track_transition(
+            true,
+            false,
+            None,
+            Some(&t1)
+        ));
         assert!(is_track_metadata_different(Some(&t1), None));
-        assert!(!should_animate_track_transition(true, Some(&t1), None));
+        assert!(!should_animate_track_transition(
+            true,
+            false,
+            Some(&t1),
+            None
+        ));
     }
 
     #[test]

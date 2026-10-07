@@ -822,6 +822,8 @@ pub enum RowContext {
     },
     /// A loose list of tracks, played as a queue of URIs.
     Uris(Arc<[String]>),
+    /// Discovery URI lists currently support only the local playback engine.
+    Discovery(Arc<[String]>),
     /// A Next up row. Playing it consumes that row and all rows before it.
     Queue,
     /// A sorted or filtered context view that plays the displayed rows.
@@ -915,6 +917,29 @@ pub struct Toast {
 /// Actions emitted while drawing and applied afterward to avoid borrow conflicts.
 #[derive(Clone, Debug)]
 pub enum Action {
+    DiscoveryDraft(String),
+    DiscoveryRecommend,
+    DiscoveryAutoRecommend,
+    DiscoveryRetryMatches,
+    DiscoveryExploration(crate::discovery::Exploration),
+    DiscoveryAutomatic(bool),
+    DiscoveryEditTaste(bool),
+    DiscoveryCancelTaste,
+    DiscoveryShowHistory,
+    DiscoveryPlayAll {
+        shuffle: bool,
+    },
+    DiscoveryPlayMix(String),
+    DiscoveryRemoveMix(String),
+    DiscoverySaveTaste,
+    DiscoverySync,
+    DiscoveryRate {
+        uri: String,
+        title: String,
+        artist: String,
+        rating: Option<crate::discovery::Rating>,
+    },
+    DiscoverySaveMix,
     Open(Page),
     /// Extracts a page's tint while its library row is hovered.
     PrepareTint(String),

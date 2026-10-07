@@ -1,0 +1,143 @@
+{
+  "source_commit": "ce7a42e52c3d24e91f8316d2ed25a4626558f176",
+  "source_state": "uncommitted final review fixes",
+  "binary_sha256": "91bf9aff9a50df5a4c189f988f2fbcab1af662d7c55908c2d5a3f200113a73d7",
+  "before_binary_sha256": "3faae7ac9cff07f6855ec5d504cb7c9e56e32525c19ab6211490cb60c1c4b6da",
+  "before_input_manifest": "../after-captures.json",
+  "source_inputs": {
+    "assets/i18n/de-DE.po": "1e829f450f2673bd9e47adf8316854fc0d7370f998e8cc82f78d2c59608f7676",
+    "assets/i18n/es.po": "aa21ffdb40012c306895ea9cb0e18a28a6497f8c7ed3331020e1fada65b87c5a",
+    "assets/i18n/fr.po": "64b16b5c999d8b99d90b5143862db1545f3210f2121b7e868aa98dba7caa0412",
+    "assets/i18n/it.po": "33a1c1a21d35c60a46935a6ba7cbf188fb26c89a4ef589440d5472eb01344279",
+    "assets/i18n/ja.po": "5540eeed168641888e6885fb92e7f8b82b691dcf993059e688ec600d83f34ee8",
+    "assets/i18n/nl.po": "f2f730aa96271f521f743bea24512352294fdaf3f61f46120f666dafda91234f",
+    "assets/i18n/pl.po": "ff9d1a6abb50624d7b9c43f4fa2685391c43cc9af8948ab284564ffecbeebb96",
+    "assets/i18n/pt-BR.po": "ef570ef94584d7c45741a3280fd1a22ea212f250b1cdcf0ce0ccbdf0054de3fb",
+    "assets/i18n/pt-PT.po": "b73a549a5dbbcadaa6ec46931b69392373db24ae4133ad0ecd8a9ff142f761d4",
+    "assets/i18n/ru.po": "3599f835998a5397eaff3f2b53a6c26285bd1be01bb8cc43904d60c210589a26",
+    "assets/i18n/spotifast.pot": "f5b04c5bb4818499c44c88e8a547d77354b20a8af6f343f467932fbf02c221f6",
+    "assets/i18n/sv.po": "e1641d6b9692ec8a94abc20254516a73ab7083efbe5bb0f1a87c1b4f023ea15c",
+    "assets/i18n/tr.po": "0d2525691d774b6fbda5b420ddf938f65fc5b00fbe19b17db2cc50bcffaf780f",
+    "assets/i18n/zh-Hans.po": "1164dd7a32139e6219ec991c3859c458dd88bfd268341ade8799c6a3dac692b6",
+    "assets/i18n/zh-Hant.po": "1ff5296d2611cd991db9f3c8325aa50417cddf941479d834c42dc38393ef834e",
+    "src/app.rs": "5d3ccde47692d185f3d577004a93db7946fbf4f08b1e53cca83135bd9f6627fb",
+    "src/discovery.rs": "a310ec03dafd8c5d196a1c9ba8e6ad0e47c60df5ca02a0f550b4e3ffbb9f0a6f",
+    "src/model.rs": "8b2377c85c3b6121a9c55c7974e7fcd7169a7e9748be0d147973fc876ec15684",
+    "src/ui/discovery.rs": "fecc811bdb89eb1a2b30501b82cc7a5e9a66d9a078ab8bbda58d127ed39683a6"
+  },
+  "platform": "native macOS arm64",
+  "captures": [
+    {
+      "filename": "before-dark-normal.jpg",
+      "sha256": "0256d2b4fdd958b92a544e5ef61a69562ba35b28b9b18a024a280212254f8aaa",
+      "native_sha256": "718fd10b47c6b827419d9c74d1f26adfa6f223e871bf27133f796f810976006a",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ],
+      "logical_dimensions": "1440x900",
+      "flags": "discovery-remote,discovery-empty",
+      "phase": "before",
+      "theme": "dark",
+      "size": "normal"
+    },
+    {
+      "filename": "before-dark-narrow.jpg",
+      "sha256": "9114798a5b0562b0f7e9095ac12661af4d4fb5854b4409f35c51e4718ede8a3e",
+      "native_sha256": "e4854782ee35767beac7154c3df2df42623cd3aad166f9c516cc487e3f882c67",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ],
+      "logical_dimensions": "900x760",
+      "flags": "discovery-remote,discovery-empty",
+      "phase": "before",
+      "theme": "dark",
+      "size": "narrow"
+    },
+    {
+      "filename": "before-light-normal.jpg",
+      "sha256": "b080c0a4bebe8746196a83235de181228f059f097882a7df988b88ee3e184f47",
+      "native_sha256": "b32e3879b74ab7c4782765b994d55198587cdac8cd7daca3e68984ebc98ed037",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ],
+      "logical_dimensions": "1440x900",
+      "flags": "discovery-remote,discovery-empty,light",
+      "phase": "before",
+      "theme": "light",
+      "size": "normal"
+    },
+    {
+      "filename": "before-light-narrow.jpg",
+      "sha256": "9aef0ebd6ca252221786351edb90eb8145b6e76688df682e873adaaf152882df",
+      "native_sha256": "3c5ae5b0631088388b534ac6b785f8ecf06a03ad05759f8d743f50479ce9546a",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ],
+      "logical_dimensions": "900x760",
+      "flags": "discovery-remote,discovery-empty,light",
+      "phase": "before",
+      "theme": "light",
+      "size": "narrow"
+    },
+    {
+      "filename": "after-dark-normal.jpg",
+      "sha256": "94e92397ae19d25f42c8fdaf49ec2fa1112e9a6cb1b48e14f67e21402aa9c5e1",
+      "native_sha256": "700998c6b1d64ac0166934032bdf0ac873b2d6bc40e8e512494a540e9328b8e6",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ],
+      "logical_dimensions": "1440x900",
+      "flags": "discovery-remote,discovery-empty",
+      "phase": "after",
+      "theme": "dark",
+      "size": "normal"
+    },
+    {
+      "filename": "after-dark-narrow.jpg",
+      "sha256": "62cd0054d437b0b426f252d47ad604865cf2c03a60e4f1d2cda1af9920959499",
+      "native_sha256": "67370f17d38bfa41438b7c6b29fb20eec20ed42d36922795dcd61b8bca4a17d9",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ],
+      "logical_dimensions": "900x760",
+      "flags": "discovery-remote,discovery-empty",
+      "phase": "after",
+      "theme": "dark",
+      "size": "narrow"
+    },
+    {
+      "filename": "after-light-normal.jpg",
+      "sha256": "c59b600853995b1c273ab26810455bef85d14e39008c0ad41706853e3da012fb",
+      "native_sha256": "7f1d274511e357d8cf5ca76a437fdbca3090af7c4243d2ee3819a1ce0b6615e0",
+      "pixel_dimensions": [
+        2880,
+        1800
+      ],
+      "logical_dimensions": "1440x900",
+      "flags": "discovery-remote,discovery-empty,light",
+      "phase": "after",
+      "theme": "light",
+      "size": "normal"
+    },
+    {
+      "filename": "after-light-narrow.jpg",
+      "sha256": "30c600dd12185ec85775a5aab149868ffb3233192412a98a1a145f4421024b27",
+      "native_sha256": "6ad540427afb4eb60aae533fbb52c7cf9be265f5854446b05a2183b869e8b59b",
+      "pixel_dimensions": [
+        1800,
+        1520
+      ],
+      "logical_dimensions": "900x760",
+      "flags": "discovery-remote,discovery-empty,light",
+      "phase": "after",
+      "theme": "light",
+      "size": "narrow"
+    }
+  ]
+}

@@ -9,7 +9,7 @@ use crate::model::{Action, Dialog};
 use crate::settings::{LanguageChoice, ProxyMode, ThemeChoice};
 use crate::theme::{self, Icon, Palette};
 
-use super::widgets;
+use super::{material, widgets};
 
 const PLAYBACK_DIRTY_ID: &str = "playback-settings-dirty";
 pub(crate) const PERSONAL_APP_FOCUS_ID: &str = "focus-personal-app-setup";
@@ -76,6 +76,7 @@ fn filtered_row(
     control: impl FnOnce(&mut egui::Ui),
 ) {
     if row.matches(needle, section) {
+        row_rule(ui, palette);
         widgets::setting_row(ui, palette, &row.title, &row.description, control);
     }
 }
@@ -91,6 +92,7 @@ fn filtered_row_sized(
     control: impl FnOnce(&mut egui::Ui),
 ) {
     if row.matches(needle, section) {
+        row_rule(ui, palette);
         widgets::setting_row_sized(
             ui,
             palette,
@@ -177,20 +179,102 @@ fn section(
     ui.add_space(10.0);
     theme::text(ui, title, theme::bold(18.0), palette.text);
     ui.add_space(8.0);
+    // Flat chrome groups keep settings readable above the scenery.
     Frame::new()
-        .fill(
-            palette
-                .surface
-                .gamma_multiply(if palette.dark { 0.7 } else { 1.0 }),
-        )
-        .stroke(Stroke::new(1.0, palette.outline))
-        .corner_radius(CornerRadius::same(theme::RADIUS + 2))
+        .fill(material::glass(palette, material::Kind::Content).fill)
+        .corner_radius(CornerRadius::same(material::PANE_RADIUS as u8))
         .inner_margin(Margin::symmetric(20, 16))
         .show(ui, |ui| {
             ui.set_width(ui.available_width().min(760.0));
             add_contents(ui);
         });
     ui.add_space(8.0);
+}
+
+/// A hairline between a section's rows, centred in the gap the previous
+/// row leaves; none above a section's first row.
+fn row_rule(ui: &egui::Ui, palette: &Palette) {
+    let top = ui.cursor().top();
+    if top <= ui.min_rect().top() + 1.0 {
+        return;
+    }
+    // `widgets::setting_row_sized` ends each row with this much space, and
+    // the next row adds the item spacing below it.
+    const ROW_END: f32 = 10.0;
+    let y = top + (ui.spacing().item_spacing.y - ROW_END) / 2.0;
+    ui.painter().hline(
+        ui.max_rect().x_range(),
+        y,
+        Stroke::new(1.0, material::rim_colour(palette)),
+    );
+}
+
+/// The space between choices, as `theme::choice_chips` lays them out.
+const CHOICE_GAP: f32 = 6.0;
+
+/// The width `choices` take side by side on one line.
+fn choices_width<T>(ui: &egui::Ui, choices: &[(T, &str)]) -> f32 {
+    choices
+        .iter()
+        .map(|(_, label)| theme::soft_button_width(ui, label))
+        .sum::<f32>()
+        + CHOICE_GAP * choices.len().saturating_sub(1) as f32
+}
+
+/// Mutually exclusive choices whose selected fill glides between them,
+/// wrapping onto more lines when they do not fit. A setting can hold a value
+/// none of them stands for (one written into the settings file by hand, an
+/// equalizer curve of the listener's own), and then every choice still shows,
+/// none selected.
+fn choices_row<T: Copy + PartialEq>(
+    ui: &mut egui::Ui,
+    palette: &Palette,
+    id: egui::Id,
+    choices: &[(T, &str)],
+    selected: T,
+) -> Option<T> {
+    if choices.iter().any(|(value, _)| *value == selected) {
+        return theme::choice_chips(ui, palette, id, choices, selected, true);
+    }
+    let mut picked = None;
+    ui.horizontal_wrapped(|ui| {
+        ui.spacing_mut().item_spacing = Vec2::splat(CHOICE_GAP);
+        for &(value, label) in choices {
+            if theme::soft_button(ui, palette, None, label, false).clicked() {
+                picked = Some(value);
+            }
+        }
+    });
+    picked
+}
+
+/// [`choices_row`] in a settings row's control slot: read left to right on
+/// one line, or stacked one per line when the slot is too narrow for that.
+fn setting_choices<T: Copy + PartialEq>(
+    ui: &mut egui::Ui,
+    palette: &Palette,
+    id: egui::Id,
+    choices: &[(T, &str)],
+    selected: T,
+) -> Option<T> {
+    let line = choices_width(ui, choices);
+    let width = if ui.available_width() >= line {
+        line
+    } else {
+        choices
+            .iter()
+            .map(|(_, label)| theme::soft_button_width(ui, label))
+            .fold(0.0, f32::max)
+    };
+    // The slot lays out right to left; the choices read left to right in a
+    // box of their own at its end. A point of slack keeps rounding from
+    // wrapping a line that fits.
+    ui.allocate_ui_with_layout(
+        Vec2::new(width + 1.0, 0.0),
+        Layout::left_to_right(Align::Center),
+        |ui| choices_row(ui, palette, id, choices, selected),
+    )
+    .inner
 }
 
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
@@ -338,26 +422,21 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             }
             let mut client_id = app.settings.web_client_id.clone().unwrap_or_default();
             filtered_row(ui, &palette, &needle, &account, &account_rows[0], |ui| {
-                let response = Frame::new()
-                    .fill(palette.surface)
-                    .corner_radius(CornerRadius::same(6))
-                    .inner_margin(Margin::symmetric(10, 6))
-                    .show(ui, |ui| {
-                        widgets::text_edit(
-                            ui,
-                            app.locale,
-                            egui::TextEdit::singleline(&mut client_id)
-                                .id(egui::Id::new("personal-web-client-id"))
-                                .hint_text(
-                                    egui::RichText::new(gettext(locale, "Client ID"))
-                                        .color(palette.dim),
-                                )
-                                .font(theme::regular(13.0))
-                                .frame(egui::Frame::NONE)
-                                .desired_width(200.0),
-                        )
-                    })
-                    .inner;
+                let response = widgets::field_well(ui, &palette, |ui| {
+                    widgets::text_edit(
+                        ui,
+                        app.locale,
+                        egui::TextEdit::singleline(&mut client_id)
+                            .id(egui::Id::new("personal-web-client-id"))
+                            .hint_text(
+                                egui::RichText::new(gettext(locale, "Client ID"))
+                                    .color(palette.dim),
+                            )
+                            .font(theme::regular(13.0))
+                            .frame(egui::Frame::NONE)
+                            .desired_width(200.0),
+                    )
+                });
                 if ui
                     .data_mut(|data| data.remove_temp::<bool>(egui::Id::new(PERSONAL_APP_FOCUS_ID)))
                     .unwrap_or(false)
@@ -413,7 +492,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             gettext(locale, "This computer is a Spotify Connect device."),
             None,
         ),
-        crate::backend::LocalPlayback::Authorizing => (
+        crate::backend::LocalPlayback::Authorizing { .. } => (
             pgettext(locale, "playback status", "Setting up"),
             gettext(locale, "Finish authorizing in your browser."),
             None,
@@ -485,7 +564,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     "Spotifast hides to the system tray. Quit from the tray menu or with Cmd+Q.",
                 ),
             )
-            .to_owned(),
+            .replace("Spotifast", "Spotiurge"),
         ),
         RowText::new(
             update_checks.clone(),
@@ -551,21 +630,16 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 }
             });
             filtered_row(ui, &palette, &needle, &playback, &playback_rows[1], |ui| {
-                let response = Frame::new()
-                    .fill(palette.surface)
-                    .corner_radius(CornerRadius::same(6))
-                    .inner_margin(Margin::symmetric(10, 6))
-                    .show(ui, |ui| {
-                        widgets::text_edit(
-                            ui,
-                            locale,
-                            egui::TextEdit::singleline(&mut app.settings.device_name)
-                                .font(theme::regular(14.0))
-                                .frame(egui::Frame::NONE)
-                                .desired_width(200.0),
-                        )
-                    })
-                    .inner;
+                let response = widgets::field_well(ui, &palette, |ui| {
+                    widgets::text_edit(
+                        ui,
+                        locale,
+                        egui::TextEdit::singleline(&mut app.settings.device_name)
+                            .font(theme::regular(14.0))
+                            .frame(egui::Frame::NONE)
+                            .desired_width(200.0),
+                    )
+                });
                 if response.changed() {
                     changed = true;
                     playback_dirty = true;
@@ -573,17 +647,17 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             });
             // Normal to Very high, left to right when side by side and top
             // to bottom in a column.
-            let choices = [
-                (96u16, gettext(locale, "Normal · 96 kbps")),
-                (160, gettext(locale, "High · 160 kbps")),
-                (320, gettext(locale, "Very high · 320 kbps")),
+            let labels = [
+                gettext(locale, "Normal · 96 kbps"),
+                gettext(locale, "High · 160 kbps"),
+                gettext(locale, "Very high · 320 kbps"),
             ];
-            let choice_gap = 6.0;
-            let choices_width = choices
-                .iter()
-                .map(|(_, label)| theme::soft_button_width(ui, label))
-                .sum::<f32>()
-                + choice_gap * (choices.len() - 1) as f32;
+            let choices = [
+                (96u16, labels[0].as_ref()),
+                (160, labels[1].as_ref()),
+                (320, labels[2].as_ref()),
+            ];
+            let choices_width = choices_width(ui, &choices);
             filtered_row_sized(
                 ui,
                 &palette,
@@ -592,38 +666,16 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 &playback_rows[2],
                 choices_width,
                 |ui| {
-                    let mut choose = |ui: &mut egui::Ui, kbps: u16, label: &str| {
-                        if theme::soft_button(
-                            ui,
-                            &palette,
-                            None,
-                            label,
-                            app.settings.bitrate == kbps,
-                        )
-                        .clicked()
-                            && app.settings.bitrate != kbps
-                        {
-                            app.settings.bitrate = kbps;
-                            changed = true;
-                            playback_dirty = true;
-                        }
-                    };
-                    if ui.available_width() >= choices_width {
-                        // Laid right to left, so the last choice goes first.
-                        ui.horizontal(|ui| {
-                            ui.spacing_mut().item_spacing.x = choice_gap;
-                            for (kbps, label) in choices.iter().rev() {
-                                choose(ui, *kbps, label);
-                            }
-                        });
-                    } else {
-                        // Too narrow even for a line of their own: a column.
-                        ui.with_layout(Layout::top_down(Align::Max), |ui| {
-                            ui.spacing_mut().item_spacing.y = choice_gap;
-                            for (kbps, label) in &choices {
-                                choose(ui, *kbps, label);
-                            }
-                        });
+                    if let Some(kbps) = setting_choices(
+                        ui,
+                        &palette,
+                        egui::Id::new("settings-bitrate"),
+                        &choices,
+                        app.settings.bitrate,
+                    ) {
+                        app.settings.bitrate = kbps;
+                        changed = true;
+                        playback_dirty = true;
                     }
                 },
             );
@@ -678,28 +730,32 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 }
             });
             filtered_row(ui, &palette, &needle, &playback, &playback_rows[7], |ui| {
-                if widgets::switch(
-                    ui,
-                    &palette,
-                    &update_checks,
-                    &mut app.settings.check_for_updates,
-                )
-                .changed()
-                {
-                    changed = true;
-                }
+                ui.add_enabled_ui(crate::updates::ENABLED, |ui| {
+                    if widgets::switch(
+                        ui,
+                        &palette,
+                        &update_checks,
+                        &mut app.settings.check_for_updates,
+                    )
+                    .changed()
+                    {
+                        changed = true;
+                    }
+                });
             });
             filtered_row(ui, &palette, &needle, &playback, &playback_rows[13], |ui| {
-                if widgets::switch(
-                    ui,
-                    &palette,
-                    &download_updates,
-                    &mut app.settings.download_updates_automatically,
-                )
-                .changed()
-                {
-                    changed = true;
-                }
+                ui.add_enabled_ui(crate::updates::ENABLED, |ui| {
+                    if widgets::switch(
+                        ui,
+                        &palette,
+                        &download_updates,
+                        &mut app.settings.download_updates_automatically,
+                    )
+                    .changed()
+                    {
+                        changed = true;
+                    }
+                });
             });
             if cfg!(target_os = "linux") {
                 filtered_row(ui, &palette, &needle, &playback, &playback_rows[8], |ui| {
@@ -707,42 +763,37 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                         .settings
                         .platform_backend()
                         .unwrap_or_else(|| "rodio".into());
-                    ui.horizontal(|ui| {
-                        ui.spacing_mut().item_spacing.x = 6.0;
-                        for backend in ["rodio", "pulseaudio"] {
-                            let label = if backend == "pulseaudio" {
-                                "PulseAudio / PipeWire"
-                            } else {
-                                "ALSA (rodio)"
-                            };
-                            if theme::soft_button(ui, &palette, None, label, current == backend)
-                                .clicked()
-                                && current != backend
-                            {
-                                app.settings.audio_backend = Some(backend.to_string());
-                                changed = true;
-                                playback_dirty = true;
-                            }
-                        }
-                    });
+                    if let Some(backend) = setting_choices(
+                        ui,
+                        &palette,
+                        egui::Id::new("settings-audio-backend"),
+                        &[
+                            ("rodio", "ALSA (rodio)"),
+                            ("pulseaudio", "PulseAudio / PipeWire"),
+                        ],
+                        current.as_str(),
+                    ) {
+                        app.settings.audio_backend = Some(backend.to_string());
+                        changed = true;
+                        playback_dirty = true;
+                    }
                 });
             }
             #[cfg(windows)]
             filtered_row(ui, &palette, &needle, &playback, &playback_rows[9], |ui| {
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 6.0;
-                    let current = app.settings.audio_buffer_ms;
-                    for ms in [50u32, 100, 200] {
-                        let label = format!("{ms} ms");
-                        if theme::soft_button(ui, &palette, None, &label, current == ms).clicked()
-                            && current != ms
-                        {
-                            app.settings.audio_buffer_ms = ms;
-                            changed = true;
-                            playback_dirty = true;
-                        }
-                    }
-                });
+                let labels = [50u32, 100, 200].map(|ms| (ms, format!("{ms} ms")));
+                let choices = labels.each_ref().map(|(ms, label)| (*ms, label.as_str()));
+                if let Some(ms) = setting_choices(
+                    ui,
+                    &palette,
+                    egui::Id::new("settings-output-buffer"),
+                    &choices,
+                    app.settings.audio_buffer_ms,
+                ) {
+                    app.settings.audio_buffer_ms = ms;
+                    changed = true;
+                    playback_dirty = true;
+                }
             });
             filtered_row(ui, &palette, &needle, &playback, &playback_rows[10], |ui| {
                 // The control area lays out right-to-left: add the rightmost item first.
@@ -756,21 +807,16 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     }
                     if app.settings.audio_cache {
                         ui.add_space(6.0);
-                        for (mb, label) in [(4096u64, "4 GB"), (1024, "1 GB"), (512, "512 MB")] {
-                            if theme::soft_button(
-                                ui,
-                                &palette,
-                                None,
-                                label,
-                                app.settings.audio_cache_mb == mb,
-                            )
-                            .clicked()
-                                && app.settings.audio_cache_mb != mb
-                            {
-                                app.settings.audio_cache_mb = mb;
-                                changed = true;
-                                playback_dirty = true;
-                            }
+                        if let Some(mb) = setting_choices(
+                            ui,
+                            &palette,
+                            egui::Id::new("settings-audio-cache-size"),
+                            &[(512u64, "512 MB"), (1024, "1 GB"), (4096, "4 GB")],
+                            app.settings.audio_cache_mb,
+                        ) {
+                            app.settings.audio_cache_mb = mb;
+                            changed = true;
+                            playback_dirty = true;
                         }
                     }
                 });
@@ -805,6 +851,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let middle_click = gettext(locale, "Middle-click autoscroll");
     let custom_titlebar = gettext(locale, "Custom title bar");
     let player_bar_vis = gettext(locale, "Player bar visualizer");
+    let reduce_motion = gettext(locale, "Reduce motion");
     let appearance_rows = [
         RowText::new(theme_title.clone(), {
             let detail = theme::catalog_detail(
@@ -872,7 +919,8 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             gettext(
                 locale,
                 "Draw Spotifast's own title bar and window buttons instead of the standard Windows ones.",
-            ),
+            )
+            .replace("Spotifast", "Spotiurge"),
         )
         .when(app.windows_controls_visible()),
         RowText::new(
@@ -880,6 +928,13 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             gettext(
                 locale,
                 "Show the song moving behind the player bar's controls while it plays here.",
+            ),
+        ),
+        RowText::new(
+            reduce_motion.clone(),
+            gettext(
+                locale,
+                "Show changes at once instead of animating them. macOS Reduce Motion also applies.",
             ),
         ),
     ];
@@ -1013,17 +1068,17 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             );
             {
                 use crate::settings::PlayerBarVis;
-                let choices = [
-                    (PlayerBarVis::Off, gettext(locale, "Off")),
-                    (PlayerBarVis::Spectrum, gettext(locale, "Spectrum")),
-                    (PlayerBarVis::Waveform, gettext(locale, "Waveform")),
+                let labels = [
+                    gettext(locale, "Off"),
+                    gettext(locale, "Spectrum"),
+                    gettext(locale, "Waveform"),
                 ];
-                let choice_gap = 6.0;
-                let choices_width = choices
-                    .iter()
-                    .map(|(_, label)| theme::soft_button_width(ui, label))
-                    .sum::<f32>()
-                    + choice_gap * (choices.len() - 1) as f32;
+                let choices = [
+                    (PlayerBarVis::Off, labels[0].as_ref()),
+                    (PlayerBarVis::Spectrum, labels[1].as_ref()),
+                    (PlayerBarVis::Waveform, labels[2].as_ref()),
+                ];
+                let choices_width = choices_width(ui, &choices);
                 filtered_row_sized(
                     ui,
                     &palette,
@@ -1032,40 +1087,38 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     &appearance_rows[8],
                     choices_width,
                     |ui| {
-                        let mut choose = |ui: &mut egui::Ui, mode: PlayerBarVis, label: &str| {
-                            if theme::soft_button(
-                                ui,
-                                &palette,
-                                None,
-                                label,
-                                app.settings.player_bar_vis == mode,
-                            )
-                            .clicked()
-                                && app.settings.player_bar_vis != mode
-                            {
-                                app.settings.player_bar_vis = mode;
-                                changed = true;
-                            }
-                        };
-                        if ui.available_width() >= choices_width {
-                            // Laid right to left, so the last choice goes first.
-                            ui.horizontal(|ui| {
-                                ui.spacing_mut().item_spacing.x = choice_gap;
-                                for (mode, label) in choices.iter().rev() {
-                                    choose(ui, *mode, label);
-                                }
-                            });
-                        } else {
-                            ui.with_layout(Layout::top_down(Align::Max), |ui| {
-                                ui.spacing_mut().item_spacing.y = choice_gap;
-                                for (mode, label) in &choices {
-                                    choose(ui, *mode, label);
-                                }
-                            });
+                        if let Some(mode) = setting_choices(
+                            ui,
+                            &palette,
+                            egui::Id::new("settings-player-bar-visualizer"),
+                            &choices,
+                            app.settings.player_bar_vis,
+                        ) {
+                            app.settings.player_bar_vis = mode;
+                            changed = true;
                         }
                     },
                 );
             }
+            filtered_row(
+                ui,
+                &palette,
+                &needle,
+                &appearance,
+                &appearance_rows[9],
+                |ui| {
+                    if widgets::switch(
+                        ui,
+                        &palette,
+                        &reduce_motion,
+                        &mut app.settings.reduce_motion,
+                    )
+                    .changed()
+                    {
+                        changed = true;
+                    }
+                },
+            );
             filtered_row(
                 ui,
                 &palette,
@@ -1197,31 +1250,25 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         );
         // The row's control slot is right-to-left and too narrow for four
         // choices; they sit on this line so they read Off, System, HTTP, SOCKS5.
-        ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 6.0;
-            for choice in ProxyMode::ALL {
-                if theme::soft_button(
-                    ui,
-                    &palette,
-                    None,
-                    &choice.label(locale),
-                    app.settings.proxy_mode == choice,
-                )
-                .clicked()
-                    && app.settings.proxy_mode != choice
-                {
-                    app.settings.proxy_mode = choice;
-                    changed = true;
-                    app.actions.push(Action::ProxyEdited);
-                    if choice.is_manual() {
-                        proxy_dirty = true;
-                    } else {
-                        proxy_dirty = false;
-                        app.actions.push(Action::ApplyProxy);
-                    }
-                }
+        let labels = ProxyMode::ALL.map(|choice| (choice, choice.label(locale)));
+        let choices = labels.each_ref().map(|(choice, label)| (*choice, label.as_ref()));
+        if let Some(choice) = choices_row(
+            ui,
+            &palette,
+            egui::Id::new("settings-proxy-mode"),
+            &choices,
+            app.settings.proxy_mode,
+        ) {
+            app.settings.proxy_mode = choice;
+            changed = true;
+            app.actions.push(Action::ProxyEdited);
+            if choice.is_manual() {
+                proxy_dirty = true;
+            } else {
+                proxy_dirty = false;
+                app.actions.push(Action::ApplyProxy);
             }
-        });
+        }
         ui.add_space(10.0);
         if app.settings.proxy_mode.is_manual() {
             if widgets::proxy_manual_form(
@@ -1368,7 +1415,9 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 // the mini player opens.
                 const RANDOM: usize = usize::MAX;
                 let random = gettext(locale, "Random");
-                let mut options: Vec<(usize, &str)> = vec![(RANDOM, &random), (0, "Spotifast")];
+                // The app's own mini player look, the one no .wsz skin draws.
+                let classic = gettext(locale, "Classic");
+                let mut options: Vec<(usize, &str)> = vec![(RANDOM, &random), (0, &classic)];
                 options.extend(
                     choices
                         .iter()
@@ -1402,7 +1451,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     let label = options
                         .iter()
                         .find(|(value, _)| *value == showing)
-                        .map_or("Spotifast", |(_, label)| label);
+                        .map_or(classic.as_ref(), |(_, label)| label);
                     theme::subtle(
                         ui,
                         &palette,
@@ -1415,18 +1464,22 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             filtered_row(ui, &palette, &needle, &skins, &skins_rows[2], |ui| {
                 let scale =
                     crate::winamp::WinampState::scale(&app.settings, ui.ctx().pixels_per_point());
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 6.0;
-                    for candidate in 1..=crate::winamp::MAX_SCALE {
-                        let label = format!("{candidate}x");
-                        if theme::soft_button(ui, &palette, None, &label, candidate == scale)
-                            .clicked()
-                            && candidate != scale
-                        {
-                            app.actions.push(Action::SetSkinScale(candidate as u8));
-                        }
-                    }
-                });
+                let labels: Vec<_> = (1..=crate::winamp::MAX_SCALE)
+                    .map(|candidate| (candidate, format!("{candidate}x")))
+                    .collect();
+                let choices: Vec<_> = labels
+                    .iter()
+                    .map(|(candidate, label)| (*candidate, label.as_str()))
+                    .collect();
+                if let Some(candidate) = setting_choices(
+                    ui,
+                    &palette,
+                    egui::Id::new("settings-skin-scale"),
+                    &choices,
+                    scale,
+                ) {
+                    app.actions.push(Action::SetSkinScale(candidate as u8));
+                }
             });
             filtered_row(ui, &palette, &needle, &skins, &skins_rows[3], |ui| {
                 ui.add_enabled_ui(app.window_level_supported, |ui| {
@@ -1501,7 +1554,8 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 )
                 .replace("{count}", &n.to_string())
                 .replace("{folder}", &folder),
-            },
+            }
+            .replace("Spotifast", "Spotiurge"),
         ),
         RowText::new(
             gettext(locale, "Time per preset"),
@@ -1677,21 +1731,24 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             });
             filtered_row(ui, &palette, &needle, "MilkDrop", &milkdrop_rows[4], |ui| {
                 let current = app.settings.milkdrop_scale.max(1);
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 6.0;
-                    for (scale, label) in [
-                        (1u32, pgettext(locale, "resolution", "Full")),
-                        (2, pgettext(locale, "resolution", "Half")),
-                        (4, pgettext(locale, "resolution", "Quarter")),
-                    ] {
-                        if theme::soft_button(ui, &palette, None, &label, scale == current)
-                            .clicked()
-                            && scale != current
-                        {
-                            app.actions.push(Action::SetMilkdropScale(scale));
-                        }
-                    }
-                });
+                let labels = [
+                    pgettext(locale, "resolution", "Full"),
+                    pgettext(locale, "resolution", "Half"),
+                    pgettext(locale, "resolution", "Quarter"),
+                ];
+                if let Some(scale) = setting_choices(
+                    ui,
+                    &palette,
+                    egui::Id::new("settings-milkdrop-resolution"),
+                    &[
+                        (1u32, labels[0].as_ref()),
+                        (2, labels[1].as_ref()),
+                        (4, labels[2].as_ref()),
+                    ],
+                    current,
+                ) {
+                    app.actions.push(Action::SetMilkdropScale(scale));
+                }
             });
         });
     }
@@ -1748,7 +1805,13 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 .unwrap_or(usize::MAX);
             let eq_extra_visible = equalizer_rows[1].matches(&needle, &equalizer);
             if eq_extra_visible {
-                if let Some(picked) = widgets::chips(ui, &palette, &names, current) {
+                if let Some(picked) = choices_row(
+                    ui,
+                    &palette,
+                    egui::Id::new("settings-eq-presets"),
+                    &names,
+                    current,
+                ) {
                     app.actions.push(Action::ApplyEqPreset(picked));
                 }
                 ui.add_space(10.0);
@@ -1855,10 +1918,16 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let checking = gettext(locale, "Checking…");
     let keyboard_shortcuts = gettext(locale, "Keyboard shortcuts");
     let source_code = gettext(locale, "Source code");
+    let version = env!("CARGO_PKG_VERSION");
+    // Translators: {name} is replaced by the author's name, shown as a link.
+    let based_on = gettext(locale, "Based on Spotifast by {name}. MIT License.");
     let about_rows = [
         RowText::new(
-            format!("Spotifast {}", env!("CARGO_PKG_VERSION")),
-            built_with.clone(),
+            format!("Spotiurge {version}"),
+            format!(
+                "{built_with} {}",
+                based_on.replace("{name}", "Carmine Paolino")
+            ),
         ),
         RowText::new(
             format!("{check_for_updates} {checking}"),
@@ -1869,15 +1938,24 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         any_visible = true;
         section(ui, &palette, &about, |ui| {
             ui.horizontal(|ui| {
-                let (logo, _) = ui.allocate_exact_size(Vec2::splat(40.0), egui::Sense::hover());
-                theme::logo(ui, logo.center(), 40.0);
+                ui.spacing_mut().item_spacing.x = 14.0;
+                let (logo, _) = ui.allocate_exact_size(Vec2::splat(56.0), egui::Sense::hover());
+                theme::logo(ui, logo.center(), 56.0, &palette);
                 ui.vertical(|ui| {
-                    theme::text(
-                        ui,
-                        format!("Spotifast {}", env!("CARGO_PKG_VERSION")),
-                        theme::semibold(15.0),
-                        palette.text,
+                    ui.spacing_mut().item_spacing.y = 2.0;
+                    // The wordmark and its version share a baseline.
+                    let mut wordmark = egui::text::LayoutJob::default();
+                    wordmark.append(
+                        "Spotiurge",
+                        0.0,
+                        egui::TextFormat::simple(theme::bold(22.0), palette.text),
                     );
+                    wordmark.append(
+                        version,
+                        8.0,
+                        egui::TextFormat::simple(theme::regular(14.0), palette.secondary),
+                    );
+                    ui.add(egui::Label::new(wordmark).selectable(false));
                     theme::text(
                         ui,
                         built_with.as_ref(),
@@ -1894,12 +1972,19 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 } else {
                     &check_for_updates
                 };
-                if theme::soft_button(ui, &palette, Some(Icon::Refresh), check_label, false)
-                    .clicked()
-                    && !app.update_checking
-                {
-                    app.actions.push(Action::CheckForUpdates);
-                }
+                ui.add_enabled_ui(crate::updates::ENABLED, |ui| {
+                    if theme::soft_button(ui, &palette, Some(Icon::Refresh), check_label, false)
+                        .clicked()
+                        && !app.update_checking
+                    {
+                        app.actions.push(Action::CheckForUpdates);
+                    }
+                })
+                .response
+                .on_disabled_hover_text(gettext(
+                    locale,
+                    "Spotiurge updates are disabled until fork packages are ready.",
+                ));
                 if theme::soft_button(ui, &palette, Some(Icon::Info), &keyboard_shortcuts, false)
                     .clicked()
                 {
@@ -1913,10 +1998,23 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 }
             });
             ui.add_space(14.0);
-            if widgets::credit(ui, &palette, locale) {
-                app.actions
-                    .push(Action::OpenUrl(widgets::AUTHOR_URL.to_owned()));
-            }
+            // Spotiurge's upstream, credited quietly.
+            let (before, after) = based_on.split_once("{name}").unwrap_or((&based_on, ""));
+            ui.horizontal_wrapped(|ui| {
+                ui.spacing_mut().item_spacing.x = 0.0;
+                let font = theme::regular(12.5);
+                theme::text(ui, before, font.clone(), palette.secondary);
+                if theme::link(ui, "Carmine Paolino", font.clone(), palette.secondary)
+                    .on_hover_text(widgets::AUTHOR_URL)
+                    .clicked()
+                {
+                    app.actions
+                        .push(Action::OpenUrl(widgets::AUTHOR_URL.to_owned()));
+                }
+                if !after.is_empty() {
+                    theme::text(ui, after, font, palette.secondary);
+                }
+            });
         });
     }
 
@@ -2198,5 +2296,74 @@ mod tests {
             assert!(response.rect.width() > ui.spacing().slider_width);
         });
         output.textures_delta.clear();
+    }
+
+    /// Choices stack one per line in a slot too narrow for a line of
+    /// them, and still answer a click when the setting holds none of them.
+    #[test]
+    fn setting_choices_stack_when_narrow_and_work_without_a_match() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let palette = crate::theme::Palette::dark();
+        crate::theme::install(&ctx);
+        crate::theme::apply(&ctx, &palette);
+        let choices = [(1u32, "Full"), (2, "Half"), (4, "Quarter")];
+        let frame = |width: f32, selected: u32, events: Vec<egui::Event>| {
+            let (mut height, mut picked) = (0.0, None);
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    events,
+                    ..Default::default()
+                },
+                |ui| {
+                    ui.allocate_ui_with_layout(
+                        egui::vec2(width, 400.0),
+                        egui::Layout::right_to_left(egui::Align::Center),
+                        |ui| {
+                            picked = super::setting_choices(
+                                ui,
+                                &palette,
+                                egui::Id::new("choices"),
+                                &choices,
+                                selected,
+                            );
+                            height = ui.min_rect().height();
+                        },
+                    );
+                },
+            );
+            output.textures_delta.clear();
+            let tree = output.platform_output.accesskit_update.unwrap();
+            let half = tree
+                .nodes
+                .iter()
+                .find(|(_, node)| node.label() == Some("Half"))
+                .and_then(|(_, node)| node.bounds())
+                .map(|bounds| {
+                    egui::pos2(
+                        ((bounds.x0 + bounds.x1) / 2.0) as f32,
+                        ((bounds.y0 + bounds.y1) / 2.0) as f32,
+                    )
+                });
+            (height, picked, half)
+        };
+        let (line, _, _) = frame(400.0, 1, vec![]);
+        let (column, _, _) = frame(60.0, 1, vec![]);
+        assert!(column > line * 2.5, "{column} is not three lines of {line}");
+        let (_, _, half) = frame(400.0, 3, vec![]);
+        let half = half.expect("Half is on screen");
+        let button = |pressed| egui::Event::PointerButton {
+            pos: half,
+            button: egui::PointerButton::Primary,
+            pressed,
+            modifiers: egui::Modifiers::NONE,
+        };
+        frame(
+            400.0,
+            3,
+            vec![egui::Event::PointerMoved(half), button(true)],
+        );
+        let (_, picked, _) = frame(400.0, 3, vec![button(false)]);
+        assert_eq!(picked, Some(2), "a value none of the choices stands for");
     }
 }

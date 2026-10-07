@@ -11,7 +11,7 @@
 //! port that answers only requests carrying the random token the running
 //! instance writes beside the lock.
 //!
-//! Clients send one `spotifast:<verb>` line and receive one reply. Commands
+//! Clients send one `spotiurge:<verb>` line and receive one reply. Commands
 //! enter the same action queue as tray and media-key events. Read commands use
 //! snapshots, so the listener thread never accesses app state. The
 //! `spotifast` command-line subcommands are clients of this channel; MPRIS
@@ -26,7 +26,7 @@
 
 /// The name every request and reply starts with, so a copy of another app
 /// never obeys Spotifast's requests.
-const NAME: &str = "spotifast";
+const NAME: &str = "spotiurge";
 
 /// The reply to an accepted command.
 const OK_REPLY: &str = "ok";
@@ -34,6 +34,7 @@ const OK_REPLY: &str = "ok";
 const NOW_REPLY: &str = "now ";
 /// The reply to `devices`, before the snapshot.
 const DEVICES_REPLY: &str = "devices ";
+const SIGN_IN_REPLY: &str = "sign-in-url ";
 
 pub enum Outcome {
     /// This process is the only instance. Hold the guard until it exits.
@@ -94,6 +95,8 @@ pub struct Guard {
     now_playing: std::sync::Arc<std::sync::Mutex<String>>,
     /// Last Spotify Connect device snapshot, as one line of JSON.
     devices: std::sync::Arc<std::sync::Mutex<String>>,
+    /// Current authorization REQUEST URL, never a callback or grant.
+    sign_in_url: std::sync::Arc<std::sync::Mutex<String>>,
 }
 
 impl Guard {
@@ -103,6 +106,7 @@ impl Guard {
             commands: Default::default(),
             now_playing: std::sync::Arc::new(std::sync::Mutex::new(NOTHING_PLAYING.to_owned())),
             devices: std::sync::Arc::new(std::sync::Mutex::new(NO_DEVICES.to_owned())),
+            sign_in_url: Default::default(),
         }
     }
 
@@ -114,6 +118,10 @@ impl Guard {
     /// The slot the app writes the now-playing snapshot into.
     pub fn now_playing_slot(&self) -> std::sync::Arc<std::sync::Mutex<String>> {
         std::sync::Arc::clone(&self.now_playing)
+    }
+
+    pub fn sign_in_url_slot(&self) -> std::sync::Arc<std::sync::Mutex<String>> {
+        std::sync::Arc::clone(&self.sign_in_url)
     }
 
     /// The slot the app writes the device list into.
@@ -159,6 +167,8 @@ pub enum Reply {
     /// `kind`, and `active`, or [`NO_DEVICES`]. JSON safely carries free-text
     /// device names.
     Devices(String),
+    /// Empty unless the app is waiting for browser authorization.
+    SignInUrl(String),
 }
 
 /// Sends one verb to the running instance and reads its reply.
@@ -166,7 +176,7 @@ pub fn send(verb: &str) -> std::io::Result<Reply> {
     reply(&slot().send(verb)?)
 }
 
-/// Reads the running instance's reply, without the `spotifast:` prefix the
+/// Reads the running instance's reply, without the `spotiurge:` prefix the
 /// channel already checked.
 fn reply(line: &str) -> std::io::Result<Reply> {
     if line == OK_REPLY {
@@ -175,6 +185,8 @@ fn reply(line: &str) -> std::io::Result<Reply> {
         Ok(Reply::NowPlaying(snapshot.to_owned()))
     } else if let Some(snapshot) = line.strip_prefix(DEVICES_REPLY) {
         Ok(Reply::Devices(snapshot.to_owned()))
+    } else if let Some(url) = line.strip_prefix(SIGN_IN_REPLY) {
+        Ok(Reply::SignInUrl(url.to_owned()))
     } else {
         Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
@@ -204,6 +216,7 @@ fn claim(
         std::sync::Arc::clone(&guard.commands),
         std::sync::Arc::clone(&guard.now_playing),
         std::sync::Arc::clone(&guard.devices),
+        std::sync::Arc::clone(&guard.sign_in_url),
         waker.clone(),
     );
     match slot.claim(&request, handler) {
@@ -232,6 +245,7 @@ fn handler(
     commands: std::sync::Arc<std::sync::Mutex<Vec<ControlCommand>>>,
     now_playing: std::sync::Arc<std::sync::Mutex<String>>,
     devices: std::sync::Arc<std::sync::Mutex<String>>,
+    sign_in_url: std::sync::Arc<std::sync::Mutex<String>>,
     waker: crate::backend::Waker,
 ) -> impl FnMut(&str) -> Option<String> + Send + 'static {
     move |request| {
@@ -254,6 +268,13 @@ fn handler(
                     .clone();
                 Some(format!("{NOW_REPLY}{snapshot}"))
             }
+            Request::SignInUrl => {
+                let url = sign_in_url
+                    .lock()
+                    .unwrap_or_else(|p| p.into_inner())
+                    .clone();
+                Some(format!("{SIGN_IN_REPLY}{url}"))
+            }
             Request::Devices => {
                 let snapshot = devices.lock().unwrap_or_else(|p| p.into_inner()).clone();
                 // Return the current snapshot, then request a refresh for the
@@ -272,10 +293,11 @@ enum Request {
     Command(ControlCommand),
     NowPlaying,
     Devices,
+    SignInUrl,
 }
 
 /// Reads one request line, the channel having already checked and removed
-/// its `spotifast:` prefix.
+/// its `spotiurge:` prefix.
 fn parse(line: &str) -> Option<Request> {
     let verb = line.trim_end();
     let (verb, argument) = match verb.split_once(' ') {
@@ -314,6 +336,7 @@ fn parse(line: &str) -> Option<Request> {
         ("transfer", Some(id)) => ControlCommand::Transfer(device_id(id)?),
         ("nowplaying", None) => return Some(Request::NowPlaying),
         ("devices", None) => return Some(Request::Devices),
+        ("sign-in-url", None) => return Some(Request::SignInUrl),
         _ => return None,
     };
     Some(Request::Command(command))
@@ -506,6 +529,10 @@ mod tests {
         let accepted = send("next").expect("a reply");
         let volume = send("volume-by -5").expect("a reply");
         let liked = send("save-toggle").expect("a reply");
+        *guard.sign_in_url.lock().unwrap() =
+            "https://accounts.spotify.com/authorize?state=dummy".into();
+        let auth = send("sign-in-url").expect("an authorization request URL");
+        assert!(matches!(auth, Reply::SignInUrl(url) if url.ends_with("state=dummy")));
         let snapshot = send("nowplaying").expect("a reply");
         let listed = send("devices").expect("a reply");
         let search =

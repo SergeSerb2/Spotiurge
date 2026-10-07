@@ -1,10 +1,12 @@
-use egui::{Align, CornerRadius, Frame, Layout, Margin, RichText, Stroke};
+use egui::{Align, Layout, Margin, RichText};
 
 use crate::app::App;
 use crate::i18n::gettext;
 use crate::model::Action;
 use crate::theme::{self, Icon};
 use crate::updates::DownloadState;
+
+use super::material;
 
 pub fn show(app: &mut App, ctx: &egui::Context) {
     if !app.show_update {
@@ -16,20 +18,10 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
     };
     let palette = app.palette;
     let locale = app.locale;
-    let title = gettext(locale, "Update Spotifast");
+    let title = gettext(locale, "Update Spotifast").replace("Spotifast", "Spotiurge");
     let mut close = ctx.input(|input| input.key_pressed(egui::Key::Escape));
-    let frame = Frame::new()
-        .fill(palette.overlay)
-        .stroke(Stroke::new(1.0, palette.outline))
-        .corner_radius(CornerRadius::same(theme::RADIUS + 4))
-        .inner_margin(Margin::same(24))
-        .shadow(egui::epaint::Shadow {
-            offset: [0, 10],
-            blur: 40,
-            spread: 0,
-            color: palette.shadow,
-        });
-    egui::Window::new(title.as_ref())
+    let frame = material::popover_frame(&palette).inner_margin(Margin::same(24));
+    egui::Window::new(title.as_str())
         .id(egui::Id::new("spotifast-update"))
         .title_bar(false)
         .resizable(false)
@@ -40,7 +32,7 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
         .show(ctx, |ui| {
             ui.set_width(420.0_f32.min((ctx.content_rect().width() - 64.0).max(240.0)));
             ui.horizontal(|ui| {
-                theme::text(ui, title.as_ref(), theme::bold(20.0), palette.text);
+                theme::text(ui, title.as_str(), theme::bold(20.0), palette.text);
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     close |= theme::icon_button(
                         ui,
@@ -113,7 +105,8 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
                             RichText::new(gettext(
                                 locale,
                                 "Music playing on this computer will stop when Spotifast restarts.",
-                            ))
+                            )
+                            .replace("Spotifast", "Spotiurge"))
                             .font(theme::regular(14.0))
                             .color(palette.secondary),
                         )

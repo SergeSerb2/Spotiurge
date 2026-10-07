@@ -47,7 +47,11 @@ struct Cli {
     /// `windows-taskbar`, `german`, `lyrics`, `lyrics-fullscreen`, `collection-loading`,
     /// `shuffle-selected`, `shuffle-started`, `undated-mix`, `signed-out`, `connecting`, `library-list`,
     /// `library-list-narrow`, `library-list-wide`, `library-grid`, `library-grid-narrow`,
-    /// or `library-grid-wide`.
+    /// `library-grid-wide`, `discovery-empty`, `discovery-onboarding`, `discovery-matched`,
+    /// `discovery-partial`, `discovery-not-found`, `discovery-busy` (or `discovery-loading`),
+    /// `discovery-offline` (or `discovery-error`), `discovery-pairing`, `discovery-taste`,
+    /// `discovery-history`, `discovery-feedback`, `discovery-focus`, `discovery-menu`,
+    /// `discovery-unmatched`, `discovery-opening`, `discovery-load-error`, or `discovery-remote`.
     #[cfg(feature = "demo")]
     #[arg(long)]
     demo_show: Option<String>,
@@ -145,6 +149,8 @@ enum Control {
         #[arg(long)]
         raw: bool,
     },
+    /// Print the current authorization request URL, for remote sign-in.
+    SignInUrl,
     /// Bring the window of the running instance forward
     Show,
     /// Reload local palette files without starting the app or interrupting playback
@@ -208,6 +214,7 @@ fn run_control(control: Control) -> i32 {
         Control::Devices { .. } => "devices".to_owned(),
         Control::Transfer { device_id } => format!("transfer {device_id}"),
         Control::NowPlaying { .. } => "nowplaying".to_owned(),
+        Control::SignInUrl => "sign-in-url".to_owned(),
         Control::Show => "show".to_owned(),
         Control::ReloadThemes => "reload-themes".to_owned(),
     };
@@ -227,8 +234,15 @@ fn run_control(control: Control) -> i32 {
                 format_devices(&snapshot)
             }
         }
+        Ok(single_instance::Reply::SignInUrl(url)) => {
+            if url.is_empty() {
+                eprintln!("Start Spotify sign-in in Spotiurge first.");
+                return 1;
+            }
+            format!("{url}\n")
+        }
         Err(error) => {
-            eprintln!("Spotifast is not running or does not support remote control: {error}");
+            eprintln!("Spotiurge is not running or does not support remote control: {error}");
             return 1;
         }
     };
@@ -259,7 +273,7 @@ fn desktop_entry() -> String {
 
 #[cfg(target_os = "linux")]
 const PULSEAUDIO_PROPERTIES: [(&str, &str); 2] = [
-    ("PULSE_PROP_application.name", "Spotifast"),
+    ("PULSE_PROP_application.name", "Spotiurge"),
     ("PULSE_PROP_stream.description", "Spotify playback"),
 ];
 
@@ -340,7 +354,7 @@ pub(crate) fn run() -> eframe::Result<()> {
     // First of all: `--apply-update <job>` makes this process the update
     // helper, which installs and exits; otherwise the receipt and error an
     // update relaunch carries are taken out of the arguments.
-    let launch = fastframe_update::intercept(&spotifast::updates::CONFIG);
+    let launch = spotifast::updates::launch();
     // A MilkDrop child launch is a bare visualiser window, not the app: it has
     // its own event loop and OpenGL context, reads the sound from a shared
     // buffer, and never touches the app's state. Handle it before anything
@@ -542,6 +556,7 @@ pub(crate) fn run() -> eframe::Result<()> {
     spotifast::window::set_fixed_size(demo_inner.is_some());
     #[cfg(feature = "demo")]
     let demo_storage = app.dirs.cache.join("demo-window.ron");
+    let profile_storage = profile_storage(&app.dirs);
     fastframe_shell::Shell::new(app, &waker)
         .idle(fastframe_tray::idle)
         .run(|lease| {
@@ -565,14 +580,14 @@ pub(crate) fn run() -> eframe::Result<()> {
             };
             #[cfg(not(feature = "demo"))]
             let options = native_options(false, mini, None);
-            let options = profile_options(options);
+            let options = profile_options(options, profile_storage.clone());
             let persist_memory = options.persist_window;
             #[cfg(windows)]
             let thumbbar_enabled = desktop_surfaces && options.viewport.taskbar != Some(false);
             #[cfg(target_os = "linux")]
             let hide_from_taskbar = options.viewport.taskbar == Some(false);
             eframe::run_native(
-                "Spotifast",
+                "Spotiurge",
                 options,
                 Box::new(move |cc| {
                     if let Some(gl) = &cc.gl {
@@ -741,12 +756,8 @@ fn native_options(
     // Disabling saving does not disable eframe's startup restore. Give the
     // mini player its own path, and Shell disables its egui-memory saving too,
     // so it neither reads the main window's geometry nor creates a state file.
+    // The main window's path comes from `profile_options`.
     let persistence_path = mini.as_ref().map(|mini| mini.storage_path.clone());
-    #[cfg(target_os = "linux")]
-    let persistence_path = persistence_path.or_else(|| {
-        // Keep the native profile path even when Flatpak supplies its app ID.
-        eframe::storage_dir("spotifast").map(|dir| dir.join("app.ron"))
-    });
     #[cfg(target_os = "linux")]
     let app_id = desktop_entry();
     #[cfg(not(target_os = "linux"))]
@@ -760,7 +771,7 @@ fn native_options(
         app_icon()
     };
     let viewport = egui::ViewportBuilder::default()
-        .with_title("Spotifast")
+        .with_title("Spotiurge")
         .with_app_id(app_id)
         .with_taskbar(true)
         .with_icon(icon);
@@ -817,9 +828,19 @@ fn native_options(
     }
 }
 
-fn profile_options(mut options: eframe::NativeOptions) -> eframe::NativeOptions {
+/// The fork's own eframe state, beside its settings and session. Upstream
+/// Spotifast's `app.ron` is neither read nor imported.
+fn profile_storage(dirs: &paths::AppDirs) -> std::path::PathBuf {
+    dirs.state.join("app.ron")
+}
+
+fn profile_options(
+    mut options: eframe::NativeOptions,
+    storage: std::path::PathBuf,
+) -> eframe::NativeOptions {
+    // Explicit, so a Flatpak app ID cannot move the profile either.
     if options.persist_window {
-        options.persistence_path = eframe::storage_dir("spotifast").map(|dir| dir.join("app.ron"));
+        options.persistence_path = Some(storage);
     }
     options
 }
@@ -860,17 +881,23 @@ mod native_window_tests {
 
     #[test]
     fn window_geometry_is_kept_without_touching_demo_storage() {
-        let main = profile_options(native_options(false, None, None));
-        assert_eq!(
-            main.persistence_path,
-            eframe::storage_dir("spotifast").map(|dir| dir.join("app.ron"))
+        let dirs = paths::AppDirs::discover();
+        let profile = profile_storage(&dirs);
+        assert_eq!(profile, dirs.state.join("app.ron"));
+        let main = profile_options(native_options(false, None, None), profile.clone());
+        assert_eq!(main.persistence_path, Some(profile.clone()));
+        let upstream = eframe::storage_dir("spotifast").map(|dir| dir.join("app.ron"));
+        assert_ne!(
+            main.persistence_path, upstream,
+            "upstream state stays alone"
         );
         let demo_path = std::path::PathBuf::from("temporary/demo.ron");
-        let demo = profile_options(demo_native_options(
-            native_options(false, None, None),
-            demo_path.clone(),
-        ));
+        let demo = profile_options(
+            demo_native_options(native_options(false, None, None), demo_path.clone()),
+            profile,
+        );
         assert_eq!(demo.persistence_path, Some(demo_path));
+        assert!(!demo.persist_window);
     }
 
     #[test]
@@ -892,18 +919,11 @@ mod native_window_tests {
         {
             let id = desktop_entry();
             assert_eq!(main.viewport.app_id.as_deref(), Some(id.as_str()));
-            assert_eq!(mini.viewport.app_id, main.viewport.app_id);
-            assert_eq!(
-                main.persistence_path,
-                eframe::storage_dir("spotifast").map(|dir| dir.join("app.ron"))
-            );
         }
         #[cfg(not(target_os = "linux"))]
-        {
-            assert_eq!(main.viewport.app_id.as_deref(), Some("spotifast"));
-            assert_eq!(mini.viewport.app_id, main.viewport.app_id);
-            assert_eq!(main.persistence_path, None);
-        }
+        assert_eq!(main.viewport.app_id.as_deref(), Some("spotifast"));
+        assert_eq!(mini.viewport.app_id, main.viewport.app_id);
+        assert_eq!(main.persistence_path, None);
         assert_eq!(mini.persistence_path, Some(mini_path));
         assert!(main.persist_window);
         assert!(!mini.persist_window);
@@ -1250,7 +1270,9 @@ impl eframe::App for Shell {
                 MenuCommand::Back => Action::Back,
                 MenuCommand::Forward => Action::Forward,
                 MenuCommand::OpenRepo => {
-                    ctx.open_url(egui::OpenUrl::new_tab("https://github.com/crmne/spotifast"));
+                    ctx.open_url(egui::OpenUrl::new_tab(
+                        "https://github.com/SergeSerb2/Spotiurge",
+                    ));
                     continue;
                 }
                 // Editing goes through egui, which owns the text field

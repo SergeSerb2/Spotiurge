@@ -6,30 +6,31 @@ nav_order: 0
 
 ## Where things live
 
-Linux media controls use `playerctl --player=spotifast`.
+Linux media controls use `playerctl --player=spotiurge`.
 
-Spotifast follows each platform's conventions. On Linux:
+Spotiurge uses its own platform directories and media-control identifier.
+Some internal filenames retain their upstream names. On Linux:
 
 | What | Where | Safe to delete? |
 | --- | --- | --- |
-| Settings | `~/.config/spotifast/settings.json` | Yes, you lose preferences |
-| Winamp skins | `~/.config/spotifast/skins/` | Yes, you add them again |
-| MilkDrop presets | `~/.config/spotifast/milkdrop/` | Yes, you fetch them again |
+| Settings | `~/.config/spotiurge/settings.json` | Yes, you lose preferences |
+| Winamp skins | `~/.config/spotiurge/skins/` | Yes, you add them again |
+| MilkDrop presets | `~/.config/spotiurge/milkdrop/` | Yes, you fetch them again |
 | Spotify grants (available since 0.8.0) | System credential store | Use Sign out in Settings |
-| Credential revocation markers (available since 0.8.0) | `~/.local/state/spotifast/credential-storage/` | Keep after a failed sign-out deletion |
-| Legacy shared Web API grant | `~/.local/state/spotifast/shared_web_api_token.json` | Removed after migration or sign-out |
-| Legacy personal Web API grant | `~/.local/state/spotifast/personal_web_api_token.json` | Removed after migration or sign-out |
-| Legacy playback credential | `~/.local/state/spotifast/credentials/` | Removed after migration or sign-out |
+| Credential revocation markers (available since 0.8.0) | `~/.local/state/spotiurge/credential-storage/` | Keep after a failed sign-out deletion |
+| Legacy shared Web API grant | `~/.local/state/spotiurge/shared_web_api_token.json` | Removed after migration or sign-out |
+| Legacy personal Web API grant | `~/.local/state/spotiurge/personal_web_api_token.json` | Removed after migration or sign-out |
+| Legacy playback credential | `~/.local/state/spotiurge/credentials/` | Removed after migration or sign-out |
 | Proxy password | System credential store | Clear the password and apply the manual proxy settings |
-| Legacy proxy password | `~/.local/state/spotifast/proxy_password` | Removed after protected migration |
-| Last session | `~/.local/state/spotifast/session.json` | Yes |
-| Play history | `~/.local/state/spotifast/history.json` | Yes |
-| Audio cache | `~/.cache/spotifast/audio/` | Always |
-| Artwork cache | `~/.cache/spotifast/art/` | Always |
-| Lyrics cache | `~/.cache/spotifast/lyrics/` | Always |
-| Account-scoped playlist page cache | `~/.cache/spotifast/playlists/<account-id>/` | Always |
-| Last run's log | `~/.local/state/spotifast/spotifast.log` | Always |
-| Crash log | `~/.local/state/spotifast/panic.log` | Always |
+| Legacy proxy password | `~/.local/state/spotiurge/proxy_password` | Removed after protected migration |
+| Last session | `~/.local/state/spotiurge/session.json` | Yes |
+| Play history | `~/.local/state/spotiurge/history.json` | Yes |
+| Audio cache | `~/.cache/spotiurge/audio/` | Always |
+| Artwork cache | `~/.cache/spotiurge/art/` | Always |
+| Lyrics cache | `~/.cache/spotiurge/lyrics/` | Always |
+| Account-scoped playlist page cache | `~/.cache/spotiurge/playlists/<account-id>/` | Always |
+| Last run's log | `~/.local/state/spotiurge/spotifast.log` | Always |
+| Crash log | `~/.local/state/spotiurge/panic.log` | Always |
 
 Clearing caches never signs you out. Sign-out from Settings covers the shared
 and personal Web API grants and the independent playback credential.
@@ -194,22 +195,29 @@ logs, and credential revocation markers survive a full quit and relaunch under
 and caches remain under the app's `config/` and `cache/` directories. State
 already lost on quitting an older release cannot be recovered.
 
-On macOS, settings, state, and the logs are in
-`~/Library/Application Support/me.paolino.spotifast` and the caches in
-`~/Library/Caches/me.paolino.spotifast`. On Windows, settings are in
-`%APPDATA%\paolino\spotifast\config`, state and the logs in
-`%LOCALAPPDATA%\paolino\spotifast\data`, and the caches in
-`%LOCALAPPDATA%\paolino\spotifast\cache`.
+On macOS, settings, state, and logs are in
+`~/Library/Application Support/com.sergeserbinenko.spotiurge` and caches in
+`~/Library/Caches/com.sergeserbinenko.spotiurge`. On Windows, settings are in
+`%APPDATA%\sergeserbinenko\spotiurge\config`, state and logs in
+`%LOCALAPPDATA%\sergeserbinenko\spotiurge\data`, and caches in
+`%LOCALAPPDATA%\sergeserbinenko\spotiurge\cache`.
+
+Main-window geometry and egui memory use `app.ron` in that state directory.
+The fork does not import Spotifast's window state. Demo windows use a separate,
+unsaved `demo-window.ron`; the mini player retains its separate state path.
+`spotiurge-discovery.json` contains the local preference, feedback, mix and
+AI-history replica plus cached catalogue matches. Cloud pairing credentials
+remain in the native credential store, outside these files.
 
 The running copy keeps its single-instance files in a private directory:
-`$XDG_RUNTIME_DIR/spotifast` on Linux (inside Flatpak, the app's own runtime
-directory), a `spotifast` folder in your private temporary directory
+`$XDG_RUNTIME_DIR/spotiurge` on Linux (inside Flatpak, the app's own runtime
+directory), a `spotiurge` folder in your private temporary directory
 (`$TMPDIR`) on macOS, and an `instance` folder in the state directory on
 Windows. `instance.lock` marks the running copy; the system releases it when
-Spotifast quits or crashes. `instance.sock` (Linux and macOS) is the socket
+Spotiurge quits or crashes. `instance.sock` (Linux and macOS) is the socket
 a second launch and the `spotifast` command reach it through, which only your
 user can open. On Windows, `instance.key` holds the loopback port and a
-random token that every request must carry. Spotifast writes them on each
+random token that every request must carry. Spotiurge writes them on each
 start; nothing in them needs keeping.
 
 ## settings.json
@@ -219,7 +227,7 @@ main fields are:
 
 | Field | Default | Meaning |
 | --- | --- | --- |
-| `device_name` | `Spotifast` | Name on Spotify Connect |
+| `device_name` | `Spotiurge` | Name on Spotify Connect |
 | `bitrate` | `320` | 96, 160, or 320 kbps |
 | `normalisation` | `false` | Volume normalisation |
 | `autoplay` | `true` | Keep playing similar music at the end |
@@ -267,6 +275,7 @@ main fields are:
 | `milkdrop_size` | `640, 480` | The MilkDrop window's size in points |
 | `keep_playing_in_background` | `true` | Close to tray |
 | `mac_notch_widget` | `false` | Show interactive Now Playing widget when hovering over the MacBook notch (macOS only) |
+| `reduce_motion` | `false` | Show interface changes immediately; macOS Reduce Motion also applies |
 | `check_for_updates` | `true` | Ask GitHub once a day for a newer release |
 | `web_client_id` | none | Optional personal Spotify app id used alongside shared coverage |
 | `personal_app_nudge_at` | none | Legacy daily-reminder timestamp, retained for older releases |

@@ -298,14 +298,21 @@ fn top_result(
         ui.allocate_exact_size(vec2(ui.available_width(), 232.0), Sense::click());
     if ui.is_rect_visible(rect) {
         let hovered = ui.rect_contains_pointer(rect);
-        let fill = if hovered {
-            palette.surface_hover
-        } else {
-            palette.surface
-        };
-        ui.painter()
-            .rect_filled(rect, CornerRadius::same(theme::RADIUS), fill);
-        let image_rect = Rect::from_min_size(rect.min + vec2(20.0, 20.0), Vec2::splat(96.0));
+        // A key of glass resting on the page: under the pointer it
+        // brightens and its cover lifts a little toward the viewer.
+        let lift = super::motion::toggle(
+            ui.ctx(),
+            response.id.with("lift"),
+            hovered || response.has_focus(),
+            super::motion::STATE,
+        );
+        ui.painter().rect_filled(
+            rect,
+            CornerRadius::same(12),
+            super::material::key_fill(&palette, lift),
+        );
+        let image_rect = Rect::from_min_size(rect.min + vec2(20.0, 20.0), Vec2::splat(96.0))
+            .translate(vec2(0.0, -3.0 * lift));
         widgets::paint_shadow(ui, &palette, image_rect, if round { 48.0 } else { 6.0 });
         widgets::paint_cover(
             ui,
@@ -370,9 +377,13 @@ fn top_result(
                 );
             }
         }
+        // The play key rises and fades in with the hover, as on a card.
         if hovered && let Some(uri) = &play_uri {
             let button = Rect::from_center_size(
-                pos2(rect.right() - 44.0, rect.bottom() - 44.0),
+                pos2(
+                    rect.right() - 44.0,
+                    rect.bottom() - 44.0 + 6.0 * (1.0 - lift),
+                ),
                 Vec2::splat(48.0),
             );
             let mut child = ui.new_child(
@@ -380,6 +391,7 @@ fn top_result(
                     .max_rect(button)
                     .layout(Layout::centered_and_justified(egui::Direction::LeftToRight)),
             );
+            child.multiply_opacity(lift);
             if theme::circle_button(
                 &mut child,
                 Icon::PlayFilled,

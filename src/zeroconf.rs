@@ -482,6 +482,90 @@ mod tests {
     }
 
     #[test]
+    fn receiver_handoff_sends_the_configured_fork_name_and_identity() {
+        use std::io::{BufRead, Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        listener.set_nonblocking(true).unwrap();
+        let server = std::thread::spawn(move || {
+            let deadline = std::time::Instant::now() + Duration::from_secs(3);
+            let (mut stream, _) = loop {
+                match listener.accept() {
+                    Ok(connection) => break connection,
+                    Err(error)
+                        if error.kind() == std::io::ErrorKind::WouldBlock
+                            && std::time::Instant::now() < deadline =>
+                    {
+                        std::thread::sleep(Duration::from_millis(5))
+                    }
+                    Err(error) => panic!("missing dummy handoff: {error}"),
+                }
+            };
+            stream.set_nonblocking(false).unwrap();
+            stream
+                .set_read_timeout(Some(Duration::from_secs(2)))
+                .unwrap();
+            let mut reader = std::io::BufReader::new(&mut stream);
+            let mut length = 0;
+            loop {
+                let mut line = String::new();
+                assert!(reader.read_line(&mut line).unwrap() > 0);
+                if line == "\r\n" {
+                    break;
+                }
+                if let Some(value) = line.to_ascii_lowercase().strip_prefix("content-length:") {
+                    length = value.trim().parse::<usize>().unwrap();
+                }
+            }
+            let mut body = vec![0; length];
+            reader.read_exact(&mut body).unwrap();
+            let encoded = std::str::from_utf8(&body).unwrap();
+            let url = reqwest::Url::parse(&format!("http://dummy.invalid/?{encoded}")).unwrap();
+            let fields = url
+                .query_pairs()
+                .into_owned()
+                .collect::<std::collections::HashMap<_, _>>();
+            assert_eq!(fields["deviceName"], "Spotiurge Serge laptop");
+            assert_eq!(
+                fields["deviceId"],
+                hex(&Sha1::digest(b"Spotiurge Serge laptop"))
+            );
+            assert_eq!(fields["action"], "addUser");
+            let reply = r#"{"status":101}"#;
+            write!(stream, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{reply}", reply.len()).unwrap();
+        });
+        let receiver = Receiver {
+            name: "Dummy receiver".into(),
+            device_id: None,
+            address: "127.0.0.1".parse().unwrap(),
+            port,
+            path: "/".into(),
+        };
+        let info: Info = serde_json::from_value(
+            serde_json::json!({"deviceID":"dummy-device", "publicKey":BASE64.encode(vec![9u8;96])}),
+        )
+        .unwrap();
+        let credentials = Credentials {
+            username: "dummy-account".into(),
+            auth_type: 1,
+            auth_data: vec![7; 80],
+        };
+        let http = reqwest::blocking::Client::builder()
+            .no_proxy()
+            .build()
+            .unwrap();
+        add_user(
+            &http,
+            &receiver,
+            &info,
+            &credentials,
+            "Spotiurge Serge laptop",
+        )
+        .unwrap();
+        server.join().unwrap();
+    }
+
+    #[test]
     fn instance_names_are_unescaped() {
         assert_eq!(unescape_instance("House\\032Spotify"), "House Spotify");
         assert_eq!(unescape_instance("Kitchen"), "Kitchen");

@@ -103,6 +103,12 @@ class LauncherInstallTest(unittest.TestCase):
                 subprocess.run(["bash", "-euc", command], check=True, cwd=root / "source")
                 self.check_launcher(root / "app", config["id"], config["id"], config["id"])
 
+    def test_flatpak_allows_the_fork_mpris_bus_name(self):
+        for path in (ROOT / "packaging/flatpak").glob("*.yml"):
+            with self.subTest(manifest=path.name):
+                names = [arg for arg in yaml(path)["finish-args"] if arg.startswith("--own-name=org.mpris.MediaPlayer2.")]
+                self.assertEqual(names, ["--own-name=org.mpris.MediaPlayer2.spotiurge"])
+
     def test_native_manifest_installs_the_launcher_and_icon(self):
         config = yaml(ROOT / "native-packages.yaml")
         entries = [c for c in config["nfpm"]["contents"] if "/packaging/" in c["src"]]

@@ -1,11 +1,13 @@
 //! Modal dialogs: playlist details, confirmations, shortcuts.
 
-use egui::{Align, CornerRadius, Frame, Layout, Margin, Stroke};
+use egui::{Align, CornerRadius, Frame, Layout, Margin};
 
 use crate::app::App;
 use crate::i18n::{Locale, gettext, ngettext};
 use crate::model::{Action, Dialog};
 use crate::theme;
+
+use super::material;
 
 pub fn show(app: &mut App, ctx: &egui::Context) {
     let Some(dialog) = app.dialog.clone() else {
@@ -13,17 +15,7 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
     };
     let palette = app.palette;
     let locale = app.locale;
-    let frame = Frame::new()
-        .fill(palette.overlay)
-        .stroke(Stroke::new(1.0, palette.outline))
-        .corner_radius(CornerRadius::same(theme::RADIUS + 4))
-        .inner_margin(Margin::same(24))
-        .shadow(egui::epaint::Shadow {
-            offset: [0, 10],
-            blur: 40,
-            spread: 0,
-            color: palette.shadow,
-        });
+    let frame = material::popover_frame(&palette).inner_margin(Margin::same(24));
     let response = egui::Modal::new(egui::Id::new("dialog"))
         .frame(frame)
         .backdrop_color(egui::Color32::from_black_alpha(if palette.dark {
@@ -38,7 +30,7 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
                     theme::text(ui, gettext(locale, "Spend less time waiting for Spotify"), theme::bold(20.0), palette.text);
                     ui.add_space(12.0);
                     for text in [
-                        gettext(locale, "Spotifast's default connection shares Spotify's request limit with other listeners. When it gets busy, loading music and using playback controls can take longer."),
+                        gettext(locale, "Spotifast's default connection shares Spotify's request limit with other listeners. When it gets busy, loading music and using playback controls can take longer.").replace("Spotifast", "Spotiurge").into(),
                         gettext(locale, "Your Premium account lets you create a free personal Spotify app. Connect it here to give supported requests your own allowance. Some pages still use the shared connection."),
                         gettext(locale, "Setup takes a few minutes. You can also find it later in Settings under Personal Spotify app."),
                     ] {
@@ -211,7 +203,8 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
                             egui::RichText::new(gettext(
                                 locale,
                                 "Playback needs Spotify Premium. Free accounts can browse and search, but cannot play music through Spotifast.",
-                            ))
+                            )
+                            .replace("Spotifast", "Spotiurge"))
                             .font(theme::regular(14.0))
                             .color(palette.secondary),
                         )
@@ -301,6 +294,15 @@ fn duplicate_message(
     message.replace("{playlist}", playlist_name)
 }
 
+/// The frame of a text field in a dialog: a quiet well in the glass.
+fn field_frame(palette: &theme::Palette) -> Frame {
+    Frame::new()
+        .fill(material::glass(palette, material::Kind::Well).fill)
+        .stroke(egui::Stroke::new(1.0, material::rim_colour(palette)))
+        .corner_radius(CornerRadius::same(8))
+        .inner_margin(Margin::symmetric(12, 8))
+}
+
 fn text_field(
     ui: &mut egui::Ui,
     palette: &theme::Palette,
@@ -310,10 +312,7 @@ fn text_field(
     hint: &str,
     focus: bool,
 ) -> egui::Response {
-    let response = Frame::new()
-        .fill(palette.surface)
-        .corner_radius(CornerRadius::same(6))
-        .inner_margin(Margin::symmetric(12, 8))
+    let response = field_frame(palette)
         .show(ui, |ui| {
             super::widgets::text_edit(
                 ui,
@@ -529,26 +528,22 @@ fn edit_playlist(app: &mut App, ui: &mut egui::Ui) {
                 theme::medium(13.0),
                 palette.secondary,
             );
-            Frame::new()
-                .fill(palette.surface)
-                .corner_radius(CornerRadius::same(6))
-                .inner_margin(Margin::symmetric(12, 8))
-                .show(ui, |ui| {
-                    super::widgets::text_edit(
-                        ui,
-                        locale,
-                        egui::TextEdit::multiline(description)
-                            .id(egui::Id::new("edit-description"))
-                            .hint_text(
-                                egui::RichText::new(gettext(locale, "Optional description"))
-                                    .color(palette.dim),
-                            )
-                            .font(theme::regular(14.0))
-                            .frame(egui::Frame::NONE)
-                            .desired_rows(3)
-                            .desired_width(f32::INFINITY),
-                    );
-                });
+            field_frame(&palette).show(ui, |ui| {
+                super::widgets::text_edit(
+                    ui,
+                    locale,
+                    egui::TextEdit::multiline(description)
+                        .id(egui::Id::new("edit-description"))
+                        .hint_text(
+                            egui::RichText::new(gettext(locale, "Optional description"))
+                                .color(palette.dim),
+                        )
+                        .font(theme::regular(14.0))
+                        .frame(egui::Frame::NONE)
+                        .desired_rows(3)
+                        .desired_width(f32::INFINITY),
+                );
+            });
             ui.add_space(10.0);
             ui.horizontal(|ui| {
                 // Unknown shows as off; only a change of the switch is sent, so

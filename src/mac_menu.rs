@@ -447,7 +447,9 @@ mod mac_impl {
                 Some(target),
             );
             let sep = NSMenuItem::separatorItem(mtm);
-            app_menu.insertItem_atIndex(&update_item, 1);
+            if crate::updates::ENABLED {
+                app_menu.insertItem_atIndex(&update_item, 1);
+            }
             app_menu.insertItem_atIndex(&settings_item, 2);
             app_menu.insertItem_atIndex(&sep, 3);
         }
@@ -704,7 +706,7 @@ mod mac_impl {
         ));
         help_menu.addItem(&create_item(
             mtm,
-            ns_string!("Spotifast on GitHub"),
+            ns_string!("Spotiurge on GitHub"),
             Some(sel!(openRepo:)),
             ns_string!(""),
             None,

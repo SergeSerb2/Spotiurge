@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use egui::{Align, Frame, Layout, Margin};
+use egui::{Align, Layout, Margin};
 
 use crate::api::models::PlayableItem;
 use crate::app::App;
@@ -48,12 +48,17 @@ pub fn side_panel(app: &mut App, ui: &mut egui::Ui) {
         .default_size(app.settings.queue_width)
         .size_range(fit.range.clone())
         .show_separator_line(false)
-        .frame(
-            Frame::new()
-                .fill(palette.panel)
-                .inner_margin(Margin::symmetric(12, 12)),
-        );
+        .frame(super::material::panel_frame(
+            Margin {
+                left: super::material::GAP as i8,
+                right: super::material::GAP as i8,
+                top: super::material::GAP as i8,
+                bottom: 0,
+            },
+            Margin::same(12),
+        ));
     let response = panel.show(ui, |ui| {
+        super::material::paint_panel_pane(ui, Margin::same(12), &palette);
         let window_controls = super::window_controls_reservation(
             ui.ctx(),
             app.show_queue_panel,
@@ -259,7 +264,7 @@ fn contents(app: &mut App, ui: &mut egui::Ui, compact: bool) {
         theme::text(
             ui,
             gettext(app.locale, "Now playing"),
-            theme::semibold(14.0),
+            theme::bold(18.0),
             palette.text,
         );
         ui.add_space(4.0);
@@ -325,7 +330,7 @@ fn contents(app: &mut App, ui: &mut egui::Ui, compact: bool) {
                     // Translators: Songs added manually, before the current playlist or album continues.
                     "Playing next",
                 ),
-                theme::semibold(14.0),
+                theme::bold(18.0),
                 palette.text,
             );
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -432,7 +437,7 @@ fn contents(app: &mut App, ui: &mut egui::Ui, compact: bool) {
                 // Translators: Upcoming songs from the current playlist or album, after manually queued songs.
                 "Next up",
             ),
-            theme::semibold(14.0),
+            theme::bold(18.0),
             palette.text,
         );
         ui.add_space(4.0);

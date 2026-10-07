@@ -119,12 +119,12 @@ current-track pickup.
   prefixes refresh through the existing Web API grant, one page at a time,
   while the saved rows remain visible. Manual refresh starts immediately.
   Like and Unlike are kept over lagging reads until Spotify confirms them.
-- Spotifast has no telemetry, analytics, or hosted service. When the lyrics
+- Spotiurge has no telemetry or analytics. Its paired private discovery service
+  is described below. When the lyrics
   panel is open and Spotify has no lyrics, it sends the track's artist, title,
-  album, and length to [lrclib.net](https://lrclib.net). It also checks
-  api.github.com once a day for updates. You can turn off automatic checks in
-  Settings, or request one there at any time. On macOS, **Check for Updates**
-  is also in the application menu.
+  album, and length to [lrclib.net](https://lrclib.net). Spotiurge's fork updater
+  is disabled until its package identities have migrated. The following update
+  behavior describes the inherited implementation, not an active release channel.
 
   On Windows, macOS, and Linux, downloading an update fetches release metadata and
   `checksums.txt` from the project's GitHub release, then the matching binary
@@ -148,6 +148,60 @@ current-track pickup.
   A Developer ID installation also requires the same signing team and a passing
   macOS security assessment. Apps running from a disk image or an App Translocation
   directory must be moved to a writable installation directory first.
+
+## Spotiurge private discovery and AI
+
+Pairing enables background synchronization with Serge's private Railway service
+at [private-cloud-production.up.railway.app](https://private-cloud-production.up.railway.app).
+`SPOTIURGE_CLOUD_URL` can select another HTTPS origin. Without pairing, discovery
+keeps its local snapshot; it cannot sync or request hosted recommendations.
+Spotify authentication and independent playback do not depend on this service.
+
+The synchronized document contains taste text; intentional Love/Less feedback
+with track URIs, titles and artist credits; saved mix names and ordered track
+URIs; and AI history with prompts, suggested titles, artists and reasons.
+Logical record clocks, writer identifiers, deletion tombstones and the feedback
+retention cutoff travel with it to merge offline edits. A device's full local
+replica identity, cached catalogue matches, playback queue and automatic-refresh
+settings stay local. Spotify grants, audio and proxy credentials are excluded.
+The cloud pairing token authenticates requests in an HTTPS bearer header; it is
+not part of the synchronized document. Each device stores it in its native
+credential store. Startup pairing input is removed from the environment and
+discarded after its protected write and readback succeed; a failed write or
+verification retains the input in the credential worker for retry.
+
+Automatic or requested recommendations send taste text, up to 100 intentional
+feedback records and the selected exploration level to the private service.
+The service removes Spotify URIs before sending titles, artist credits, ratings
+and taste to **gpt-6-luna through the existing CLIProxyAPI subscription**. There
+is no other model or direct-provider fallback. This slice does not import raw
+Spotify listening history into model prompts. Turning automatic discovery off
+stops automatic AI refreshes; it does not stop synchronization of saved edits.
+
+The service stores one revisioned document in SQLite on its private `/data`
+Railway volume. HTTPS protects transport; the operator and hosting environment
+can access plaintext personal data. This is not end-to-end encryption. AI
+requests also pass through CLIProxyAPI and its selected subscription provider;
+their own data policies apply. There is no automatic cloud expiration or
+scheduled backup in this slice. The document is bounded to 1 MiB and 2,000
+records. Current clients retain the newest 500 feedback records, including
+cleared ratings, and up to ten live AI-history entries. New saves reuse deleted
+mix slots or the oldest slot once 100 slots exist. Legacy records and deletion
+tombstones can remain until storage limits require cleanup. Logical removals do
+not promise secure erasure of older SQLite pages or external backups.
+
+Offline edits remain locally pending. Sync refetches on revision conflicts,
+merges records by logical clock and writer identifier, and restamps unsent
+record edits, including taste, mix/history edits and deletions, when a remote
+record would otherwise replace them. The bounded local `pending_edits` stamp
+journal also protects fresh feedback against an advanced retention cutoff.
+Older `pending_feedback` entries load into this journal. Only dispatched stamps
+are acknowledged; edits made during sync remain pending. An import without a
+dispatched snapshot cannot acknowledge local intent. The journal itself never
+reaches the cloud or AI. Cached picks and
+Spotify playback remain usable when cloud or AI requests fail. Export, volume
+backup and pairing-token rotation are documented in the
+[private-cloud service guide](https://github.com/SergeSerb2/Spotiurge/tree/main/services/private-cloud#readme).
 
 ## Collection loading and artwork
 

@@ -13,10 +13,16 @@ use crate::theme::{self, Icon};
 use super::widgets::{self, TrackRow};
 
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
-    let palette = app.palette;
-    ui.add_space(6.0);
+    ui.add_space(4.0);
+    super::discovery::show(app, ui);
+    library_shelves(app, ui);
+}
+
+/// The inherited shelves remain independently testable below discovery.
+pub fn library_shelves(app: &mut App, ui: &mut egui::Ui) {
+    // The greeting heads the shelves, a section below the For you desk.
     let greeting = crate::util::greeting(app.locale);
-    theme::text(ui, greeting.as_ref(), theme::bold(30.0), palette.text);
+    theme::text(ui, greeting.as_ref(), theme::bold(20.0), app.palette.text);
     ui.add_space(12.0);
     quick_access(app, ui);
     ui.add_space(16.0);
@@ -94,22 +100,27 @@ fn quick_access(app: &mut App, ui: &mut egui::Ui) {
                     ui.allocate_exact_size(vec2(tile_width, 60.0), Sense::click());
                 if ui.is_rect_visible(rect) {
                     let hovered = ui.rect_contains_pointer(rect);
-                    let fill = if hovered {
-                        palette.surface_hover
-                    } else {
-                        palette.surface
-                    };
-                    ui.painter().rect_filled(rect, CornerRadius::same(6), fill);
+                    let lift = super::motion::toggle(
+                        ui.ctx(),
+                        response.id.with("lift"),
+                        hovered || response.has_focus(),
+                        super::motion::FEEDBACK,
+                    );
+                    ui.painter().rect_filled(
+                        rect,
+                        CornerRadius::same(10),
+                        super::material::key_fill(&palette, lift),
+                    );
                     let cover = Rect::from_min_size(rect.min, Vec2::splat(60.0));
                     if *liked {
-                        super::sidebar::liked_cover(ui, cover, 6.0);
+                        super::sidebar::liked_cover(ui, cover, 10.0, &palette);
                     } else {
                         widgets::paint_cover(
                             ui,
                             &palette,
                             image.as_deref(),
                             cover,
-                            6.0,
+                            10.0,
                             Icon::Music,
                             Some(app.backend.art()),
                         );
