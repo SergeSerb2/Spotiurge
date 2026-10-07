@@ -125,3 +125,15 @@ The first test command stalled in Xcode's post-test Simulator diagnostic
 collection after reporting all tests passed. Only that owned command was
 canceled. Repeating the same 18 tests with `-collect-test-diagnostics never`
 completed successfully and produced a readable result bundle with no failures.
+
+The listener startup correction waits for Network.framework readiness before
+opening the system authentication sheet. Asynchronous bind failures or waiting
+states complete with an actionable port error, while canceled listener,
+browser and request callbacks cannot affect a replacement sign-in. The existing
+ten-minute deadline includes listener startup. All 19 hosted Simulator tests
+pass, including real ephemeral loopback sockets for ready/occupied-port/canceled
+replacement cases; the result bundle reports 19 passed, zero failed or skipped.
+Unsigned no-engine generic iPhoneOS compilation and engine-enabled source
+typechecking pass. Core source is unchanged from the prior 45-test run. These
+tests do not open Spotify's browser page or authenticate; the physical phone
+remained untouched. The previously approved scenery appearance is unchanged.

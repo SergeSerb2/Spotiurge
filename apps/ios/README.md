@@ -120,6 +120,11 @@ invalidate in-flight AI answers. The pending map never reaches the cloud or AI.
 
 ## Safeguards (beyond the probe scaffold)
 
+- **Listener startup.** The system sign-in sheet opens only after its loopback
+  listener is ready. An asynchronous bind failure or waiting state ends the
+  attempt with a retryable port error. Canceled listener, browser and request
+  callbacks cannot affect a replacement sign-in. The ten-minute deadline also
+  covers listener startup.
 - **Randomness.** PKCE verifier and state generation fail closed if
   `SecRandomCopyBytes` fails.
 - **Keychain.**

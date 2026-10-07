@@ -133,13 +133,14 @@ final class PKCESignIn: NSObject, ASWebAuthenticationPresentationContextProvidin
     static let maxRequests = 8
 
     private let grant: Grant
-    private var listener: NWListener?
+    private let listener = LoopbackSignInListener()
     private var session: ASWebAuthenticationSession?
     private var continuation: CheckedContinuation<Tokens, Error>?
     private var deadline: Task<Void, Never>?
     private var exchangeTask: Task<Void, Never>?
     private var requests = 0
     private var redirected = false
+    private var activeState: String?
 
     init(_ grant: Grant) {
         self.grant = grant
@@ -175,20 +176,27 @@ final class PKCESignIn: NSObject, ASWebAuthenticationPresentationContextProvidin
             return
         }
         let challenge = Data(SHA256.hash(data: Data(verifier.utf8))).base64URL
-        do {
-            let parameters = NWParameters.tcp
-            parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: grant.port)!)
-            parameters.allowLocalEndpointReuse = true
-            let listener = try NWListener(using: parameters)
-            listener.newConnectionHandler = { [weak self] connection in
-                Task { @MainActor in self?.accept(connection, state: state, verifier: verifier) }
-            }
-            listener.start(queue: .main)
-            self.listener = listener
-        } catch {
-            finish(.failure(SignInError("Another sign-in is using the sign-in port. Try again in a moment.")))
-            return
+        activeState = state
+        redirected = false
+        requests = 0
+        // The lifetime includes listener startup, not just the browser sheet.
+        deadline = Task { [weak self] in
+            try? await Task.sleep(for: Self.lifetime)
+            guard !Task.isCancelled else { return }
+            self?.finish(.failure(SignInError("Sign-in timed out. Try again.")))
         }
+        listener.start(port: grant.port, onReady: { [weak self] in
+            self?.openBrowser(state: state, challenge: challenge)
+        }, onConnection: { [weak self] connection in
+            guard let self else { connection.cancel(); return }
+            self.accept(connection, state: state, verifier: verifier)
+        }, onFailure: { [weak self] in
+            self?.finish(.failure(SignInError("Could not open the sign-in port. Close another sign-in and try again.")))
+        })
+    }
+
+    private func openBrowser(state: String, challenge: String) {
+        guard continuation != nil, activeState == state else { return }
         var components = URLComponents(string: "https://accounts.spotify.com/authorize")!
         components.queryItems = [
             .init(name: "client_id", value: grant.clientID),
@@ -203,7 +211,7 @@ final class PKCESignIn: NSObject, ASWebAuthenticationPresentationContextProvidin
         // the redirect and then closes this sheet.
         let session = ASWebAuthenticationSession(url: components.url!, callbackURLScheme: "spotiurge") { [weak self] _, error in
             Task { @MainActor in
-                guard let self, error != nil, !self.redirected else { return }
+                guard let self, error != nil, self.activeState == state, !self.redirected else { return }
                 let cancelled = (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin
                 self.finish(.failure(cancelled ? SignInError.cancelled : SignInError.failed))
             }
@@ -211,18 +219,12 @@ final class PKCESignIn: NSObject, ASWebAuthenticationPresentationContextProvidin
         session.presentationContextProvider = self
         session.prefersEphemeralWebBrowserSession = false
         self.session = session
-        deadline = Task { [weak self] in
-            try? await Task.sleep(for: Self.lifetime)
-            guard !Task.isCancelled else { return }
-            self?.session?.cancel()
-            self?.finish(.failure(SignInError("Sign-in timed out. Try again.")))
-        }
         if !session.start() { finish(.failure(SignInError.failed)) }
     }
 
     private func accept(_ connection: NWConnection, state: String, verifier: String) {
         requests += 1
-        guard continuation != nil, !redirected, requests <= Self.maxRequests else {
+        guard continuation != nil, activeState == state, !redirected, requests <= Self.maxRequests else {
             connection.cancel()
             return
         }
@@ -233,7 +235,7 @@ final class PKCESignIn: NSObject, ASWebAuthenticationPresentationContextProvidin
     private func read(_ connection: NWConnection, request: LoopbackRequest, state: String, verifier: String) {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 16_384) { [weak self] data, _, complete, error in
             Task { @MainActor in
-                guard let self, self.continuation != nil, !self.redirected else { connection.cancel(); return }
+                guard let self, self.continuation != nil, self.activeState == state, !self.redirected else { connection.cancel(); return }
                 var request = request
                 do {
                     guard let line = try request.append(data ?? Data()) else {
@@ -294,12 +296,12 @@ final class PKCESignIn: NSObject, ASWebAuthenticationPresentationContextProvidin
     private func finish(_ result: Result<Tokens, Error>) {
         guard let continuation else { return }
         self.continuation = nil
+        activeState = nil
         exchangeTask?.cancel()
         exchangeTask = nil
         deadline?.cancel()
         deadline = nil
-        listener?.cancel()
-        listener = nil
+        listener.cancel()
         session?.cancel()
         session = nil
         continuation.resume(with: result)
