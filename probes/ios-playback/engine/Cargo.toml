@@ -1,0 +1,35 @@
+# Isolated iPhone playback feasibility probe. Not part of the desktop build:
+# the empty [workspace] keeps it out of the root package, and it has its own
+# Cargo.lock seeded from the root lockfile so the pinned versions match.
+# Every dependency is one the desktop already uses, at the same pinned
+# revisions (the crmne/librespot fork and the hyper-proxy2 rustls patch).
+#
+# TLS roots differ from the desktop on purpose: rustls-native-certs 0.8 only
+# reads the system store on macOS and Windows; on iOS it falls through to the
+# Unix certificate-file lookup, finds nothing and every Spotify connection
+# would fail verification. librespot's webpki-roots feature bundles Mozilla's
+# roots (webpki-roots is already in the desktop lockfile).
+[package]
+name = "spotiurge-playback-probe"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "MIT"
+
+[lib]
+crate-type = ["staticlib", "rlib"]
+
+[workspace]
+
+[dependencies]
+librespot-core = { git = "https://github.com/crmne/librespot", rev = "23fc42cff37848e51f0d8eaefad1a93941b71e59", default-features = false, features = ["rustls-tls-webpki-roots"] }
+librespot-playback = { git = "https://github.com/crmne/librespot", rev = "23fc42cff37848e51f0d8eaefad1a93941b71e59", default-features = false, features = ["rustls-tls-webpki-roots"] }
+librespot-connect = { git = "https://github.com/crmne/librespot", rev = "23fc42cff37848e51f0d8eaefad1a93941b71e59", default-features = false }
+librespot-metadata = { git = "https://github.com/crmne/librespot", rev = "23fc42cff37848e51f0d8eaefad1a93941b71e59", default-features = false }
+librespot-protocol = { git = "https://github.com/crmne/librespot", rev = "23fc42cff37848e51f0d8eaefad1a93941b71e59", default-features = false }
+tokio = { version = "1", features = ["rt-multi-thread", "sync", "time", "macros"] }
+serde_json = "1"
+log = "0.4"
+
+[patch.crates-io]
+hyper-proxy2 = { git = "https://github.com/crmne/hyper-proxy2", rev = "efca4811371ddae81c06be168de54194938d70b1" }
