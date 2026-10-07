@@ -8569,12 +8569,11 @@ impl App {
                 if uris.is_empty() {
                     return;
                 }
-                let value = crate::discovery::Value::Mix {
-                    title: gettext(self.locale, "My discovery mix").into(),
-                    uris,
-                };
-                let key = format!("mix:{:032x}", rand::random::<u128>());
-                match self.discovery.replica.edit(key, Some(value)) {
+                match self
+                    .discovery
+                    .replica
+                    .save_mix(gettext(self.locale, "My discovery mix").into(), uris)
+                {
                     Ok(()) => {
                         self.discovery.dirty = true;
                         self.backend
@@ -8584,6 +8583,31 @@ impl App {
                             "Mix saved to Spotiurge. Sync to share it across your devices.",
                         )
                         .into();
+                    }
+                    Err(error) => self.discovery.status = error,
+                }
+            }
+            Action::DiscoveryRemoveMix(key) => {
+                if !self.discovery.ready
+                    || self.offline
+                    || !key.starts_with("mix:")
+                    || !self
+                        .discovery
+                        .replica
+                        .document
+                        .records
+                        .get(&key)
+                        .is_some_and(|record| {
+                            matches!(record.value, Some(crate::discovery::Value::Mix { .. }))
+                        })
+                {
+                    return;
+                }
+                match self.discovery.replica.edit(key, None) {
+                    Ok(()) => {
+                        self.discovery.dirty = true;
+                        self.backend
+                            .send(Command::SaveDiscovery(self.discovery.replica.clone()));
                     }
                     Err(error) => self.discovery.status = error,
                 }
@@ -9868,6 +9892,10 @@ impl App {
         if self.offline || !self.discovery.ready || self.discovery.busy || !self.is_connected() {
             return;
         }
+        let now = Instant::now();
+        if self.discovery.automatic.retry_after(now).is_some() {
+            return;
+        }
         if !automatic && self.discovery.draft != self.discovery.replica.document.taste() {
             let value = crate::discovery::Value::Taste {
                 text: self.discovery.draft.clone(),
@@ -9884,10 +9912,12 @@ impl App {
             self.discovery.editing_taste = true;
             return;
         }
-        if !automatic {
+        if !automatic
+            && self.discovery.last_error == Some(crate::discovery::RecommendationErrorKind::Pairing)
+        {
             self.discovery.automatic.rearm();
         }
-        self.discovery.automatic.attempted(Instant::now());
+        self.discovery.automatic.attempted(now);
         self.discovery.last_error = None;
         self.discovery.request += 1;
         self.discovery.busy = true;
@@ -15971,6 +16001,83 @@ mod tests {
         app.apply(Action::CheckForUpdates, &egui::Context::default());
         assert!(!app.update_checking);
         assert!(app.last_update_check.is_none());
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn manual_refresh_cannot_bypass_an_ai_cooldown() {
+        let mut app = test_app("discovery-manual-cooldown");
+        app.backend.set_offline(true);
+        app.discovery.ready = true;
+        app.auth = AuthStatus::Connected {
+            username: "fixture".into(),
+        };
+        app.discovery
+            .replica
+            .edit(
+                "taste".into(),
+                Some(crate::discovery::Value::Taste {
+                    text: "Jazz".into(),
+                }),
+            )
+            .unwrap();
+        app.discovery.draft = "Jazz".into();
+        let ctx = egui::Context::default();
+        app.apply(Action::DiscoveryRecommend, &ctx);
+        let request = app.discovery.request;
+        app.handle_backend_events(vec![Event::DiscoveryRecommended {
+            request,
+            prompt: "Jazz".into(),
+            result: Err(crate::discovery::RecommendationError {
+                kind: crate::discovery::RecommendationErrorKind::RateLimited,
+                message: "Retry later".into(),
+            }),
+        }]);
+        let before = app.discovery.automatic.retry_after(Instant::now()).unwrap();
+        for _ in 0..3 {
+            app.apply(Action::DiscoveryRecommend, &ctx);
+        }
+        assert_eq!(app.discovery.request, request);
+        assert!(!app.discovery.busy);
+        assert_eq!(app.discovery.status, "Retry later");
+        let after = app.discovery.automatic.retry_after(Instant::now()).unwrap();
+        assert!(after <= before && after > Duration::from_secs(590));
+        app.backend.shutdown();
+    }
+
+    #[test]
+    fn removing_a_mix_is_optimistic_and_a_stale_sync_cannot_restore_it() {
+        let mut app = test_app("discovery-remove-mix");
+        app.backend.set_offline(true);
+        app.discovery.ready = true;
+        app.discovery
+            .replica
+            .edit(
+                "mix:fixture".into(),
+                Some(crate::discovery::Value::Mix {
+                    title: "Mix".into(),
+                    uris: vec![],
+                }),
+            )
+            .unwrap();
+        let remote = app.discovery.replica.document.clone();
+        app.discovery.sync_snapshot = Some(remote.clone());
+        app.apply(
+            Action::DiscoveryRemoveMix("mix:fixture".into()),
+            &egui::Context::default(),
+        );
+        assert!(app.discovery.dirty);
+        assert!(
+            app.discovery.replica.document.records["mix:fixture"]
+                .value
+                .is_none()
+        );
+        app.handle_backend_events(vec![Event::DiscoverySynced(Ok(remote))]);
+        assert!(
+            app.discovery.replica.document.records["mix:fixture"]
+                .value
+                .is_none()
+        );
         app.backend.shutdown();
     }
 

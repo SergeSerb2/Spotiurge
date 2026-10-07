@@ -177,3 +177,13 @@ A synthetic tone, the simulator, or the Spotify app's own audio does not pass.
   the upgrade if silent blocks appear in the counters.
 - No audio cache, normalisation or gapless tuning: the engine uses librespot's
   defaults.
+
+## Sign-in regressions
+
+`probes/ios-playback/test-signin.sh` runs host-only callback and credential
+regressions. It checks every TCP request-line split, malformed/oversized requests,
+replacement failures, and a disposable native Mac Keychain round trip. The
+probe accumulates a complete bounded request line before parsing. Credential
+replacement updates in place and reports its status; a failed write preserves
+the prior item and never records `credential_stored`. This check never accesses
+the iPhone or its real credential.

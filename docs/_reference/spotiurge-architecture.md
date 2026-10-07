@@ -103,6 +103,13 @@ Persist locally before cloud writes. Failures keep the local snapshot,
 cached recommendations and playback usable. Offline metadata access is allowed;
 offline Spotify audio downloads are not a supported feature.
 
+Saved mixes have an explicit removal action with a durable tombstone, so a stale
+replica cannot restore a removed mix. New saves reuse a removed mix slot first,
+or the oldest slot once 100 exist. Imported legacy slots remain readable and
+removable; this does not destructively rewrite their keys. A manual AI refresh
+observes the same retry deadline as automatic refreshes. Only a pairing error
+can be explicitly rearmed before a new attempt.
+
 Feedback storage keeps at most 500 URI records, counting cleared ratings. The
 version-one `feedback:retention` tombstone is a shared logical cutoff. Merges
 remove feedback at or below that stamp, including records from an old offline

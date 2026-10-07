@@ -13,6 +13,8 @@ pub const MAX_PROMPT_BYTES: usize = 4000;
 /// Live AI history entries per document, matching the newest ten the UI shows.
 /// Refreshes reuse the oldest history key once this many keys exist.
 pub const HISTORY_LIMIT: usize = 10;
+/// New saves reuse a deleted slot or the oldest slot once 100 exist.
+pub const MIX_LIMIT: usize = 100;
 /// Keep recent ratings and cleared ratings within the shared storage budget.
 pub const FEEDBACK_LIMIT: usize = 500;
 const FEEDBACK_FLOOR: &str = "feedback:retention";
@@ -109,6 +111,12 @@ pub struct AutoRecommendations {
 }
 
 impl AutoRecommendations {
+    pub fn retry_after(&self, now: std::time::Instant) -> Option<std::time::Duration> {
+        self.retry_at
+            .filter(|retry| *retry > now)
+            .map(|retry| retry - now)
+    }
+
     pub fn changed(&mut self, now: std::time::Instant, exploration: bool) {
         let delay = std::time::Duration::from_millis(if exploration { 1500 } else { 45_000 });
         let mut due = now + delay;
@@ -467,6 +475,33 @@ impl Default for Replica {
 }
 
 impl Replica {
+    /// Reuse slots rather than accumulating a permanent record on every save.
+    /// Existing legacy mixes remain readable and can be removed individually.
+    pub fn save_mix(&mut self, title: String, uris: Vec<String>) -> Result<(), String> {
+        let mixes = self
+            .document
+            .records
+            .iter()
+            .filter(|(key, _)| key.starts_with("mix:"))
+            .collect::<Vec<_>>();
+        let target = mixes
+            .iter()
+            .filter(|(_, record)| record.value.is_none())
+            .min_by_key(|(key, record)| (&record.stamp, *key))
+            .or_else(|| {
+                if mixes.len() >= MIX_LIMIT {
+                    mixes
+                        .iter()
+                        .min_by_key(|(key, record)| (&record.stamp, *key))
+                } else {
+                    None
+                }
+            })
+            .map(|(key, _)| (*key).clone())
+            .unwrap_or_else(|| format!("mix:{:032x}", rand::random::<u128>()));
+        self.edit(target, Some(Value::Mix { title, uris }))
+    }
+
     /// Import a cloud clock before uploading. A new offline rating may be
     /// below its retention floor; distinguish unsent intent from old replicas.
     pub fn merge_for_sync(&mut self, remote: &Document) -> Result<(), String> {
@@ -831,6 +866,80 @@ pub(crate) mod tests {
         scheduler.rearm();
         assert_eq!(scheduler.failures, 0);
         assert!(!scheduler.suspended);
+    }
+
+    #[test]
+    fn manual_cooldown_is_active_until_the_retry_deadline() {
+        let now = std::time::Instant::now();
+        let mut scheduler = AutoRecommendations::default();
+        scheduler.failed(RecommendationErrorKind::RateLimited, now);
+        assert_eq!(
+            scheduler.retry_after(now),
+            Some(std::time::Duration::from_secs(600))
+        );
+        assert!(
+            scheduler
+                .retry_after(now + std::time::Duration::from_secs(599))
+                .is_some()
+        );
+        assert!(
+            scheduler
+                .retry_after(now + std::time::Duration::from_secs(600))
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn repeated_mix_saves_reuse_slots_and_deleted_mixes_do_not_return() {
+        let mut replica = Replica::default();
+        let uri = "spotify:track:0123456789ABCDEFGHIJKL".to_owned();
+        for index in 0..2500 {
+            replica
+                .save_mix(format!("Mix {index}"), vec![uri.clone()])
+                .unwrap();
+        }
+        assert_eq!(replica.document.records.len(), MIX_LIMIT);
+        assert!(
+            replica
+                .document
+                .records
+                .values()
+                .any(|r| matches!(&r.value, Some(Value::Mix { title, .. }) if title == "Mix 2499"))
+        );
+        let key = replica.document.records.keys().next().unwrap().clone();
+        let stale = replica.document.clone();
+        replica.edit(key.clone(), None).unwrap();
+        replica.document.merge(&stale).unwrap();
+        assert!(replica.document.records[&key].value.is_none());
+        replica
+            .save_mix("Replacement".into(), vec![uri.clone()])
+            .unwrap();
+        assert_eq!(replica.document.records.len(), MIX_LIMIT);
+        assert!(
+            matches!(&replica.document.records[&key].value, Some(Value::Mix { title, .. }) if title == "Replacement")
+        );
+        replica
+            .edit(
+                format!("feedback:{uri}"),
+                Some(Value::Feedback {
+                    uri,
+                    title: "Song".into(),
+                    artist: "Artist".into(),
+                    rating: Rating::Love,
+                }),
+            )
+            .unwrap();
+        replica
+            .record_history(
+                "Taste".into(),
+                vec![Suggestion {
+                    title: "Song".into(),
+                    artist: "Artist".into(),
+                    reason: "Fits".into(),
+                }],
+            )
+            .unwrap();
+        replica.document.validate().unwrap();
     }
 
     #[test]

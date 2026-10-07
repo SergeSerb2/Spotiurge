@@ -930,6 +930,7 @@ pub enum Action {
         shuffle: bool,
     },
     DiscoveryPlayMix(String),
+    DiscoveryRemoveMix(String),
     DiscoverySaveTaste,
     DiscoverySync,
     DiscoveryRate {

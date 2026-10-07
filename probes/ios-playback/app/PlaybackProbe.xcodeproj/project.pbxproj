@@ -7,12 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1000000000000000000000D /* SignInSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* SignInSupport.swift */; };
 		A1000000000000000000000A /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000010 /* App.swift */; };
 		A1000000000000000000000B /* Probe.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* Probe.swift */; };
 		A1000000000000000000000C /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* SignIn.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A10000000000000000000016 /* SignInSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInSupport.swift; sourceTree = "<group>"; };
 		A10000000000000000000010 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		A10000000000000000000011 /* Probe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Probe.swift; sourceTree = "<group>"; };
 		A10000000000000000000012 /* SignIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignIn.swift; sourceTree = "<group>"; };
@@ -46,6 +48,7 @@
 				A10000000000000000000010 /* App.swift */,
 				A10000000000000000000011 /* Probe.swift */,
 				A10000000000000000000012 /* SignIn.swift */,
+				A10000000000000000000016 /* SignInSupport.swift */,
 				A10000000000000000000013 /* Info.plist */,
 				A10000000000000000000014 /* Bridging.h */,
 			);
@@ -114,6 +117,7 @@
 				A1000000000000000000000A /* App.swift in Sources */,
 				A1000000000000000000000B /* Probe.swift in Sources */,
 				A1000000000000000000000C /* SignIn.swift in Sources */,
+				A1000000000000000000000D /* SignInSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

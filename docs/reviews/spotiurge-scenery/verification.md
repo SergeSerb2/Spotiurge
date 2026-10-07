@@ -93,3 +93,10 @@ Recommendation quality still needs listening feedback. Catalogue rate limiting
 can leave suggestions unchecked, and unchecked suggestions stay unplayable.
 The app uses only GPT-6 Luna through CLIProxyAPI for recommendations. Spoken DJ,
 production signing, three-platform app acceptance and TestFlight are not complete.
+
+## Final PR findings
+
+The later cooldown, saved-mix and probe sign-in findings were fixed and checked
+separately. See [review-fixes-r3/verification.md](review-fixes-r3/verification.md)
+for the full checks (1003/1026 library tests), host-only credential regressions
+and four matched native UI pairs. These do not change the scenery design.

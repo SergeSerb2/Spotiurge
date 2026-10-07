@@ -88,6 +88,10 @@ retains the newest 500 records, counting cleared ratings. A shared logical cutof
 prevents forgotten ratings from returning from an old offline device. Older
 feedback below that cutoff is discarded; a bounded local pending-stamp map keeps new unsent ratings and clears across restarts, then advances them above the imported cutoff before uploading. Upgrade
 all devices to enforce this bound. Saved mixes and taste remain separate.
+Saved mixes have a remove control. New saves reuse removed slots, then the
+oldest slot once 100 mix slots exist, so repeated saves do not grow storage
+without bound. Imported older mixes remain readable and removable. AI refresh,
+including manual refresh, respects the service's retry cooldown.
 
 Pair each desktop once by launching with `SPOTIURGE_CLOUD_TOKEN` in its process
 environment. Obtain it from the private Railway service through a protected

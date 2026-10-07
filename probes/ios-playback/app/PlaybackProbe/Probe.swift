@@ -1,3 +1,4 @@
+import Security
 import AVFAudio
 import Foundation
 import MediaPlayer
@@ -45,8 +46,13 @@ final class Probe {
             guard let data else { return }
             let blob = Data(bytes: data, count: length)
             DispatchQueue.main.async {
-                CredentialStore.save(blob)
-                Probe.shared.record(["t": "credential_stored", "bytes": blob.count])
+                let status = CredentialStore.save(blob)
+                if status == errSecSuccess {
+                    Probe.shared.record(["t": "credential_stored", "bytes": blob.count])
+                } else {
+                    Probe.shared.record(["t": "credential_store_failed", "status": Int(status)])
+                    Probe.shared.failed("credential_store", "could not protect the reusable credential; the prior credential is preserved")
+                }
             }
         }, nil)
         record(["t": "launch", "probe_start": Int(result), "build": Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"])

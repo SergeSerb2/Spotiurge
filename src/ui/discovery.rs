@@ -163,7 +163,15 @@ fn header(app: &mut App, ui: &mut egui::Ui, can_play: bool) {
                     &gettext(locale, "Finding music…"),
                 );
             } else {
-                let enabled = app.discovery.ready && !offline && app.is_connected();
+                let retry = app
+                    .discovery
+                    .automatic
+                    .retry_after(std::time::Instant::now());
+                if let Some(retry) = retry {
+                    ui.ctx().request_repaint_after(retry);
+                }
+                let enabled =
+                    app.discovery.ready && !offline && app.is_connected() && retry.is_none();
                 ui.add_enabled_ui(enabled, |ui| {
                     if theme::icon_button(
                         ui,
@@ -173,7 +181,11 @@ fn header(app: &mut App, ui: &mut egui::Ui, can_play: bool) {
                         palette.text,
                         &refresh,
                     )
-                    .on_disabled_hover_text(demo_disabled(app))
+                    .on_disabled_hover_text(if retry.is_some() {
+                        app.discovery.status.clone()
+                    } else {
+                        demo_disabled(app).to_owned()
+                    })
                     .clicked()
                     {
                         app.actions.push(Action::DiscoveryRecommend);
@@ -985,21 +997,29 @@ const MIXES_PAGE: usize = 24;
 fn saved_mixes(app: &mut App, ui: &mut egui::Ui) {
     let playable = app.discovery_playback_available();
     let document = &app.discovery.replica.document;
-    if let Some(key) = mix_list(ui, &app.palette, app.locale, playable, document) {
-        app.actions.push(Action::DiscoveryPlayMix(key));
+    if let Some(action) = mix_list(
+        ui,
+        &app.palette,
+        app.locale,
+        playable,
+        app.discovery.ready && !app.offline,
+        document,
+    ) {
+        app.actions.push(action);
     }
 }
 
 /// The newest saved mixes, a page at a time. Thousands can sync here, so
 /// only the shown ones get widgets; "See more" reaches every one of them.
-/// Returns the key of the mix to play.
+/// Returns the action; drawing does not modify the document.
 fn mix_list(
     ui: &mut egui::Ui,
     palette: &Palette,
     locale: Locale,
     playable: bool,
+    editable: bool,
     document: &Document,
-) -> Option<String> {
+) -> Option<Action> {
     let mut mixes: Vec<(&String, &Record, &str, &[String])> = document
         .records
         .iter()
@@ -1041,7 +1061,7 @@ fn mix_list(
                     )
                     .clicked()
                     {
-                        play = Some(key.clone());
+                        play = Some(Action::DiscoveryPlayMix(key.clone()));
                     }
                 });
                 theme::text(ui, title, theme::medium(14.0), palette.text);
@@ -1051,6 +1071,20 @@ fn mix_list(
                     theme::regular(13.0),
                     palette.secondary,
                 );
+                ui.add_enabled_ui(editable, |ui| {
+                    if theme::icon_button(
+                        ui,
+                        Icon::Trash,
+                        14.0,
+                        palette.secondary,
+                        palette.text,
+                        &gettext(locale, "Remove mix"),
+                    )
+                    .clicked()
+                    {
+                        play = Some(Action::DiscoveryRemoveMix(key.clone()));
+                    }
+                });
             });
         });
     }
@@ -1203,7 +1237,7 @@ mod tests {
                     ..Default::default()
                 },
                 |ui| {
-                    mix_list(ui, &palette, Locale::English, true, &document);
+                    mix_list(ui, &palette, Locale::English, true, true, &document);
                 },
             );
             output.textures_delta.clear();
@@ -1220,6 +1254,7 @@ mod tests {
         draw(Vec::new());
         let tree = draw(Vec::new());
         assert_eq!(labelled(&tree, "Play mix").len(), MIXES_SHOWN);
+        assert_eq!(labelled(&tree, "Remove mix").len(), MIXES_SHOWN);
         assert_eq!(labelled(&tree, "Mix 1999").len(), 1, "the newest leads");
         assert!(labelled(&tree, "Mix 1991").is_empty());
         let more = tree

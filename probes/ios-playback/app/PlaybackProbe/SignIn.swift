@@ -79,26 +79,37 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
 
     private func accept(_ connection: NWConnection, state: String, verifier: String) {
         connection.start(queue: .main)
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 16_384) { [weak self] data, _, _, _ in
-            let line = data.flatMap { String(data: $0, encoding: .utf8) }?
-                .split(separator: "\r\n").first.map(String.init) ?? ""
-            let path = line.split(separator: " ").dropFirst().first.map(String.init) ?? ""
-            let items = URLComponents(string: "http://127.0.0.1\(path)")?.queryItems ?? []
-            let code = items.first { $0.name == "code" }?.value
-            let validState = items.first { $0.name == "state" }?.value == state
-            let body = "Spotiurge Probe: you can return to the app."
-            let reply = "HTTP/1.1 200 OK\r\ncontent-type: text/plain\r\ncontent-length: \(body.utf8.count)\r\nconnection: close\r\n\r\n\(body)"
-            connection.send(content: Data(reply.utf8), completion: .contentProcessed { _ in connection.cancel() })
+        read(connection, request: LoopbackRequest(), state: state, verifier: verifier)
+    }
+
+    private func read(_ connection: NWConnection, request: LoopbackRequest, state: String, verifier: String) {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 16_384) { [weak self] data, _, complete, error in
             Task { @MainActor in
-                guard let self, self.finish != nil else { return }
-                guard let code, validState else {
-                    // Favicon or stray requests do not end the flow.
-                    if path.hasPrefix("/login") { self.done(.failure(ProbeError("sign-in was refused or its state did not match"))) }
-                    return
+                guard let self, self.finish != nil, !self.redirected else { connection.cancel(); return }
+                var request = request
+                do {
+                    let line = try request.append(data ?? Data())
+                    guard let line else {
+                        if complete || error != nil { connection.cancel() }
+                        else { self.read(connection, request: request, state: state, verifier: verifier) }
+                        return
+                    }
+                    let redirect = LoopbackRequest.redirect(line, state: state)
+                    let body = "Spotiurge Probe: you can return to the app."
+                    let status = redirect == .stray ? "404 Not Found" : "200 OK"
+                    let reply = "HTTP/1.1 \(status)\r\ncontent-type: text/plain\r\ncontent-length: \(body.utf8.count)\r\nconnection: close\r\n\r\n\(body)"
+                    connection.send(content: Data(reply.utf8), completion: .contentProcessed { _ in connection.cancel() })
+                    switch redirect {
+                    case .stray: return
+                    case .refused: self.done(.failure(ProbeError("sign-in was refused or its state did not match")))
+                    case .code(let code):
+                        self.redirected = true
+                        self.session?.cancel()
+                        self.exchange(code: code, verifier: verifier)
+                    }
+                } catch {
+                    connection.cancel()
                 }
-                self.redirected = true
-                self.session?.cancel()
-                self.exchange(code: code, verifier: verifier)
             }
         }
     }
@@ -144,35 +155,6 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
         var bytes = [UInt8](repeating: 0, count: 48)
         _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
         return Data(bytes).base64URL
-    }
-}
-
-/// The reusable librespot credential, device-only, readable after the first
-/// unlock so a locked phone can reconnect.
-enum CredentialStore {
-    private static let query: [String: Any] = [
-        kSecClass as String: kSecClassGenericPassword,
-        kSecAttrService as String: "com.sergeserbinenko.spotiurge.playbackprobe",
-        kSecAttrAccount as String: "librespot-reusable",
-    ]
-
-    static func load() -> Data? {
-        var query = query
-        query[kSecReturnData as String] = true
-        var item: CFTypeRef?
-        return SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess ? item as? Data : nil
-    }
-
-    static func save(_ data: Data) {
-        SecItemDelete(query as CFDictionary)
-        var item = query
-        item[kSecValueData as String] = data
-        item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        SecItemAdd(item as CFDictionary, nil)
-    }
-
-    static func delete() {
-        SecItemDelete(query as CFDictionary)
     }
 }
 
