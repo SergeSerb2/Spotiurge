@@ -14,12 +14,13 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
     static let clientID = "65b708073fc0480ea92a077233ca87bd"
     static let redirect = "http://127.0.0.1:8898/login"
 
-    private var listener: NWListener?
+    private let listener = LoopbackSignInListener()
     private var session: ASWebAuthenticationSession?
     private var finish: ((Result<String, Error>) -> Void)?
     private var exchangeTask: Task<Void, Never>?
     /// Set once the redirect arrived, so closing the sheet is not a failure.
     private var redirected = false
+    private var activeState: String?
     private let anchor: ASPresentationAnchor
 
     init(anchor: ASPresentationAnchor) {
@@ -39,23 +40,21 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
         catch { done(.failure(error)); return }
         let challenge = Data(SHA256.hash(data: Data(verifier.utf8))).base64URL
         let state = UUID().uuidString
+        activeState = state
         redirected = false
 
-        do {
-            let parameters = NWParameters.tcp
-            parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: 8898)
-            parameters.allowLocalEndpointReuse = true
-            let listener = try NWListener(using: parameters)
-            listener.newConnectionHandler = { [weak self] connection in
-                Task { @MainActor in self?.accept(connection, state: state, verifier: verifier) }
-            }
-            listener.start(queue: .main)
-            self.listener = listener
-        } catch {
-            done(.failure(error))
-            return
-        }
+        listener.start(port: 8898, onReady: { [weak self] in
+            self?.openBrowser(state: state, challenge: challenge)
+        }, onConnection: { [weak self] connection in
+            guard let self else { connection.cancel(); return }
+            self.accept(connection, state: state, verifier: verifier)
+        }, onFailure: { [weak self] in
+            self?.done(.failure(ProbeError("Could not open the sign-in port. Close another sign-in and try again.")))
+        })
+    }
 
+    private func openBrowser(state: String, challenge: String) {
+        guard finish != nil, activeState == state else { return }
         var components = URLComponents(string: "https://accounts.spotify.com/authorize")!
         components.queryItems = [
             .init(name: "client_id", value: Self.clientID),
@@ -72,7 +71,7 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
         let session = ASWebAuthenticationSession(url: components.url!, callbackURLScheme: "spotiurge-probe") {
             [weak self] _, error in
             Task { @MainActor in
-                guard let self, let error, self.finish != nil, !self.redirected else { return }
+                guard let self, let error, self.finish != nil, self.activeState == state, !self.redirected else { return }
                 self.done(.failure(error))
             }
         }
@@ -82,6 +81,7 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
     }
 
     private func accept(_ connection: NWConnection, state: String, verifier: String) {
+        guard finish != nil, activeState == state, !redirected else { connection.cancel(); return }
         connection.start(queue: .main)
         read(connection, request: LoopbackRequest(), state: state, verifier: verifier)
     }
@@ -89,7 +89,7 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
     private func read(_ connection: NWConnection, request: LoopbackRequest, state: String, verifier: String) {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 16_384) { [weak self] data, _, complete, error in
             Task { @MainActor in
-                guard let self, self.finish != nil, !self.redirected else { connection.cancel(); return }
+                guard let self, self.finish != nil, self.activeState == state, !self.redirected else { connection.cancel(); return }
                 var request = request
                 do {
                     let line = try request.append(data ?? Data())
@@ -157,8 +157,8 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
     /// queued browser or token-exchange results cannot reconnect afterwards.
     func cancel() {
         finish = nil
-        listener?.cancel()
-        listener = nil
+        activeState = nil
+        listener.cancel()
         session?.cancel()
         session = nil
         exchangeTask?.cancel()

@@ -1,10 +1,12 @@
 import Foundation
+import Network
 import Security
 
 @main
 struct SignInSupportTests {
     @MainActor
-    static func main() throws {
+    static func main() async throws {
+        try await listenerReadiness()
         let began = Date(timeIntervalSince1970: 1_000)
         var playback = PlaybackStatus()
         playback.receive("connected", at: began)
@@ -144,6 +146,55 @@ struct SignInSupportTests {
         if gate.accepts(current) { _ = CredentialStore.save(new, query: query) }
         precondition(SecItemCopyMatching(read as CFDictionary, &value) == errSecItemNotFound)
         precondition(CredentialStore.delete(query: query, remove: { _ in errSecInteractionNotAllowed }) == errSecInteractionNotAllowed)
-        print("PASS: reconnect/terminal-error state and idle deadline, secure verifier failure, stale callback revocation, fresh stopped audio graph, interruption intent, fragmented callback, bounds, failure preservation, and disposable native Keychain round trip")
+        print("PASS: real loopback readiness/occupied-port/canceled-replacement checks, reconnect/terminal-error state and idle deadline, secure verifier failure, stale callback revocation, fresh stopped audio graph, interruption intent, fragmented callback, bounds, failure preservation, and disposable native Keychain round trip")
+    }
+
+    @MainActor
+    private static func listenerReadiness() async throws {
+        let bound = LoopbackSignInListener()
+        defer { bound.cancel() }
+        var opened = 0, accepted = 0, failures = 0
+        bound.start(port: 0, onReady: { opened += 1 }, onConnection: {
+            accepted += 1
+            $0.cancel()
+        }, onFailure: { failures += 1 })
+        precondition(opened == 0, "Authentication opened before asynchronous listener readiness")
+        try await waitUntil { opened + failures > 0 }
+        precondition(opened == 1 && failures == 0)
+        let port = bound.port!
+        precondition(port != 0)
+        let client = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: port)!, using: .tcp)
+        defer { client.cancel() }
+        client.start(queue: .main)
+        try await waitUntil { accepted == 1 }
+
+        let occupied = LoopbackSignInListener()
+        defer { occupied.cancel() }
+        var secondOpened = 0, secondFailed = 0
+        occupied.start(port: port, onReady: { secondOpened += 1 }, onConnection: { $0.cancel() },
+                       onFailure: { secondFailed += 1 })
+        try await waitUntil { secondOpened + secondFailed > 0 }
+        precondition(secondOpened == 0 && secondFailed == 1 && occupied.port == nil)
+
+        let replacement = LoopbackSignInListener()
+        defer { replacement.cancel() }
+        var stale = 0, replacementOpened = 0, replacementFailed = 0
+        replacement.start(port: 0, onReady: { stale += 1 }, onConnection: { $0.cancel() }, onFailure: { stale += 1 })
+        replacement.cancel()
+        replacement.start(port: 0, onReady: { replacementOpened += 1 }, onConnection: { $0.cancel() },
+                          onFailure: { replacementFailed += 1 })
+        try await waitUntil { replacementOpened + replacementFailed > 0 }
+        try await Task.sleep(for: .milliseconds(100))
+        precondition(stale == 0 && replacementOpened == 1 && replacementFailed == 0)
+        precondition(opened == 1 && secondFailed == 1)
+    }
+
+    @MainActor
+    private static func waitUntil(_ condition: () -> Bool) async throws {
+        let end = ContinuousClock.now + .seconds(3)
+        while !condition() {
+            precondition(ContinuousClock.now < end, "Loopback regression timed out")
+            try await Task.sleep(for: .milliseconds(10))
+        }
     }
 }

@@ -39,6 +39,14 @@ Remote/SDK controller and must never be replaced by one.
 - `build.sh`: builds the engine, then the signed app. All output goes to
   `target/ios-probe/` in the checkout.
 
+Current source opens the system sign-in sheet only after the loopback listener
+reports ready. Asynchronous listener failures or waiting states close that
+attempt with a retryable sign-in-port error. Canceled or replaced listeners
+cannot open a sheet or complete a later attempt; browser and request callbacks
+also belong to their exact sign-in state. Host regressions use ephemeral local
+ports, including an occupied-port test, without opening Spotify. These source
+fixes have not been installed or tested on the physical phone.
+
 ## Why webpki roots instead of the desktop's native roots
 
 `rustls-native-certs` 0.8 only reads the system trust store on macOS and
