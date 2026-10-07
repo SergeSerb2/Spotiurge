@@ -17,8 +17,15 @@ final class Probe {
     private var engine: AVAudioEngine { audio.engine }
     private var engineObserver: NSObjectProtocol?
     private var awaitingPlaybackRequest = false
-    private(set) var connected = false
-    private(set) var playing = false
+    private var playback = PlaybackStatus()
+    private(set) var connected: Bool {
+        get { playback.connected }
+        set { playback.connected = newValue }
+    }
+    private(set) var playing: Bool {
+        get { playback.playing }
+        set { playback.playing = newValue }
+    }
     private(set) var track = ""
     private(set) var positionMs: UInt32 = 0
     /// The latest failure, shown on screen so a silent failure is visible.
@@ -28,7 +35,7 @@ final class Probe {
     private var autoplayed = false
     private var wasBackgrounded = false
     /// When playback last stopped; the output stops after five idle minutes.
-    private var idleSince: Date?
+    private var idleSince: Date? { playback.idleSince }
     private var interruptionPlayback = InterruptionPlayback()
     var onChange: (() -> Void)?
 
@@ -101,6 +108,8 @@ final class Probe {
     private func connect(kind: UInt32, _ data: Data) {
         Self.credentialCallbacks.revoke()
         probe_disconnect()
+        playback.receive("reconnecting", at: Date())
+        interruptionPlayback = InterruptionPlayback()
         Self.credentialCallbacks.begin()
         let result = data.withUnsafeBytes { probe_connect(kind, $0.bindMemory(to: UInt8.self).baseAddress, data.count) }
         record(["t": "connect_requested", "kind": kind == 0 ? "fresh_sign_in" : "stored_credential", "result": Int(result)])
@@ -279,9 +288,13 @@ final class Probe {
               var event = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
               let type = event["t"] as? String
         else { return }
+        if type != "playing" || !awaitingPlaybackRequest {
+            if playback.receive(type, stage: event["stage"] as? String, at: Date()) {
+                interruptionPlayback = InterruptionPlayback()
+            }
+        }
         switch type {
         case "connected":
-            connected = true
             lastError = ""
             // `devicectl ... process launch ... -autoplay <uri>` starts playback
             // over the cable, so diagnosis does not need taps on the phone.
@@ -291,10 +304,8 @@ final class Probe {
                 let uri = arguments[index + 1]
                 record(["t": "load_requested", "uri": uri, "result": Int(probe_load(uri)), "via": "launch_argument"])
             }
-        case "session_ended":
-            connected = false
-            playing = false
-            idleSince = idleSince ?? Date()
+        case "session_ended", "reconnecting", "reconnect_failed":
+            break
         case "track":
             track = "\(event["name"] as? String ?? "") — \(event["artists"] as? String ?? "")"
             durationMs = event["duration_ms"] as? UInt32 ?? 0
@@ -304,13 +315,9 @@ final class Probe {
                 probe_flush()
                 break
             }
-            idleSince = nil
-            playing = true
             positionMs = event["position_ms"] as? UInt32 ?? positionMs
             activateAndRun(reason: "playing")
         case "paused", "stopped":
-            idleSince = idleSince ?? Date()
-            playing = false
             positionMs = event["position_ms"] as? UInt32 ?? positionMs
         case "position", "seeked":
             positionMs = event["position_ms"] as? UInt32 ?? positionMs
@@ -369,7 +376,7 @@ final class Probe {
         return """
         \(connected ? "Connected to Spotify" : "Not connected")  ·  \(playing ? "playing" : "idle")
         \(track.isEmpty ? "No track" : track)
-        position \(positionMs / 1000)s · decoded audio heard \(Int(seconds))s · RMS \(String(format: "%.4f", stats.last_rms))
+        position \(positionMs / 1000)s · rendered audio \(Int(seconds))s · RMS \(String(format: "%.4f", stats.last_rms))
         route \(outputs().joined(separator: ", ")) · engine \(engine.isRunning ? "running" : "stopped")
         \(lastError.isEmpty ? "" : "Last error: \(lastError)")
         """

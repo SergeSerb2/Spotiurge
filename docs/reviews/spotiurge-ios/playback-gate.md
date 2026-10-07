@@ -9,10 +9,10 @@ does not select a production iOS architecture.
 **Gate status: NOT PASSED (partial). Device testing is stopped at Serge's
 request.**
 
-- **Passed: locked background playback.** Build 8 played for more than 17
-  continuous minutes while locked. That run had 4 natural track changes, the
-  Spotify app was not running, and one Spotify session drop was recovered
-  automatically.
+- **Passed: locked background playback.** Build 8 decoded and rendered audio
+  across a continuously locked 17 min 22 s window, with 4 natural track changes
+  and the Spotify app absent. It recovered one Spotify session drop, with
+  1.36 s of silent rendering during recovery; audio was not uninterrupted.
 - **Still required:**
   - a deliberate interruption and resume,
   - a deliberate route change,

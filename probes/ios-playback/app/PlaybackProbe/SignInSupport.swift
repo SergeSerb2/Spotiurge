@@ -1,6 +1,43 @@
 import Foundation
 import Security
 
+/// Live engine status, separate from the queue/position retained for recovery.
+/// Repeated reconnect failures keep the first idle time, so output still stops
+/// after the existing five-minute idle window if recovery never succeeds.
+struct PlaybackStatus {
+    var connected = false
+    var playing = false
+    var idleSince: Date?
+
+    /// Returns true when this event invalidates the current connection.
+    @discardableResult
+    mutating func receive(_ type: String, stage: String? = nil, at now: Date) -> Bool {
+        switch type {
+        case "session_ended", "reconnecting", "reconnect_failed":
+            break
+        case "error" where stage == "connect":
+            break
+        case "connected":
+            connected = true
+            return false
+        case "playing":
+            playing = true
+            idleSince = nil
+            return false
+        case "paused", "stopped":
+            playing = false
+            idleSince = idleSince ?? now
+            return false
+        default:
+            return false
+        }
+        connected = false
+        playing = false
+        idleSince = idleSince ?? now
+        return true
+    }
+}
+
 /// C callbacks copy data on runtime threads, then deliver it on the main actor.
 /// A ticket binds that delivery to one connection, including across Forget
 /// followed immediately by a new sign-in. All shared state is under this lock.

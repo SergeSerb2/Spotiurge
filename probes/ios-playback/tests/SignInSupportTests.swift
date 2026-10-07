@@ -5,6 +5,41 @@ import Security
 struct SignInSupportTests {
     @MainActor
     static func main() throws {
+        let began = Date(timeIntervalSince1970: 1_000)
+        var playback = PlaybackStatus()
+        playback.receive("connected", at: began)
+        playback.receive("playing", at: began)
+        precondition(playback.connected && playback.playing && playback.idleSince == nil)
+        // A command failure does not invalidate an otherwise live session.
+        playback.receive("error", stage: "command", at: began)
+        precondition(playback.connected && playback.playing)
+        let dropped = began.addingTimeInterval(30)
+        playback.receive("reconnecting", at: dropped)
+        precondition(!playback.connected && !playback.playing && playback.idleSince == dropped)
+        for delay in [1.0, 3.0, 7.0, 15.0, 31.0, 63.0] {
+            playback.receive("reconnect_failed", at: dropped.addingTimeInterval(delay))
+            precondition(!playback.connected && !playback.playing && playback.idleSince == dropped)
+        }
+        playback.receive("error", stage: "connect", at: dropped.addingTimeInterval(64))
+        precondition(!playback.connected && !playback.playing && playback.idleSince == dropped)
+        let recovered = dropped.addingTimeInterval(65)
+        playback.receive("connected", at: recovered)
+        precondition(playback.connected && !playback.playing && playback.idleSince == dropped)
+        playback.receive("playing", at: recovered)
+        precondition(playback.connected && playback.playing && playback.idleSince == nil)
+        playback.receive("error", stage: "connect", at: recovered.addingTimeInterval(1))
+        precondition(!playback.connected && !playback.playing)
+        // Paused sessions remain connected; idle time resets only on playback.
+        playback.receive("connected", at: recovered)
+        playback.receive("playing", at: recovered)
+        playback.receive("paused", at: recovered)
+        precondition(playback.connected && !playback.playing && playback.idleSince == recovered)
+        playback.receive("session_ended", at: recovered.addingTimeInterval(2))
+        precondition(!playback.connected && !playback.playing && playback.idleSince == recovered)
+        playback.receive("connected", at: recovered)
+        playback.receive("playing", at: recovered)
+        playback.receive("reconnect_failed", at: recovered)
+        precondition(!playback.connected && !playback.playing && playback.idleSince == recovered)
         do {
             _ = try SecureVerifier.make(fill: { bytes in
                 bytes = [UInt8](repeating: 7, count: bytes.count)
@@ -109,6 +144,6 @@ struct SignInSupportTests {
         if gate.accepts(current) { _ = CredentialStore.save(new, query: query) }
         precondition(SecItemCopyMatching(read as CFDictionary, &value) == errSecItemNotFound)
         precondition(CredentialStore.delete(query: query, remove: { _ in errSecInteractionNotAllowed }) == errSecInteractionNotAllowed)
-        print("PASS: secure verifier failure, stale callback revocation, fresh stopped audio graph, interruption intent, fragmented callback, bounds, failure preservation, and disposable native Keychain round trip")
+        print("PASS: reconnect/terminal-error state and idle deadline, secure verifier failure, stale callback revocation, fresh stopped audio graph, interruption intent, fragmented callback, bounds, failure preservation, and disposable native Keychain round trip")
     }
 }
