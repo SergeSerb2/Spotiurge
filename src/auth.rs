@@ -462,9 +462,9 @@ main{{max-width:28rem;padding:2.5rem;border-radius:1.25rem;background:#181b20;bo
 
 fn success_page() -> String {
     page(
-        "Signed in to Spotifast",
+        "Signed in to Spotiurge",
         "You're signed in",
-        "You can close this tab and go back to Spotifast.",
+        "You can close this tab and go back to Spotiurge.",
         "#1ed760",
     )
 }
@@ -473,13 +473,25 @@ fn failure_page(reason: &str) -> String {
     page(
         "Sign-in failed",
         "Sign-in didn't complete",
-        &format!("{reason}. Return to Spotifast and try again."),
+        &format!("{reason}. Return to Spotiurge and try again."),
         "#f5717f",
     )
 }
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn browser_completion_pages_identify_the_fork() {
+        let success = super::success_page();
+        assert!(success.contains("<title>Signed in to Spotiurge</title>"));
+        assert!(success.contains("go back to Spotiurge."));
+        let failure = super::failure_page("Sign-in was cancelled");
+        assert!(failure.contains("Return to Spotiurge and try again."));
+        for html in [success, failure] {
+            assert!(!html.contains("Spotifast"));
+        }
+    }
+
     #[test]
     fn token_errors_never_include_authorization_response_contents() {
         for (status, body) in [

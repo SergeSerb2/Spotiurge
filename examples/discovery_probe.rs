@@ -1,7 +1,19 @@
 //! Diagnostic for the same native credential, merge and HTTP paths as the UI.
 //! Pair via environment once; the token is never printed or written to JSON.
 
-use spotifast::discovery::{Replica, Value};
+use std::path::Path;
+
+use spotifast::discovery::{Document, Replica, Value};
+
+fn save_synced(
+    replica: &mut Replica,
+    remote: &Document,
+    snapshot: &Document,
+    path: &Path,
+) -> Result<(), String> {
+    replica.merge_synced(remote, Some(snapshot))?;
+    replica.save(path)
+}
 
 fn main() -> Result<(), String> {
     // SAFETY: consume pairing input before the runtime starts any worker.
@@ -46,17 +58,69 @@ async fn run() -> Result<(), String> {
         .await
         .map_err(|error| format!("Cloud health request failed: {:?}", error.without_url()))?;
     println!("cloud_health={}", health.status().as_u16());
+    let snapshot = replica.document.clone();
     let remote = spotifast::discovery_cloud::sync(
         &client,
         &spotifast::discovery_cloud::endpoint(),
         replica.clone(),
     )
     .await?;
-    replica.document.merge(&remote)?;
-    replica.save(&path)?;
+    save_synced(&mut replica, &remote, &snapshot, &path)?;
     println!(
         "{}",
         serde_json::json!({"device":replica.device, "keys":replica.document.records.keys().collect::<Vec<_>>(), "synced":true})
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use spotifast::discovery::{Rating, Record, Stamp};
+
+    #[test]
+    fn synced_rating_below_remote_floor_reopens_with_acknowledged_stamp() {
+        let mut local = Replica::default();
+        let uri = "spotify:track:0123456789ABCDEFGHIJKL";
+        let key = format!("feedback:{uri}");
+        local
+            .edit(
+                key.clone(),
+                Some(Value::Feedback {
+                    uri: uri.into(),
+                    title: "Song".into(),
+                    artist: "Artist".into(),
+                    rating: Rating::Love,
+                }),
+            )
+            .unwrap();
+        let snapshot = local.document.clone();
+        let mut remote = Document::default();
+        remote.records.insert(
+            "feedback:retention".into(),
+            Record {
+                stamp: Stamp {
+                    counter: 100,
+                    device: "b".repeat(32),
+                },
+                value: None,
+            },
+        );
+        // Reproduce the HTTP sync path's cloned upload, with a fresh rating
+        // re-stamped above another installation's retention floor.
+        let mut uploaded = local.clone();
+        uploaded.merge_for_sync(&remote).unwrap();
+        assert_eq!(uploaded.document.records[&key].stamp.counter, 101);
+        let path = Path::new("target").join(format!(
+            "discovery-probe-sync-{:032x}.json",
+            rand::random::<u128>()
+        ));
+        save_synced(&mut local, &uploaded.document, &snapshot, &path).unwrap();
+        let reopened = Replica::load(&path);
+        std::fs::remove_file(&path).unwrap();
+        let reopened = reopened.unwrap();
+        assert_eq!(reopened.document, uploaded.document);
+        assert!(reopened.pending_feedback.is_empty());
+        assert_eq!(reopened.document.rating(uri), Some(Rating::Love));
+    }
 }

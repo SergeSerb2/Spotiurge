@@ -104,3 +104,8 @@ and four matched native UI pairs. These do not change the scenery design.
 The subsequent [restart/catalogue/probe review fixes](review-fixes-r4.md) passed
 the full checks with 1004/1027 library tests. They preserve the same appearance
 and add no physical-device coverage.
+
+The later [diagnostic and sign-in identity fixes](review-fixes-r5.md) add an
+actual-file reopen regression and correct the browser-visible fork name.
+That record also distinguishes the r7 package's restored state from its failed
+live catalogue retry, without claiming new playback or listening-quality proof.
