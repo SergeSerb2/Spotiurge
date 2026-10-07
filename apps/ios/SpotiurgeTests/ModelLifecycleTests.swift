@@ -351,6 +351,30 @@ struct ModelLifecycle {
         #expect(secrets.value(Keychain.playback) == Data("fresh credential".utf8))
     }
 
+    @Test func `reconnecting clears playback until connected and playing return`() {
+        let player = Player(secrets: FakeSecrets().store)
+        player.receiveEngineEvent(#"{"t":"connected"}"#)
+        player.receiveEngineEvent(#"{"t":"playing","position_ms":1000}"#)
+        #expect(player.engine == .ready && player.playing)
+        player.receiveEngineEvent(#"{"t":"error","stage":"command"}"#)
+        #expect(player.engine == .ready && player.playing)
+        player.receiveEngineEvent(#"{"t":"reconnecting"}"#)
+        #expect(player.engine == .connecting && !player.playing)
+        #expect(player.unavailableReason != nil)
+        for _ in 0..<6 {
+            player.receiveEngineEvent(#"{"t":"reconnect_failed"}"#)
+            #expect(player.engine == .connecting && !player.playing)
+        }
+        player.receiveEngineEvent(#"{"t":"error","stage":"connect"}"#)
+        if case .failed = player.engine {} else { Issue.record("Terminal failure did not end the connecting state") }
+        #expect(!player.playing)
+        player.receiveEngineEvent(#"{"t":"connected"}"#)
+        #expect(player.engine == .ready && !player.playing && player.notice == nil)
+        player.receiveEngineEvent(#"{"t":"playing","position_ms":1500}"#)
+        #expect(player.engine == .ready && player.playing)
+        #expect(player.position.ms == 1500)
+    }
+
     @Test func `leaving demo retries a Spotify restore refused by the locked Keychain`() async {
         StubNetwork.reset(["GET /v1/me": me, "GET /v1/me/tracks": emptyTracks, "GET /v1/me/playlists": emptyPlaylists])
         let secrets = FakeSecrets([Keychain.webRefresh: grant])

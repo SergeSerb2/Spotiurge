@@ -114,3 +114,14 @@ The unsigned generic-device build without the engine and iPhoneOS source
 typechecking with `SPOTIURGE_ENGINE` enabled pass. No engine linking, browser
 OAuth or audible playback is claimed by those checks. The physical phone
 remained untouched, and the approved scenery appearance is preserved.
+
+The next status correction clears active playback while the engine reconnects
+or reports a terminal connection error. A fresh connection does not itself
+claim resumed playback. All 18 hosted Simulator model tests pass through the
+actual event handler without audio; the core source remains unchanged from
+the prior 45-test run. Unsigned no-engine generic iPhoneOS compilation and
+engine-enabled source typechecking pass. The physical phone was not accessed.
+The first test command stalled in Xcode's post-test Simulator diagnostic
+collection after reporting all tests passed. Only that owned command was
+canceled. Repeating the same 18 tests with `-collect-test-diagnostics never`
+completed successfully and produced a readable result bundle with no failures.

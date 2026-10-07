@@ -252,3 +252,10 @@ credential/event callbacks even after a new sign-in. This follow-up passes
 generic iPhoneOS build without the engine, and iPhoneOS typechecking of all
 Swift sources with `SPOTIURGE_ENGINE` enabled. The latter checks the bridge
 source; it does not link or run a production engine. No phone was accessed.
+
+Reconnect status now clears active playback on connection loss, failed retries
+and terminal connection errors, and resumes only on fresh engine events. The
+actual event handler passes a scripted hosted model regression; all 18 hosted
+Simulator tests pass without audio. The unsigned no-engine iPhoneOS build and
+engine-enabled source typecheck also pass. The Swift core is unchanged from
+the prior 45-test run. No new device playback is claimed.

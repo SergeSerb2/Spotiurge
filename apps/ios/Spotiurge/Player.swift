@@ -170,7 +170,7 @@ final class Player {
             let line = String(cString: json)
             DispatchQueue.main.async { MainActor.assumeIsolated {
                 guard Player.credentialCallbacks.accepts(ticket) else { return }
-                Player.shared.event(line)
+                Player.shared.receiveEngineEvent(line)
             } }
         }, { data, length, _ in
             guard let data, let ticket = Player.credentialCallbacks.ticket() else { return }
@@ -258,26 +258,8 @@ final class Player {
         }
     }
 
-    #if SPOTIURGE_ENGINE
-    private func connect(kind: UInt32, _ data: Data) {
-        Self.credentialCallbacks.revoke()
-        probe_disconnect()
-        Self.credentialCallbacks.begin()
-        engine = .connecting
-        let result = data.withUnsafeBytes { probe_connect(kind, $0.bindMemory(to: UInt8.self).baseAddress, data.count) }
-        if result != 0 { engine = .failed("The playback engine refused the credential.") }
-    }
-
-    private func load(_ uri: String) {
-        if probe_load(uri) != 0 { notice = "Playback on this iPhone is not connected yet." }
-    }
-
-    private func command(_ command: UInt32) {
-        if engine == .ready { _ = probe_command(command) }
-    }
-
-    private func event(_ line: String) {
-        guard let data = line.data(using: .utf8),
+    func receiveEngineEvent(_ line: String) {
+        guard !demo, let data = line.data(using: .utf8),
               let event = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
               let type = event["t"] as? String
         else { return }
@@ -285,6 +267,13 @@ final class Player {
         switch type {
         case "connected":
             engine = .ready
+            notice = nil
+        case "reconnecting", "reconnect_failed":
+            engine = .connecting
+            setPlaying(false, at: positionMs(at: .now))
+            idleSince = idleSince ?? .now
+            resumeAfterInterruption = false
+            notice = "Reconnecting playback on this iPhone…"
         case "session_ended":
             switch Result(catching: { () throws(KeychainError) in try secrets.read(Keychain.playback) }) {
             case .success(nil): engine = .needsSignIn
@@ -301,7 +290,9 @@ final class Player {
         case "playing":
             idleSince = nil
             setPlaying(true, at: ms ?? position.ms)
+            #if SPOTIURGE_ENGINE
             activateAudio()
+            #endif
         case "paused", "stopped":
             idleSince = idleSince ?? .now
             setPlaying(false, at: ms ?? position.ms)
@@ -313,7 +304,11 @@ final class Player {
             // Engine messages carry no secrets, but they are terse; keep the
             // user-facing line plain and actionable.
             if event["stage"] as? String == "connect" {
-                engine = .failed("Spotify refused playback sign-in on this iPhone. The development engine still announces the stock librespot iPhone identity; see Settings.")
+                engine = .failed("Playback on this iPhone could not connect. Check your connection or sign in again; the stock development identity may also be refused.")
+                setPlaying(false, at: positionMs(at: .now))
+                idleSince = idleSince ?? .now
+                resumeAfterInterruption = false
+                notice = nil
             } else {
                 notice = "The playback engine reported an error."
             }
@@ -321,6 +316,24 @@ final class Player {
             return
         }
         updateNowPlayingInfo()
+    }
+
+    #if SPOTIURGE_ENGINE
+    private func connect(kind: UInt32, _ data: Data) {
+        Self.credentialCallbacks.revoke()
+        probe_disconnect()
+        Self.credentialCallbacks.begin()
+        engine = .connecting
+        let result = data.withUnsafeBytes { probe_connect(kind, $0.bindMemory(to: UInt8.self).baseAddress, data.count) }
+        if result != 0 { engine = .failed("The playback engine refused the credential.") }
+    }
+
+    private func load(_ uri: String) {
+        if probe_load(uri) != 0 { notice = "Playback on this iPhone is not connected yet." }
+    }
+
+    private func command(_ command: UInt32) {
+        if engine == .ready { _ = probe_command(command) }
     }
 
     private func configureAudio() {
