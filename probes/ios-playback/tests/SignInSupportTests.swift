@@ -1,6 +1,7 @@
 import Foundation
 import Network
 import Security
+import Darwin
 
 @main
 struct SignInSupportTests {
@@ -155,7 +156,7 @@ struct SignInSupportTests {
         if gate.accepts(current) { _ = CredentialStore.save(new, query: query) }
         precondition(SecItemCopyMatching(read as CFDictionary, &value) == errSecItemNotFound)
         precondition(CredentialStore.delete(query: query, remove: { _ in errSecInteractionNotAllowed }) == errSecInteractionNotAllowed)
-        print("PASS: real loopback readiness/occupied-port/canceled-replacement checks, reconnect/terminal-error state and idle deadline, secure verifier failure, stale callback revocation, fresh stopped audio graph, interruption intent, fragmented callback, bounds, failure preservation, and disposable native Keychain round trip")
+        print("PASS: real loopback readiness/exclusive-bind/occupied-port/canceled-replacement checks, reconnect/terminal-error state and idle deadline, secure verifier failure, stale callback revocation, fresh stopped audio graph, interruption intent, fragmented callback, bounds, failure preservation, and disposable native Keychain round trip")
     }
 
     @MainActor
@@ -184,6 +185,35 @@ struct SignInSupportTests {
                        onFailure: { secondFailed += 1 })
         try await waitUntil { secondOpened + secondFailed > 0 }
         precondition(secondOpened == 0 && secondFailed == 1 && occupied.port == nil)
+
+        // A competing process may deliberately opt into SO_REUSEPORT. Our
+        // OAuth listener must still refuse to share its callback socket.
+        let socket = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+        precondition(socket >= 0)
+        defer { Darwin.close(socket) }
+        var reuse: Int32 = 1
+        precondition(setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &reuse, socklen_t(MemoryLayout.size(ofValue: reuse))) == 0)
+        precondition(setsockopt(socket, SOL_SOCKET, SO_REUSEPORT, &reuse, socklen_t(MemoryLayout.size(ofValue: reuse))) == 0)
+        var address = sockaddr_in()
+        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        address.sin_family = sa_family_t(AF_INET)
+        address.sin_addr.s_addr = inet_addr("127.0.0.1")
+        var length = socklen_t(MemoryLayout.size(ofValue: address))
+        let boundSocket = withUnsafeMutablePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.bind(socket, $0, length) }
+        }
+        precondition(boundSocket == 0 && Darwin.listen(socket, 1) == 0)
+        precondition(withUnsafeMutablePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { getsockname(socket, $0, &length) }
+        } == 0)
+        let exclusive = LoopbackSignInListener()
+        defer { exclusive.cancel() }
+        var sharedOpened = 0, sharedFailed = 0
+        exclusive.start(port: UInt16(bigEndian: address.sin_port), onReady: { sharedOpened += 1 },
+                        onConnection: { $0.cancel() }, onFailure: { sharedFailed += 1 })
+        try await waitUntil { sharedOpened + sharedFailed > 0 }
+        precondition(sharedOpened == 0 && sharedFailed == 1 && exclusive.port == nil,
+                     "OAuth callback listener shared another process's reusable socket")
 
         let replacement = LoopbackSignInListener()
         defer { replacement.cancel() }

@@ -130,10 +130,12 @@ and never enters the cloud document or AI prompts.
 
 Recommendation generations are invalidated by saved taste, feedback, exploration
 changes or imported taste/feedback. The superseded request retains its worker
-slot until completion, then its content and input-specific errors are discarded
-without replacing cached picks, refresh time or AI history. Request-wide busy,
-rate-limit and pairing failures still install and persist the retry deadline or
-automatic suspension. Duplicate old completions cannot throttle newer work.
+slot until completion, then its successful content is discarded without
+replacing cached picks, refresh time or AI history. Every completed active
+failure still installs and persists its retry deadline or automatic suspension.
+This includes availability and malformed-response failures, which use the normal
+ten-minute initial backoff, as well as busy, rate-limit and pairing failures.
+Duplicate old completions cannot throttle newer work.
 An old completion cannot
 release a newer request's slot. Unfinished taste-editor drafts do not change the
 saved recommendation inputs.

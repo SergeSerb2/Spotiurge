@@ -40,12 +40,14 @@ Remote/SDK controller and must never be replaced by one.
   `target/ios-probe/` in the checkout.
 
 Current source opens the system sign-in sheet only after the loopback listener
-reports ready. Asynchronous listener failures or waiting states close that
-attempt with a retryable sign-in-port error. Canceled or replaced listeners
+reports ready. It binds exclusively, with local endpoint reuse disabled, so a
+competing bind fails before authentication opens, including when the other
+socket opts into address/port reuse. Asynchronous listener failures or waiting
+states close that attempt with a retryable sign-in-port error. Canceled or replaced listeners
 cannot open a sheet or complete a later attempt; browser and request callbacks
 also belong to their exact sign-in state. Host regressions use ephemeral local
-ports, including an occupied-port test, without opening Spotify. These source
-fixes have not been installed or tested on the physical phone.
+ports, including occupied and reusable-socket tests, without opening Spotify.
+These source fixes have not been installed or tested on the physical phone.
 
 A synchronous connection rejection also revokes its callback gate, clears live
 playback status and displays a credential recovery error. No asynchronous

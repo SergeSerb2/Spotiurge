@@ -1934,17 +1934,9 @@ impl App {
                     let completed_active = self.discovery.in_flight_request == Some(request);
                     self.finish_discovery_request(request);
                     if request != self.discovery.request {
-                        // Picks belong to their input generation; service limits
-                        // belong to the completed request even after input changes.
-                        if completed_active
-                            && let Err(error) = result
-                            && matches!(
-                                error.kind,
-                                crate::discovery::RecommendationErrorKind::Busy
-                                    | crate::discovery::RecommendationErrorKind::RateLimited
-                                    | crate::discovery::RecommendationErrorKind::Pairing
-                            )
-                        {
+                        // Picks belong to their input generation; failure backoff
+                        // belongs to the completed request even after input changes.
+                        if completed_active && let Err(error) = result {
                             self.discovery_request_failed(error);
                         }
                         continue;
@@ -16061,10 +16053,27 @@ mod tests {
                 assert!(!app.discovery.busy);
                 assert_eq!(app.discovery.picks, vec![cached.clone()]);
                 assert_eq!(app.discovery.replica.cached_picks, vec![cached]);
-                assert_eq!(app.discovery.status, status);
                 assert!(app.discovery.replica.document.recent_history().is_empty());
                 assert!(app.settings.discovery.refreshed_at.is_none());
-                assert!(app.discovery.last_error.is_none());
+                if success {
+                    assert_eq!(app.discovery.status, status);
+                    assert!(app.discovery.last_error.is_none());
+                } else {
+                    assert_eq!(app.discovery.status, "stale error");
+                    assert_eq!(
+                        app.discovery.last_error,
+                        Some(crate::discovery::RecommendationErrorKind::Unavailable)
+                    );
+                    assert!(
+                        app.discovery.automatic.retry_after(Instant::now()).unwrap()
+                            > Duration::from_secs(590)
+                    );
+                    app.apply(Action::DiscoveryRecommend, &ctx);
+                    assert_eq!(app.discovery.request, generation);
+                    assert!(!app.discovery.busy);
+                    // Make retry eligible for the duplicate-completion check.
+                    app.discovery.automatic.rearm();
+                }
 
                 app.apply(Action::DiscoveryRecommend, &ctx);
                 assert!(app.discovery.busy);
@@ -16163,6 +16172,8 @@ mod tests {
                 RecommendationErrorKind::Busy,
                 RecommendationErrorKind::RateLimited,
                 RecommendationErrorKind::Pairing,
+                RecommendationErrorKind::Unavailable,
+                RecommendationErrorKind::InvalidResponse,
             ] {
                 let mut app = test_app("discovery-superseded-throttle");
                 app.backend.set_offline(true);
