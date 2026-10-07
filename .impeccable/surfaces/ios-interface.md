@@ -9,7 +9,7 @@ related_targets: ["DESIGN.md",".impeccable/surfaces/ios-spotiurge.md",".impeccab
 
 Status: a working native candidate, built on October 6 and 7, 2026, to the
 whole-app visual scope Serge approved. It was built code first, with no
-concept images. Evidence is simulator only:
+concept images. Evidence is Simulator only; the original amber captures are being replaced:
 `docs/reviews/spotiurge-ios/interface-review.html` and
 `interface-captures.json`. The production architecture stays gated by
 `docs/reviews/spotiurge-ios/playback-gate.md`. Physical-phone checks are
@@ -17,36 +17,26 @@ stopped at Serge's request.
 
 ## Contract carried from DESIGN.md
 
-- **Room.**
-  - The room is `room` (#0B0D12 / #E9EBF1).
-  - The key light comes from the cover, from the upper left.
-  - The counter-light is the same colour turned a third of the way round the
-    hue wheel, from the lower right.
-  - With no cover, the key light is lamp amber, so the room reads amber and
-    teal.
-  - Light strength is 0.24 in dark and 0.20 in light.
-  - The room crosses over in 600 ms, immediately with Reduce Motion.
-- **Glass.**
-  - System Liquid Glass (`glassEffect`) carries only controls: the header keys,
-    the exploration track, empty-state panes, the tab bar and the mini-player
-    accessory.
-  - Rows, covers and text sit on the room.
-- **One lamp.** Amber marks primary play discs only:
-  - 44 points on the desk, 36 in the console accessory, 72 in Now Playing;
-  - the selected tab;
-  - on the playing row: a 3-point bar at 46% of the row height, an EQ glyph
-    and the title in lamp text (#FFB547 / #653706).
-
-  DESIGN.md's recorded exceptions also apply: a selected Love, and switches.
-  - The lamp is unlit (desaturated, at 35%) when there is nothing to play.
-  - Everything else is neutral. Content tint is `text`.
+- **Scenery.** One original bundled mountain/lake photograph uses the desktop's
+  centred aspect-fill crop and flat contrast wash. The forest room is
+  #0E1110 / #F4F6F4; image opacity is 0.613402 / 0.53125 and the black/white
+  wash is 0.612 / 0.68. It stays static, with no cover-light request or animation.
+- **Glass.** Native Liquid Glass carries navigation and controls. Content sits
+  directly on the scenery; empty-state content uses a quiet flat plate
+  (#2C3A32 at 85% in dark, white at 68% in light).
+- **Live controls.** Moss (#98D2AC / #27633F) marks primary play, the current
+  tab and playing text/meter. Playing rows have no decorative leading bar.
+  Play controls keep the established 44 / 36 / 72-point sizes. Disabled play
+  uses a neutral surface with readable disabled ink, without a faded accent.
+  Choices remain neutral inverted pills; the selected Love and boolean
+  switches retain the existing recorded behaviour.
 - **Choices.** The exploration fader selects with the neutral inverted pill
   (`text` fill, `room` label). It glides with `matchedGeometryEffect` over
   220 ms with exponential ease-out, plus a selection haptic. At accessibility
   text sizes the three channels stack vertically instead of truncating.
 - **Opaque overlays.**
   - The taste editor and Discovery options sheets use `overlay`
-    (#1C202B / #FFFFFF).
+    (#202A25 / #FFFFFF).
   - Now Playing uses the room.
   - The For you options are a sheet, not a translucent menu.
   - The demo banner and notices are opaque.
@@ -56,8 +46,10 @@ stopped at Serge's request.
   - Every size is relative to a Dynamic Type style.
   - Times use tabular figures.
   - Navigation bar titles use Inter through `UIFontMetrics`.
-- **Mark.** The surge S is drawn from the SVG geometry: two 17-unit arcs,
-  skewed by -6.84 degrees, on the smoked tile with a 27/128 corner radius.
+- **Mark.** A flat mint ridge cut into three meter columns, from the shared
+  SVG geometry. The header uses the bare glyph; the app icon uses the forest
+  tile. The desktop assets are staged at build time, without duplicate sources.
+
 
 ## Phone structure
 

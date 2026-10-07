@@ -29,6 +29,7 @@ if [ -z "$font" ]; then
 fi
 cp "$font" "$here/Spotiurge/InterVariable.ttf"
 cp "$root/assets/brand/png/spotiurge-1024.png" "$here/Spotiurge/Assets.xcassets/AppIcon.appiconset/spotiurge-1024.png"
+cp "$root/assets/scenery/alpine-lake.jpg" "$here/Spotiurge/Assets.xcassets/Scenery.imageset/alpine-lake.jpg"
 
 if [ "$platform" = simulator ]; then
     triple=aarch64-apple-ios-sim

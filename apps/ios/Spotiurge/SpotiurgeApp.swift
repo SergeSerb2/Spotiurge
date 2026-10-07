@@ -1,7 +1,7 @@
 // Spotiurge for iPhone (development). A system tab bar moves between
 // channels (Home, Library, Search, Settings); the floating console above it
 // is the mini-player, and Now Playing opens as a sheet. Content sits on the
-// cover-lit room; glass carries only the controls.
+// static mountain scene; glass carries only the controls.
 
 import SpotiurgeCore
 import SwiftUI
@@ -109,13 +109,12 @@ struct Root: View {
     @State private var tab = AppTab.home
     @State private var query = ""
     @State private var showNowPlaying = false
-    @State private var light: [UInt32] = []
     @Environment(\.scenePhase) private var phase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         TabView(selection: $tab) {
-            // The amber lamp marks the current channel in the tab bar only;
+            // The moss accent marks the current channel in the tab bar only;
             // controls inside the pages stay neutral.
             Tab("Home", systemImage: "dot.radiowaves.left.and.right", value: .home) {
                 HomeView { text in
@@ -134,13 +133,11 @@ struct Root: View {
             MiniPlayer { showNowPlaying = true }
         }
         .sheet(isPresented: $showNowPlaying) { NowPlayingSheet().tint(Palette.text) }
-        .environment(\.roomLight, light.map { Color(hex: $0) })
         .environment(session.discovery)
         .environment(session.account)
         .environment(session.player)
         .environment(\.demoMode, demo != nil)
         .fontDesign(.default)
-        .task(id: session.player.nowPlaying?.uri) { await updateLight() }
         .onChange(of: phase) { _, phase in
             if phase == .active {
                 session.account.foreground()
@@ -149,17 +146,4 @@ struct Root: View {
         }
     }
 
-    /// The room takes its light from the playing cover, computed off the main actor.
-    private func updateLight() async {
-        guard let now = session.player.nowPlaying else { return }
-        if demo != nil {
-            light = Demo.tile(now.uri)
-        } else if let url = now.imageURL {
-            let colors = await CoverLight.shared.colors(for: url)
-            // A newer track may have started while this cover was fetched.
-            guard !Task.isCancelled, session.player.nowPlaying?.uri == now.uri else { return }
-            light = colors
-            session.player.setLight(colors, for: now.uri)
-        }
-    }
 }

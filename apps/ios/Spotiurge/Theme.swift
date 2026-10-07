@@ -20,22 +20,22 @@ extension Color {
 /// `Palette::dark()` and `Palette::light()` from src/theme.rs, with the
 /// roles DESIGN.md names (lamp text, overlay).
 enum Palette {
-    static let room = Color(dark: 0x0B0D12, light: 0xE9EBF1)
-    static let panel = Color(dark: 0x14171F, light: 0xFCFCFE)
-    static let surface = Color(dark: 0x1C202A, light: 0xEEF0F5)
-    static let surfaceActive = Color(dark: 0x2E3444, light: 0xD6DAE4)
-    static let outline = Color(dark: 0x2A2F3C, light: 0xD5D9E3)
-    static let text = Color(dark: 0xF3F2EF, light: 0x15171C)
-    static let secondary = Color(dark: 0xA7ADBB, light: 0x4D5463)
-    static let dim = Color(dark: 0x707787, light: 0x868D9C)
-    /// The VU-amber lamp: live state only (playing, primary play, current tab).
-    static let lamp = Color(dark: 0xFFB547, light: 0xA95C06)
-    static let onLamp = Color(dark: 0x1F1303, light: 0xFFFFFF)
-    /// The lamp for small text (playing titles): derived to reach 4.5:1.
-    static let lampText = Color(dark: 0xFFB547, light: 0x653706)
-    /// The opaque base of every sheet, menu and dialog that floats over content.
-    static let overlay = Color(dark: 0x1C202B, light: 0xFFFFFF)
-    static let danger = Color(dark: 0xFF6F73, light: 0xC83344)
+    static let room = Color(dark: 0x0E1110, light: 0xF4F6F4)
+    static let panel = Color(dark: 0x141A17, light: 0xFFFFFF)
+    static let surface = Color(dark: 0x1A221E, light: 0xEAF0EB)
+    static let surfaceActive = Color(dark: 0x2C3A32, light: 0xC9D1CA)
+    static let outline = Color(dark: 0x2E3B34, light: 0xD8DED9)
+    static let text = Color(dark: 0xF3F6F3, light: 0x161A17)
+    static let secondary = Color(dark: 0xC5CFC8, light: 0x4B524C)
+    static let dim = Color(dark: 0xB8C5BB, light: 0x47504A)
+    static let disabled = Color(dark: 0x84988B, light: 0x59695E)
+    /// Moss is reserved for live state and the primary playback control.
+    static let lamp = Color(dark: 0x98D2AC, light: 0x27633F)
+    static let onLamp = Color(dark: 0x07140C, light: 0xFFFFFF)
+    static let lampText = Color(dark: 0x98D2AC, light: 0x27633F)
+    static let overlay = Color(dark: 0x202A25, light: 0xFFFFFF)
+    static let danger = Color(dark: 0xFFB0B8, light: 0x951524)
+    static let warning = Color(dark: 0xFFB020, light: 0x7B3605)
 }
 
 /// Inter, ranked by weight (src/theme.rs). The variable face is staged into
@@ -78,70 +78,55 @@ enum Radius {
     static let gap: CGFloat = 8
 }
 
-// MARK: - The room
+// MARK: - Static mountain scenery
 
-/// DESIGN.md's room: the window colour lit by two soft fields, the playing
-/// cover's key light from the upper left and a counter-light a third of the
-/// way round the hue wheel from the lower right. With no cover the key light
-/// is the lamp amber (an amber and teal room). Kept faint so text over it
-/// holds contrast; crosses over in 600 ms, immediately with Reduce Motion.
+/// The desktop/T3 Pretty scene stack: one bundled image and a contrast wash.
+/// It never depends on playback and performs no image network requests.
 struct Room: View {
-    var light: [Color]
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
-        let strength = scheme == .dark ? 0.24 : 0.2
-        let key = light.first ?? Palette.lamp
-        ZStack {
-            Palette.room
-            RadialGradient(colors: [key.opacity(strength), .clear], center: .topLeading, startRadius: 0, endRadius: 540)
-            RadialGradient(colors: [key.rotatedHue(1.0 / 3).opacity(strength * 0.7), .clear], center: .bottomTrailing, startRadius: 0, endRadius: 480)
+        GeometryReader { geometry in
+            ZStack {
+                Palette.room
+                Image("Scenery").resizable().scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+                    .opacity(scheme == .dark ? 0.613402 : 0.53125)
+                (scheme == .dark ? Color.black : Color.white)
+                    .opacity(scheme == .dark ? 0.612 : 0.68)
+            }
         }
-        .animation(Motion.curve(Motion.ambient, reduced: reduceMotion), value: light)
         .ignoresSafeArea()
+        .accessibilityHidden(true)
     }
-}
-
-extension Color {
-    func rotatedHue(_ turn: Double) -> Color {
-        var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        UIColor(self).getHue(&h, saturation: &s, brightness: &b, alpha: &a)
-        return Color(hue: (h + turn).truncatingRemainder(dividingBy: 1), saturation: s, brightness: b, opacity: a)
-    }
-}
-
-struct RoomLightKey: EnvironmentKey { static let defaultValue: [Color] = [] }
-
-extension EnvironmentValues {
-    var roomLight: [Color] {
-        get { self[RoomLightKey.self] }
-        set { self[RoomLightKey.self] = newValue }
-    }
-}
-
-private struct RoomBackground: View {
-    @Environment(\.roomLight) private var light
-    var body: some View { Room(light: light) }
 }
 
 extension View {
-    /// Puts a screen in the cover-lit room.
     func roomBackground() -> some View {
-        scrollContentBackground(.hidden).background { RoomBackground() }
+        scrollContentBackground(.hidden).background { Room() }
     }
 }
 
 // MARK: - Glass
 
-extension View {
-    /// System Liquid Glass for the control layer, in the desktop pane shape.
-    func paneGlass(radius: CGFloat = Radius.pane, interactive: Bool = false) -> some View {
-        glassEffect(interactive ? .regular.interactive() : .regular, in: .rect(cornerRadius: radius))
+private struct ContentPlate: ViewModifier {
+    var radius: CGFloat
+    @Environment(\.colorScheme) private var scheme
+    func body(content: Content) -> some View {
+        content.background((scheme == .dark ? Palette.surfaceActive : Palette.panel)
+            .opacity(scheme == .dark ? 0.85 : 0.68), in: .rect(cornerRadius: radius))
     }
 }
 
-/// The primary play control: the single amber lamp on a screen.
+extension View {
+    /// Quiet content plates; native Liquid Glass stays in the control layer.
+    func paneGlass(radius: CGFloat = Radius.pane, interactive: Bool = false) -> some View {
+        modifier(ContentPlate(radius: radius))
+    }
+}
+
+/// The primary play control: the moss play control on a screen.
 struct LampButtonStyle: ButtonStyle {
     /// DESIGN.md: 44 on the desk, 36 in the console.
     var size: CGFloat = 44
@@ -150,12 +135,9 @@ struct LampButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: size * 0.4, weight: .bold))
-            .foregroundStyle(Palette.onLamp)
+            .foregroundStyle(enabled ? Palette.onLamp : Palette.disabled)
             .frame(width: size, height: size)
-            .background(Palette.lamp, in: .circle)
-            // Nothing to play: the lamp is unlit, not merely faded.
-            .saturation(enabled ? 1 : 0)
-            .opacity(enabled ? 1 : 0.35)
+            .background(enabled ? Palette.lamp : Palette.surfaceActive, in: .circle)
             .scaleEffect(configuration.isPressed ? 0.94 : 1)
             .animation(.easeOut(duration: Motion.feedback), value: configuration.isPressed)
     }
@@ -163,28 +145,25 @@ struct LampButtonStyle: ButtonStyle {
 
 // MARK: - The mark
 
-/// The amber surge S on a smoked glass tile (assets/brand/spotiurge-mark.svg),
-/// drawn from the same geometry: two 17-unit arcs, skewed -6.84 degrees.
+/// The same flat ridge geometry as assets/brand/spotiurge-glyph.svg.
 struct Mark: View {
     var size: CGFloat = 28
-
     var body: some View {
         Canvas { context, canvas in
-            let scale = canvas.width / 128
+            let scale = canvas.width / 84
             context.scaleBy(x: scale, y: scale)
-            let tile = Path(roundedRect: CGRect(x: 4, y: 4, width: 120, height: 120), cornerRadius: 27)
-            context.fill(tile, with: .linearGradient(Gradient(colors: [Color(hex: 0x262C4A), Color(hex: 0x0A0C16)]), startPoint: CGPoint(x: 0, y: 4), endPoint: CGPoint(x: 0, y: 124)))
-            context.fill(tile, with: .radialGradient(Gradient(colors: [Color(hex: 0xFF9228).opacity(0.22), .clear]), center: CGPoint(x: 64, y: 70), startRadius: 0, endRadius: 58))
-            var s = Path()
-            s.move(to: CGPoint(x: 78.72, y: 38.5))
-            s.addArc(center: CGPoint(x: 64, y: 47), radius: 17, startAngle: .degrees(-30), endAngle: .degrees(90), clockwise: true)
-            s.addArc(center: CGPoint(x: 64, y: 81), radius: 17, startAngle: .degrees(-90), endAngle: .degrees(150), clockwise: false)
-            let skew = CGAffineTransform(a: 1, b: 0, c: -tan(6.84 * .pi / 180), d: 1, tx: 64 * tan(6.84 * .pi / 180), ty: 0)
-            let surge = s.applying(skew)
-            let stroke = StrokeStyle(lineWidth: 15, lineCap: .round)
-            context.stroke(surge, with: .linearGradient(Gradient(colors: [Color(hex: 0xFFD680), Color(hex: 0xFF9228)]), startPoint: CGPoint(x: 0, y: 22), endPoint: CGPoint(x: 0, y: 106)), style: stroke)
-            context.stroke(surge.applying(CGAffineTransform(translationX: -1.6, y: -2.1)), with: .color(Color(hex: 0xFFF4D6).opacity(0.3)), style: StrokeStyle(lineWidth: 4, lineCap: .round))
-            context.stroke(Path(roundedRect: CGRect(x: 4.6, y: 4.6, width: 118.8, height: 118.8), cornerRadius: 26.4), with: .linearGradient(Gradient(stops: [.init(color: Color(hex: 0xEBF0FF).opacity(0.55), location: 0), .init(color: .clear, location: 0.5), .init(color: .black.opacity(0.5), location: 1)]), startPoint: CGPoint(x: 0, y: 4), endPoint: CGPoint(x: 0, y: 124)), lineWidth: 1.2)
+            context.translateBy(x: -22, y: -22)
+            var ridge = Path()
+            for vertices in [
+                [CGPoint(x: 24, y: 98), CGPoint(x: 24, y: 72), CGPoint(x: 46, y: 47), CGPoint(x: 46, y: 98)],
+                [CGPoint(x: 53, y: 98), CGPoint(x: 53, y: 39.1), CGPoint(x: 61, y: 30), CGPoint(x: 75, y: 42.4), CGPoint(x: 75, y: 98)],
+                [CGPoint(x: 82, y: 98), CGPoint(x: 82, y: 48.6), CGPoint(x: 104, y: 68), CGPoint(x: 104, y: 98)]
+            ] {
+                ridge.move(to: vertices[0])
+                for point in vertices.dropFirst() { ridge.addLine(to: point) }
+                ridge.closeSubpath()
+            }
+            context.fill(ridge, with: .color(Palette.lamp))
         }
         .frame(width: size, height: size)
         .accessibilityHidden(true)

@@ -257,3 +257,69 @@ func `the private cloud accepts documents written here`() throws {
     python.waitUntilExit()
     #expect(python.terminationStatus == 0)
 }
+
+func feedbackEdit(_ index: Int, clear: Bool = false) -> (String, Value?) {
+    let uri = "spotify:track:" + String(format: "%022d", index)
+    return ("feedback:\(uri)", clear ? nil : .feedback(uri: uri, title: "Song", artist: "Artist", rating: .love))
+}
+
+@Test func `feedback clears stay bounded and stale records cannot return`() throws {
+    var a = device("a")
+    let (oldKey, oldValue) = feedbackEdit(0)
+    try a.edit(oldKey, oldValue)
+    let stale = a.document
+    for index in 1..<2100 {
+        let (key, value) = feedbackEdit(index, clear: index % 2 == 0)
+        try a.edit(key, value)
+    }
+    #expect(a.document.records.count == DiscoveryLimits.feedbackLimit + 1)
+    #expect(a.document.records[DiscoveryLimits.feedbackFloor]?.stamp.counter == 1600)
+    let compacted = a.document
+    try a.document.merge(stale)
+    #expect(a.document == compacted)
+    var old = stale
+    try old.merge(compacted)
+    #expect(old == compacted)
+    try a.edit(oldKey, oldValue)
+    #expect(a.document.records[oldKey]?.value != nil)
+    try a.edit("mix:new", .mix(title: "Still works", uris: []))
+    #expect(a.document.records.count == DiscoveryLimits.feedbackLimit + 2)
+}
+
+@Test func `legacy feedback union compacts before capacity validation`() throws {
+    var a = device("a"), b = device("b")
+    for index in 0..<1200 {
+        let (key, value) = feedbackEdit(index)
+        a.document.records[key] = Record(stamp: Stamp(counter: UInt64(index + 1), device: a.device), value: value)
+        let (otherKey, otherValue) = feedbackEdit(index + 1200, clear: true)
+        b.document.records[otherKey] = Record(stamp: Stamp(counter: UInt64(index + 1), device: b.device), value: otherValue)
+    }
+    var left = a.document
+    try left.merge(b.document)
+    try b.document.merge(a.document)
+    #expect(left == b.document)
+    #expect(left.records.count == DiscoveryLimits.feedbackLimit + 1)
+    var tied = device("c")
+    try tied.editMany((0...DiscoveryLimits.feedbackLimit).map { let (key, value) = feedbackEdit($0); return (key: key, value: value) })
+    #expect(tied.document.records.count == 1)
+}
+
+@Test func `sync reexpresses newer feedback without restamping its cutoff`() throws {
+    var local = device("a")
+    for index in 0...DiscoveryLimits.feedbackLimit {
+        let (key, value) = feedbackEdit(index)
+        try local.edit(key, value)
+    }
+    let snapshot = local.document
+    let (key, value) = feedbackEdit(DiscoveryLimits.feedbackLimit + 1)
+    try local.edit(key, value)
+    var remote = device("b")
+    try remote.document.merge(snapshot)
+    for _ in 0..<10 { try remote.edit("taste", taste("remote clock")) }
+    try remote.edit(key, value)
+    try local.mergeSynced(remote.document, snapshot: snapshot)
+    #expect(local.document.records[key]!.stamp.counter > remote.document.records[key]!.stamp.counter)
+    #expect(local.document.records[DiscoveryLimits.feedbackFloor]?.stamp.counter == 2)
+    try remote.document.merge(local.document)
+    #expect(remote.document == local.document)
+}

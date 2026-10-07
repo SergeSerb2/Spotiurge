@@ -1,6 +1,5 @@
 // Shared pieces: artwork, track rows, feedback, the exploration fader.
 
-import ImageIO
 import SpotiurgeCore
 import SwiftUI
 
@@ -55,36 +54,11 @@ struct Artwork: View {
     }
 }
 
-/// Two soft colours from a cover, computed once per URL off the main actor
-/// and cached: the room's light.
-actor CoverLight {
-    static let shared = CoverLight()
-    private var cache: [URL: [UInt32]] = [:]
-
-    func colors(for url: URL) async -> [UInt32] {
-        if let known = cache[url] { return known }
-        guard let (data, _) = try? await URLSession.shared.data(from: url),
-              let source = CGImageSourceCreateWithData(data as CFData, nil),
-              let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceThumbnailMaxPixelSize: 2] as CFDictionary)
-        else { return [] }
-        var pixels = [UInt8](repeating: 0, count: 2 * 2 * 4)
-        let drawn = pixels.withUnsafeMutableBytes { buffer in
-            CGContext(data: buffer.baseAddress, width: 2, height: 2, bitsPerComponent: 8, bytesPerRow: 8, space: CGColorSpaceCreateDeviceRGB(),
-                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue).map { $0.draw(image, in: CGRect(x: 0, y: 0, width: 2, height: 2)); return true } ?? false
-        }
-        guard drawn else { return [] }
-        // Top-left and bottom-right quadrants make the two fields.
-        let colors = [0, 12].map { UInt32(pixels[$0]) << 16 | UInt32(pixels[$0 + 1]) << 8 | UInt32(pixels[$0 + 2]) }
-        cache[url] = colors
-        return colors
-    }
-}
-
 // MARK: - Exploration fader
 
 /// Familiar / Balanced / Adventurous. Choices select with the desktop's
 /// neutral inverted pill, which glides between channels (the fader glide);
-/// amber stays reserved for live state.
+/// moss stays reserved for live state.
 struct ExplorationPicker: View {
     var selection: Exploration
     var onSelect: (Exploration) -> Void
@@ -151,7 +125,7 @@ extension Exploration {
 // MARK: - Rows
 
 /// A playable track row: cover, title, artist and time, an optional
-/// reason, and the amber lamp when it is the one playing.
+/// reason, and the moss accent when it is the one playing.
 struct TrackRow: View {
     var track: Track
     var reason: String?
@@ -184,13 +158,6 @@ struct TrackRow: View {
         }
         .padding(.vertical, 4)
         .frame(minHeight: 56)
-        // The leading-edge lamp bar on the playing row.
-        .overlay(alignment: .leading) {
-            if live {
-                // 46% of the 56-point row.
-                Capsule().fill(Palette.lamp).frame(width: 3, height: 26).offset(x: -10)
-            }
-        }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(live ? [.isSelected] : [])
         // The current track, playing or paused.

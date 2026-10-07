@@ -12,6 +12,8 @@ public enum DiscoveryLimits {
     /// Live AI history entries per document, matching the newest ten shown.
     public static let historyLimit = 10
     public static let maxRecords = 2000
+    public static let feedbackLimit = 500
+    static let feedbackFloor = "feedback:retention"
 }
 
 public struct DiscoveryError: Error, Equatable, LocalizedError, Sendable {
@@ -209,6 +211,14 @@ public struct Document: Codable, Hashable, Sendable {
         if version != 1 || records.count > DiscoveryLimits.maxRecords {
             throw DiscoveryError("Unsupported or oversized discovery state. Your local state is preserved.")
         }
+        try validateRecords()
+        guard let bytes = try? encoded() else { throw DiscoveryError("Cannot encode discovery state.") }
+        if bytes.count > DiscoveryLimits.maxBytes {
+            throw DiscoveryError("Discovery storage is full. Export and remove old mixes or history.")
+        }
+    }
+
+    func validateRecords() throws(DiscoveryError) {
         for (key, record) in records {
             if key.utf8.count > 200 || !isDeviceID(record.stamp.device) || record.stamp.counter == 0 || record.stamp.counter == .max {
                 throw DiscoveryError("Invalid discovery record.")
@@ -227,9 +237,20 @@ public struct Document: Codable, Hashable, Sendable {
             }
             if !valid { throw DiscoveryError("Invalid discovery record content.") }
         }
-        guard let bytes = try? encoded() else { throw DiscoveryError("Cannot encode discovery state.") }
-        if bytes.count > DiscoveryLimits.maxBytes {
-            throw DiscoveryError("Discovery storage is full. Export and remove old mixes or history.")
+    }
+
+    /// Same deterministic forgetting boundary and tied-cohort rule as Rust.
+    mutating func compactFeedback() {
+        var floor = records[DiscoveryLimits.feedbackFloor]?.stamp
+        let stamps = records.filter { $0.key.hasPrefix("feedback:") && $0.key != DiscoveryLimits.feedbackFloor }
+            .map { $0.value.stamp }.sorted(by: >)
+        if stamps.count > DiscoveryLimits.feedbackLimit {
+            let pruned = stamps[DiscoveryLimits.feedbackLimit]
+            floor = floor.map { max($0, pruned) } ?? pruned
+        }
+        if let floor {
+            records = records.filter { !$0.key.hasPrefix("feedback:") || $0.key == DiscoveryLimits.feedbackFloor || $0.value.stamp > floor }
+            records[DiscoveryLimits.feedbackFloor] = Record(stamp: floor, value: nil)
         }
     }
 
@@ -246,6 +267,7 @@ public struct Document: Codable, Hashable, Sendable {
             }
             merged.records[key] = remote
         }
+        merged.compactFeedback()
         try merged.validate()
         self = merged
     }
@@ -370,7 +392,7 @@ public struct Replica: Codable, Sendable {
     /// Merge an acknowledged sync without undoing edits made after its snapshot.
     public mutating func mergeSynced(_ remote: Document, snapshot: Document?) throws(DiscoveryError) {
         let changed = snapshot.map { snapshot in
-            document.records.filter { snapshot.records[$0.key] != $0.value }
+            document.records.filter { $0.key != DiscoveryLimits.feedbackFloor && snapshot.records[$0.key] != $0.value }
         } ?? [:]
         var merged = self
         try merged.document.merge(remote)
@@ -390,7 +412,7 @@ public struct Replica: Codable, Sendable {
     /// Store an AI result in a bounded set of history keys. Below the limit it
     /// adds one; after that it overwrites the oldest history key, live or
     /// tombstone. Live entries beyond the limit become tombstones in the same
-    /// write. Every other record and clock is left untouched.
+    /// write. Independent feedback retention also applies to every edit.
     public mutating func recordHistory(prompt: String, suggestions: [Suggestion]) throws(DiscoveryError) {
         var history = document.records
             .filter { $0.key.hasPrefix("history:") }
@@ -415,6 +437,8 @@ public struct Replica: Codable, Sendable {
         for edit in edits {
             candidate.records[edit.key] = Record(stamp: Stamp(counter: highest + 1, device: device), value: edit.value)
         }
+        try candidate.validateRecords()
+        candidate.compactFeedback()
         try candidate.validate()
         document = candidate
     }
@@ -435,6 +459,7 @@ public struct Replica: Codable, Sendable {
             throw DiscoveryError("Cannot read discovery state. The original file is preserved.")
         }
         try replica.document.validate()
+        replica.document.compactFeedback()
         if replica.cachedPicks.count > 12 { throw DiscoveryError("Invalid cached discovery results.") }
         if !isDeviceID(replica.device) { throw DiscoveryError("Invalid discovery installation identity.") }
         replica.device = newDeviceID()

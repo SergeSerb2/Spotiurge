@@ -93,7 +93,7 @@ struct NowPlayingSheet: View {
             .padding(.horizontal, 24)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(Room(light: (now?.light ?? []).map { Color(hex: $0) }))
+        .background(Room())
         .presentationBackground(Palette.room)
         .presentationDragIndicator(.hidden)
     }

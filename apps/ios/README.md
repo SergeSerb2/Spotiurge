@@ -2,7 +2,10 @@
 
 A native SwiftUI candidate for Spotiurge on iPhone. It follows the desktop
 interface contract in `DESIGN.md` and the phone brief in
-`.impeccable/surfaces/ios-interface.md`.
+`.impeccable/surfaces/ios-interface.md`. The forest/mist palette, quiet bundled
+mountain scene and flat mint ridge mark match the desktop and T3 Pretty. The
+background stays static; Liquid Glass belongs to native navigation and controls.
+Artwork no longer causes a second request for ambient lighting.
 
 **Status: developmental, not for distribution.** The production iOS
 architecture is still gated by `docs/reviews/spotiurge-ios/playback-gate.md`.
@@ -86,7 +89,7 @@ Limits:
 | `accounts.spotify.com` | PKCE sign-in in the system sheet, and code or refresh exchange | Sign-in, and token refresh |
 | `api.spotify.com` | Web API reads: profile, liked songs, playlists, search, discovery matching | Library, search, matching |
 | Spotify access points (librespot) | Streaming session | Engine builds after playback sign-in |
-| Cover image hosts | Image requests for real covers (room light is computed on the phone) | Showing covers |
+| Cover image hosts | Image requests for real covers | Showing covers |
 
 There is no telemetry. Spotify grants never go to the private cloud or the AI.
 The cloud token, the Web API refresh grant and the playback credential are
