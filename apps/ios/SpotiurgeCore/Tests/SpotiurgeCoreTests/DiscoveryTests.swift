@@ -421,8 +421,62 @@ func feedbackEdit(_ index: Int, clear: Bool = false) -> (String, Value?) {
     }
     #expect(LoopbackRequest.redirect("GET /favicon.ico HTTP/1.1", state: "x") == .stray)
     #expect(LoopbackRequest.redirect("GET /login-extra?code=x&state=x HTTP/1.1", state: "x") == .stray)
-    #expect(LoopbackRequest.redirect("GET /login?code=x&state=wrong HTTP/1.1", state: "x") == .refused)
-    #expect(LoopbackRequest.redirect("GET /login?code=x&state=x&state=x HTTP/1.1", state: "x") == .refused)
+    #expect(LoopbackRequest.redirect("GET /login?code=x&state=wrong HTTP/1.1", state: "x") == .stray)
+    #expect(LoopbackRequest.redirect("GET /login?code=x&state=x&state=x HTTP/1.1", state: "x") == .stray)
     var oversized = LoopbackRequest()
     #expect(throws: (any Error).self) { try oversized.append(Data(repeating: 65, count: 16_385)) }
+}
+
+@Test func `busy retries stay short through restarts without increasing rate limit backoff`() {
+    let now = ContinuousClock.now
+    var automatic = AutoRecommendations()
+    automatic.failed(.rateLimited, now: now)
+    for offset in 0..<5 {
+        let attempt = now + .seconds(600 + offset * 15)
+        automatic.attempted(now: attempt)
+        automatic.failed(.busy, now: attempt)
+        #expect(automatic.failures == 1)
+        #expect(automatic.retryAfter(now: attempt) == .seconds(15))
+        #expect(automatic.due(now: attempt, wallNow: 100_000, preferences: Preferences(), enabled: true, hasInputs: true, empty: true) == .seconds(15))
+        let restored = AutoRecommendations(saved: automatic.checkpoint(now: attempt, wallNow: 100_000), now: attempt, wallNow: 100_005)
+        #expect(restored.retryAfter(now: attempt) == .seconds(10))
+    }
+    automatic.failed(.rateLimited, now: now)
+    #expect(automatic.retryAfter(now: now) == .seconds(1200))
+}
+
+@Test(arguments: [Rating.love, Rating.less, nil] as [Rating?])
+func `unsent offline ratings override higher cloud records then acknowledge`(rating: Rating?) throws {
+    var local = device("a")
+    let key = "feedback:\(uri)"
+    let value = Value.feedback(uri: uri, title: "Song", artist: "Artist", rating: .love)
+    try local.edit(key, value)
+    var remote = local.document
+    remote.records[key]!.stamp = Stamp(counter: 100, device: String(repeating: "b", count: 32))
+    let edit = rating.map { Value.feedback(uri: uri, title: "Song", artist: "Artist", rating: $0) }
+    try local.edit(key, edit)
+    let bytes = try JSONEncoder().encode(local)
+    var reopened = try JSONDecoder().decode(Replica.self, from: bytes)
+    try reopened.mergeForSync(remote)
+    #expect(reopened.document.records[key]?.value == edit)
+    #expect(reopened.document.records[key]?.stamp.counter == 101)
+    #expect(reopened.pendingFeedback[key] == reopened.document.records[key]?.stamp)
+    let pending = reopened.document
+    try reopened.mergeForSync(remote)
+    #expect(reopened.document == pending)
+    try remote.merge(pending)
+    try reopened.mergeSynced(remote, snapshot: pending)
+    #expect(reopened.pendingFeedback.isEmpty)
+    remote.records[key]!.stamp.counter = 200
+    remote.records[key]!.value = value
+    try reopened.mergeForSync(remote)
+    #expect(reopened.document == remote)
+}
+
+@Test func `stale callbacks cannot refuse a newer sign in`() {
+    #expect(LoopbackRequest.redirect("GET /login?error=access_denied&state=old HTTP/1.1", state: "new") == .stray)
+    #expect(LoopbackRequest.redirect("GET /login?code=old&state=old HTTP/1.1", state: "new") == .stray)
+    #expect(LoopbackRequest.redirect("GET /login?code=x HTTP/1.1", state: "new") == .stray)
+    #expect(LoopbackRequest.redirect("GET /login?error=access_denied&state=new HTTP/1.1", state: "new") == .refused)
+    #expect(LoopbackRequest.redirect("GET /login?code=next&state=new HTTP/1.1", state: "new") == .code("next"))
 }

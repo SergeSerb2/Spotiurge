@@ -31,7 +31,8 @@ public struct LoopbackRequest: Sendable {
         let items = url.queryItems ?? []
         let states = items.filter { $0.name == "state" }
         let codes = items.filter { $0.name == "code" }
-        guard states.count == 1, states[0].value == state,
+        guard states.count == 1, states[0].value == state else { return .stray }
+        guard !items.contains(where: { $0.name == "error" }),
               codes.count == 1, let code = codes[0].value, !code.isEmpty else { return .refused }
         return .code(code)
     }

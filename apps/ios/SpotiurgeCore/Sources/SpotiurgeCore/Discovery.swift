@@ -411,13 +411,14 @@ public struct Replica: Codable, Sendable {
 
     /// Import the remote clock without confusing fresh offline intent with old replicas.
     public mutating func mergeForSync(_ remote: Document) throws(DiscoveryError) {
-        let pending = pendingFeedback.compactMap { key, stamp -> (key: String, value: Value?)? in
+        let pending = pendingFeedback.compactMap { key, stamp -> (key: String, record: Record)? in
             guard let record = document.records[key], record.stamp == stamp else { return nil }
-            return (key, record.value)
+            return (key, record)
         }
         var merged = self
         try merged.document.merge(remote)
-        let lost = pending.filter { merged.document.records[$0.key] == nil }
+        let lost = pending.filter { merged.document.records[$0.key] != $0.record }
+            .map { (key: $0.key, value: $0.record.value) }
         if !lost.isEmpty { try merged.editMany(lost) }
         merged.keepCurrentPending()
         self = merged
@@ -660,6 +661,10 @@ public struct AutoRecommendations: Sendable {
     public mutating func failed(_ kind: RecommendationErrorKind, now: ContinuousClock.Instant) {
         if kind == .pairing {
             suspended = true
+            return
+        }
+        if kind == .busy {
+            retryAt = now + .seconds(15)
             return
         }
         failures = min(failures + 1, 10)

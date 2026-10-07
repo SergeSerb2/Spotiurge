@@ -236,3 +236,10 @@ performed one.
 - **Real-data checks.** Signed-in library, search and matching, paired sync
   against the deployed service, a live Luna answer, a VoiceOver pass, and
   motion and performance on device.
+
+Latest review fixes preserve pending love, less and clear actions against an
+existing higher-stamped cloud rating, use a restart-safe 15-second retry for
+AI-slot contention, and ignore stale/unbound sign-in callbacks. Current-state
+Spotify denials still fail. These core changes pass 45 Swift tests, 16 hosted
+Simulator tests and an unsigned device compile without the playback engine.
+No physical phone was accessed and these checks add no audio proof.

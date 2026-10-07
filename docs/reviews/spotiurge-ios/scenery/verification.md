@@ -97,3 +97,10 @@ build and unsigned generic iPhoneOS build pass with the engine omitted. Core
 source is unchanged from the 42-test run. This small disabled-control state is
 compile/lifecycle verified; the earlier capture manifest is not presented as
 new visual evidence for that state. Physical-device operations remain stopped.
+
+The next source review preserves pending feedback against existing higher cloud
+stamps, keeps AI-slot contention retries at 15 seconds without increasing model
+backoff, and ignores stale callback states. All 45 Swift core tests and 16 hosted
+Simulator tests pass. An unsigned generic-device build without the engine also
+passes. The physical phone was not read or changed. These are source/lifecycle
+checks, not new audio, cloud-sync or sign-in measurements.
