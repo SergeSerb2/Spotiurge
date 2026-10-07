@@ -5,7 +5,7 @@ keeps local snapshots; the service stores only a revisioned document and brokers
 AI requests through the existing subscription-backed CLIProxyAPI deployment.
 No telemetry, browser, Spotify grant, audio storage or direct-provider fallback.
 
-Required Railway variables: `SPOTIURGE_CLOUD_TOKEN` (random, at least 32 bytes),
+Required Railway variables: `SPOTIURGE_CLOUD_TOKEN` (random, 32–256 ASCII characters),
 `CLI_PROXY_BASE_URL` (existing HTTPS proxy's `/v1` URL), `CLI_PROXY_API_KEY`,
 `SPOTIURGE_DATA_DIR=/data`. Recommendations use **`gpt-6-luna` only**, with no
 model fallback. Legacy `SPOTIURGE_MODELS` values are ignored. Do not alter the existing

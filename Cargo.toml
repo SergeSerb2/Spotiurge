@@ -151,6 +151,9 @@ urlencoding = "2"
 jiff = "0.2"
 mdns-sd = "0.21"
 unicode-bidi = "0.3"
+# Canonical title/artist normalization for exact discovery matches. ICU's
+# normalizer and data already compile for URL/IDNA handling.
+icu_normalizer = { version = "2.3", default-features = false, features = ["compiled_data"] }
 hmac = "0.12"
 pbkdf2 = "0.12"
 aes = "0.8"

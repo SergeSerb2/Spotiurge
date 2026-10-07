@@ -1270,7 +1270,9 @@ impl eframe::App for Shell {
                 MenuCommand::Back => Action::Back,
                 MenuCommand::Forward => Action::Forward,
                 MenuCommand::OpenRepo => {
-                    ctx.open_url(egui::OpenUrl::new_tab("https://github.com/crmne/spotifast"));
+                    ctx.open_url(egui::OpenUrl::new_tab(
+                        "https://github.com/SergeSerb2/Spotiurge",
+                    ));
                     continue;
                 }
                 // Editing goes through egui, which owns the text field

@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from http.server import ThreadingHTTPServer
 
 from unittest.mock import patch
-from server import Store, make_handler, recommend, same_track, RateLimited, BoundedServer, MAX_BYTES
+from server import Store, make_handler, recommend, same_track, RateLimited, BoundedServer, MAX_BYTES, main
 
 
 class PrivateCloudTests(unittest.TestCase):
@@ -44,6 +44,27 @@ class PrivateCloudTests(unittest.TestCase):
         self.assertEqual(self.request(token="wrong")[0], 401)
         self.assertEqual(self.request("PUT", {}, 0, "wrong")[0], 401)
         self.assertEqual(self.store.read()["revision"], 0)
+
+    def test_startup_requires_the_desktop_ascii_token_bounds(self):
+        for token in ["x" * 31, "x" * 257, "é" * 32, "界" * 32]:
+            with self.subTest(length=len(token), ascii=token.isascii()):
+                with patch.dict("server.os.environ", {"SPOTIURGE_CLOUD_TOKEN": token}, clear=True), \
+                        patch("server.os.umask"), patch("server.Store") as store, \
+                        patch("server.BoundedServer") as server:
+                    with self.assertRaisesRegex(SystemExit, "32–256 ASCII"):
+                        main()
+                    store.assert_not_called()
+                    server.assert_not_called()
+        for length in [32, 256]:
+            with self.subTest(length=length):
+                with patch.dict("server.os.environ", {
+                        "SPOTIURGE_CLOUD_TOKEN": "x" * length,
+                        "CLI_PROXY_BASE_URL": "https://proxy.invalid/v1",
+                        "CLI_PROXY_API_KEY": "dummy-test-key",
+                    }, clear=True), patch("server.os.umask"), \
+                        patch("server.Store"), patch("server.BoundedServer") as server:
+                    main()
+                    server.return_value.serve_forever.assert_called_once()
 
     def test_compare_and_swap_and_restart_preserve_acknowledged_state(self):
         document = {"version": 1, "records": {"taste": {"stamp": {"counter": 1, "device": "a" * 32}, "value": {"kind": "taste", "text": "warm strings"}}}}

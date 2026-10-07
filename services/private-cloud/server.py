@@ -350,8 +350,8 @@ def make_handler(store, token, ai_config=None):
 def main():
     os.umask(0o077)
     token = os.environ["SPOTIURGE_CLOUD_TOKEN"]
-    if len(token) < 32:
-        raise SystemExit("A strong Spotiurge token is required")
+    if not 32 <= len(token) <= 256 or not token.isascii():
+        raise SystemExit("Spotiurge token must be 32–256 ASCII characters")
     proxy_url = os.environ.get("CLI_PROXY_BASE_URL", "").rstrip("/")
     if not proxy_url.startswith("https://"):
         raise SystemExit("Configure the existing HTTPS CLIProxyAPI endpoint")

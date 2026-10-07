@@ -561,11 +561,12 @@ struct PlaylistCacheWrite {
     next_offset: Option<u32>,
 }
 
-/// Fold presentation-only differences: whitespace, Unicode case, typographic
+/// Fold presentation-only differences: NFC, whitespace, Unicode case, typographic
 /// apostrophes/quotes/dashes. Meaningful punctuation such as "Fred again.."
 /// stays, so it must still match exactly.
 fn fold_name(text: &str) -> String {
-    text.chars()
+    let folded = text
+        .chars()
         .map(|c| match c {
             '\u{2018}' | '\u{2019}' | '\u{02BC}' | '`' | '\u{00B4}' => '\'',
             '\u{201C}' | '\u{201D}' => '"',
@@ -576,7 +577,10 @@ fn fold_name(text: &str) -> String {
         .collect::<String>()
         .split_whitespace()
         .collect::<Vec<_>>()
-        .join(" ")
+        .join(" ");
+    icu_normalizer::ComposingNormalizer::new_nfc()
+        .normalize_iter(folded.chars())
+        .collect()
 }
 
 const CREDIT_SEPARATORS: [&str; 15] = [
@@ -6691,6 +6695,37 @@ mod tests {
                 discovery_matches(&suggestion(title, artist), &track(name, &artists, 'a')),
                 "{title} by {artist}"
             );
+        }
+    }
+
+    #[test]
+    fn discovery_matches_canonically_equivalent_titles_and_artist_credits() {
+        for (title, artist, name, artists) in [
+            ("Cafe\u{301}", "Beyonce\u{301}", "Café", vec!["Beyoncé"]),
+            ("Café", "Beyoncé", "Cafe\u{301}", vec!["Beyonce\u{301}"]),
+            (
+                "Cafe\u{301} (feat. Ame\u{301}lie)",
+                "Beyonce\u{301} & Ame\u{301}lie",
+                "Café",
+                vec!["Beyoncé", "Amélie"],
+            ),
+            ("\u{1100}\u{1161}", "Artist", "가", vec!["Artist"]),
+        ] {
+            assert!(discovery_matches(
+                &suggestion(title, artist),
+                &track(name, &artists, 'a')
+            ));
+        }
+        // NFC must preserve accents and meaningful versions.
+        for (title, artist) in [
+            ("Cafe", "Beyoncé"),
+            ("Café", "Beyonce"),
+            ("Café (Live)", "Beyoncé"),
+        ] {
+            assert!(!discovery_matches(
+                &suggestion(title, artist),
+                &track("Café", &["Beyoncé"], 'a')
+            ));
         }
     }
 

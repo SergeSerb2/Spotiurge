@@ -5873,6 +5873,7 @@ dependencies = [
  "hmac 0.12.1",
  "http",
  "hyper-util",
+ "icu_normalizer",
  "image",
  "jiff",
  "keyring-core",
