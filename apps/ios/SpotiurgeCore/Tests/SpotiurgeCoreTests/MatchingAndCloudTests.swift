@@ -13,6 +13,18 @@ func track(_ name: String, _ artists: [String], _ id: Character = "a") -> Track 
     Track(uri: "spotify:track:" + String(repeating: id, count: 22), name: name, artists: artists, durationMs: 1000)
 }
 
+@Test func `full case folding matches names while preserving accents and versions`() {
+    for (title, artist, name, credit) in [
+        ("STRASSE", "GROSS", "Straße", "Groß"),
+        ("ΟΣ", "Σ", "ος", "ς"),
+        ("FFI", "ARTIST", "ﬃ", "Artist"),
+        ("İ", "Artist", "i\u{307}", "Artist"),
+        ("Cafe\u{301}", "Beyonce\u{301}", "Café", "Beyoncé"),
+    ] { #expect(discoveryMatches(suggestion(title, artist), track(name, [credit]))) }
+    #expect(!discoveryMatches(suggestion("Cafe", "Beyoncé"), track("Café", ["Beyoncé"])))
+    #expect(!discoveryMatches(suggestion("CAFÉ (REMIX)", "Beyoncé"), track("Café", ["Beyoncé"])))
+}
+
 @Test(arguments: [
     ("adore u", "Fred again.. and Obongjayar", "adore u", ["Fred again..", "Obongjayar"]),
     ("Imagination", "Gorgon City feat. Katy Menditta", "Imagination", ["Gorgon City", "Katy Menditta"]),

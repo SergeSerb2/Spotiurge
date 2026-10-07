@@ -104,6 +104,9 @@ separate Keychain items. They use `AfterFirstUnlockThisDeviceOnly`.
 Saved mixes can be removed. New saves reuse removed slots first, then the oldest
 slot once 100 exist, matching desktop; imported legacy slots remain readable
 and removable. Manual recommendation requests honor the AI retry deadline.
+Attempt and pending-refresh checkpoints, failure counts, cooldowns and pairing
+suspension persist per installation, outside the cloud document. Restarting
+keeps the same limits, and the local writer finishes before AI access.
 The loopback sign-in parser waits for a complete bounded request line, including
 when TCP splits the state or CRLF across callbacks.
 

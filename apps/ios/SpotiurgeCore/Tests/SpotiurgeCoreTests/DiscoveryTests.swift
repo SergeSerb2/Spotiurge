@@ -367,6 +367,35 @@ func feedbackEdit(_ index: Int, clear: Bool = false) -> (String, Value?) {
     #expect(scheduler.retryAfter(now: now + .seconds(600)) == nil)
 }
 
+@Test func `local recommendation checkpoints retain restart limits`() throws {
+    let now = ContinuousClock.now
+    var scheduler = AutoRecommendations()
+    scheduler.attempted(now: now)
+    scheduler.rearm()
+    var replica = Replica()
+    replica.recommendationThrottle = scheduler.checkpoint(now: now, wallNow: 100_000)
+    let stored = try JSONDecoder().decode(Replica.self, from: JSONEncoder().encode(replica))
+    var restored = AutoRecommendations(saved: stored.recommendationThrottle, now: now, wallNow: 100_010)
+    restored.changed(now: now, exploration: false)
+    #expect(restored.due(now: now, wallNow: 100_010, preferences: Preferences(), enabled: true, hasInputs: true, empty: false) == .seconds(590))
+    scheduler.failed(.rateLimited, now: now)
+    let cooldown = scheduler.checkpoint(now: now, wallNow: 100_000)
+    restored = AutoRecommendations(saved: cooldown, now: now, wallNow: 100_010)
+    #expect(restored.retryAfter(now: now) == .seconds(590))
+    restored.attempted(now: now + .seconds(590))
+    restored.failed(.rateLimited, now: now + .seconds(590))
+    #expect(restored.retryAfter(now: now + .seconds(590)) == .seconds(1200))
+    #expect(AutoRecommendations(saved: cooldown, now: now, wallNow: 100_600).retryAfter(now: now) == nil)
+    var skewed = cooldown
+    skewed.retryAt = UInt64.max
+    skewed.failures = UInt32.max
+    skewed.suspended = true
+    let bounded = AutoRecommendations(saved: skewed, now: now, wallNow: 100_000)
+    #expect(bounded.retryAfter(now: now) == .seconds(21_600))
+    #expect(bounded.failures == 10 && bounded.suspended)
+    #expect(!String(decoding: try JSONEncoder().encode(replica.document), as: UTF8.self).contains("retry_at"))
+}
+
 @Test func `mix slots stay bounded and removal survives stale sync`() throws {
     var local = device("a")
     for index in 0..<2500 { try local.saveMix(title: "Mix \(index)", uris: [uri]) }

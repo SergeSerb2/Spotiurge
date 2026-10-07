@@ -385,11 +385,13 @@ public struct Replica: Codable, Sendable {
     public var cachedPicks: [Pick]
     /// Current unsynced rating stamps; local only, bounded by retained feedback.
     public var pendingFeedback: [String: Stamp] = [:]
+    public var recommendationThrottle = RecommendationThrottle()
 
     enum CodingKeys: String, CodingKey {
         case device, document
         case cachedPicks = "cached_picks"
         case pendingFeedback = "pending_feedback"
+        case recommendationThrottle = "recommendation_throttle"
     }
 
     public init(device: String = newDeviceID(), document: Document = Document(), cachedPicks: [Pick] = []) {
@@ -404,6 +406,7 @@ public struct Replica: Codable, Sendable {
         document = try container.decode(Document.self, forKey: .document)
         cachedPicks = try container.decodeIfPresent([Pick].self, forKey: .cachedPicks) ?? []
         pendingFeedback = try container.decodeIfPresent([String: Stamp].self, forKey: .pendingFeedback) ?? [:]
+        recommendationThrottle = try container.decodeIfPresent(RecommendationThrottle.self, forKey: .recommendationThrottle) ?? RecommendationThrottle()
     }
 
     /// Import the remote clock without confusing fresh offline intent with old replicas.
@@ -572,10 +575,24 @@ public enum RecommendationErrorKind: Sendable, Equatable {
     case pairing, busy, rateLimited, unavailable, invalidResponse
 }
 
-/// When to ask for fresh picks without a tap. Same schedule as the desktop:
-/// at most every twelve hours, 1.5 s after a taste or exploration change,
-/// 45 s (and at least ten minutes after the last attempt) after feedback,
-/// exponential backoff on failure, and suspension until re-paired.
+/// Restart checkpoints are local and excluded from cloud sync and AI prompts.
+public struct RecommendationThrottle: Codable, Equatable, Sendable {
+    public var lastAttemptAt: UInt64?
+    public var retryAt: UInt64?
+    public var changedAt: UInt64?
+    public var failures: UInt32 = 0
+    public var suspended = false
+    public init() {}
+    enum CodingKeys: String, CodingKey {
+        case lastAttemptAt = "last_attempt_at"
+        case retryAt = "retry_at"
+        case changedAt = "changed_at"
+        case failures, suspended
+    }
+}
+
+/// Same schedule as desktop: twelve-hour freshness, debounced input changes,
+/// a ten-minute feedback throttle and bounded failure backoff.
 public struct AutoRecommendations: Sendable {
     public var failures: UInt32 = 0
     public var suspended = false
@@ -584,6 +601,33 @@ public struct AutoRecommendations: Sendable {
     var lastAttempt: ContinuousClock.Instant?
 
     public init() {}
+
+    public init(saved: RecommendationThrottle, now: ContinuousClock.Instant, wallNow: UInt64) {
+        failures = min(saved.failures, 10)
+        suspended = saved.suspended
+        lastAttempt = saved.lastAttemptAt.map { now - .seconds(min(wallNow > $0 ? wallNow - $0 : 0, 600)) }
+        retryAt = saved.retryAt.map { now + .seconds(min($0 > wallNow ? $0 - wallNow : 0, 21_600)) }
+        changedAt = saved.changedAt.map { now + .seconds(min($0 > wallNow ? $0 - wallNow : 0, 600)) }
+    }
+
+    public func checkpoint(now: ContinuousClock.Instant, wallNow: UInt64) -> RecommendationThrottle {
+        func deadline(_ time: ContinuousClock.Instant) -> UInt64 {
+            let parts = max(.zero, time - now).components
+            let remaining = UInt64(parts.seconds) + (parts.attoseconds > 0 ? 1 : 0)
+            let (sum, overflow) = wallNow.addingReportingOverflow(remaining)
+            return overflow ? UInt64.max : sum
+        }
+        var saved = RecommendationThrottle()
+        saved.lastAttemptAt = lastAttempt.map {
+            let elapsed = UInt64(min(max(.zero, now - $0).components.seconds, 600))
+            return wallNow >= elapsed ? wallNow - elapsed : 0
+        }
+        saved.retryAt = retryAt.map(deadline)
+        saved.changedAt = changedAt.map(deadline)
+        saved.failures = failures
+        saved.suspended = suspended
+        return saved
+    }
 
     public func retryAfter(now: ContinuousClock.Instant) -> Duration? {
         guard let retryAt, retryAt > now else { return nil }
@@ -603,7 +647,8 @@ public struct AutoRecommendations: Sendable {
         if empty && lastAttempt == nil { return .zero }
         let refreshed = preferences.refreshedAt.flatMap { $0 <= wallNow &+ 43_200 ? $0 : nil } ?? 0
         let next = refreshed &+ 43_200
-        return .seconds(next > wallNow ? next - wallNow : 0)
+        let freshness = Duration.seconds(next > wallNow ? next - wallNow : 0)
+        return lastAttempt.map { max(freshness, max(.zero, $0 + .seconds(600) - now)) } ?? freshness
     }
 
     public mutating func attempted(now: ContinuousClock.Instant) {

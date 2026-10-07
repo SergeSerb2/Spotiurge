@@ -44,6 +44,8 @@ final class DiscoveryModel {
     @ObservationIgnored private var retryAfter: Date?
     @ObservationIgnored private var pendingWrite: Replica?
     @ObservationIgnored private var writing = false
+    @ObservationIgnored private var lastWriteSucceeded = true
+    @ObservationIgnored private var writeWaiters: [CheckedContinuation<Bool, Never>] = []
     @ObservationIgnored var account: SpotifyAccount?
     /// Network work in flight, cancelled on suspension. `epoch` changes with
     /// each suspension so a late answer is recognised and dropped.
@@ -89,6 +91,10 @@ final class DiscoveryModel {
             switch result {
             case .success(let replica):
                 self.replica = replica
+                var throttle = replica.recommendationThrottle
+                throttle.lastAttemptAt = throttle.lastAttemptAt ?? preferences.refreshedAt
+                automatic = AutoRecommendations(saved: throttle, now: .now, wallNow: UInt64(Date().timeIntervalSince1970))
+                lastError = automatic.suspended ? .pairing : nil
                 picks = replica.cachedPicks
                 draft = replica.document.taste
                 ready = true
@@ -178,6 +184,7 @@ final class DiscoveryModel {
             lastError = nil
         }
         status = "Paired with your private cloud."
+        persist()
         sync()
         schedule()
         return nil
@@ -241,6 +248,7 @@ final class DiscoveryModel {
         guard !demo else { return }
         invalidate()
         automatic.changed(now: .now, exploration: true)
+        persist()
         schedule()
     }
 
@@ -305,6 +313,7 @@ final class DiscoveryModel {
         }
         if !isAutomatic && lastError == .pairing { automatic.rearm() }
         automatic.attempted(now: now)
+        persist()
         lastError = nil
         request += 1
         busy = true
@@ -319,6 +328,10 @@ final class DiscoveryModel {
         start { () async -> Result<(picks: [Pick], outcome: CatalogueOutcome), RecommendationFailure> in
             let result: Result<(picks: [Pick], outcome: CatalogueOutcome), RecommendationFailure>
             do throws(RecommendationFailure) {
+                guard await self.waitForWrites() else {
+                    throw RecommendationFailure(.unavailable, "Cannot save discovery state. No AI request was sent.")
+                }
+                guard !Task.isCancelled else { throw RecommendationFailure(.unavailable, "Recommendation cancelled.") }
                 let suggestions = try await client.recommend(document, exploration: exploration)
                 result = .success(await self.resolve(suggestions.map { Pick(suggestion: $0) }, web: web))
             } catch {
@@ -372,6 +385,7 @@ final class DiscoveryModel {
             automatic.failed(failure.kind, now: .now)
             lastError = failure.kind
             status = failure.message
+            persist()
         }
     }
 
@@ -507,6 +521,7 @@ final class DiscoveryModel {
     /// One writer, latest snapshot wins, through an atomic replace off the main actor.
     private func persist() {
         guard !demo else { return }
+        replica.recommendationThrottle = automatic.checkpoint(now: .now, wallNow: UInt64(Date().timeIntervalSince1970))
         var snapshot = replica
         snapshot.cachedPicks = Array(picks.prefix(12))
         pendingWrite = snapshot
@@ -514,13 +529,23 @@ final class DiscoveryModel {
         writing = true
         let file = file
         Task {
+            var persisted = true
             while let next = pendingWrite {
                 pendingWrite = nil
                 let result = await Task.detached { Result { () throws(DiscoveryError) in try next.save(to: file) } }.value
-                if case .failure(let error) = result { status = error.message }
+                if case .failure(let error) = result { status = error.message; persisted = false }
             }
             writing = false
+            lastWriteSucceeded = persisted
+            let waiters = writeWaiters
+            writeWaiters = []
+            for waiter in waiters { waiter.resume(returning: persisted) }
         }
+    }
+
+    private func waitForWrites() async -> Bool {
+        guard writing else { return lastWriteSucceeded }
+        return await withCheckedContinuation { writeWaiters.append($0) }
     }
 
     // MARK: - Demo

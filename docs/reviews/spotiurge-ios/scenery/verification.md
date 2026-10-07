@@ -78,3 +78,13 @@ for a complete bounded callback line. Core and hosted suites were rerun, includi
 a scripted 429/manual-repeat regression. The unsigned generic device build also
 passed with this code. The visual design is unchanged; the capture manifest
 continues to identify the exact earlier builds used for those images.
+
+The later restart and catalogue review fixes also preserve appearance. Local
+attempt times, pending refreshes, pairing suspension and failure cooldowns now
+survive reopening; the serial writer finishes before AI access. Catalogue
+matching uses full case folding followed by NFC while preserving accents and
+versions. All 42 Swift core tests and 15 hosted iOS Simulator tests passed,
+including a saved-429/reopen regression and a disposable native Keychain round
+trip. The Simulator test build and unsigned generic iPhoneOS build passed with
+the engine omitted. No physical phone, live AI/catalogue/cloud round or
+TestFlight upload was tested in this round.

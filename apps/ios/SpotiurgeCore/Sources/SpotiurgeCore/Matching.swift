@@ -16,7 +16,8 @@ func foldName(_ text: String) -> String {
         default: scalar
         }
     }))
-    return mapped.lowercased().split(whereSeparator: \.isWhitespace).joined(separator: " ")
+    return mapped.folding(options: .caseInsensitive, locale: Locale(identifier: "en_US_POSIX"))
+        .split(whereSeparator: \.isWhitespace).joined(separator: " ").precomposedStringWithCanonicalMapping
 }
 
 private let creditSeparators = [

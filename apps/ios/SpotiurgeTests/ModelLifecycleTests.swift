@@ -399,6 +399,32 @@ struct ModelLifecycle {
 
     // MARK: Pairing (F7)
 
+    @Test func `reopening keeps a saved recommendation cooldown`() async throws {
+        StubNetwork.reset(["POST /v1/recommendations": .init(status: 429)])
+        let suite = "spotiurge-restart-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        let file = FileManager.default.temporaryDirectory.appending(path: "discovery-restart-\(UUID().uuidString).json")
+        defer { defaults.removePersistentDomain(forName: suite); try? FileManager.default.removeItem(at: file) }
+        defaults.set(endpoint, forKey: "cloudEndpoint")
+        let secrets = FakeSecrets([cloudKey: cloudToken])
+        let model = DiscoveryModel(file: file, defaults: defaults, secrets: secrets.store, session: StubNetwork.session)
+        model.setAutomatic(false)
+        model.load()
+        #expect(await eventually { model.ready && !model.syncing })
+        model.draft = "Jazz"
+        model.recommend()
+        #expect(await eventually { (try? Replica.load(from: file))?.recommendationThrottle.failures == 1 })
+        model.suspend()
+        let reopened = DiscoveryModel(file: file, defaults: defaults, secrets: secrets.store, session: StubNetwork.session)
+        reopened.load()
+        #expect(await eventually { reopened.ready && !reopened.syncing })
+        reopened.recommend()
+        await settle()
+        #expect(!reopened.busy)
+        #expect(StubNetwork.seen.filter { $0 == "POST /v1/recommendations" }.count == 1)
+        reopened.suspend()
+    }
+
     @Test func `a locked Keychain is not an unpaired phone`() async {
         StubNetwork.reset()
         let secrets = FakeSecrets([cloudKey: cloudToken])
