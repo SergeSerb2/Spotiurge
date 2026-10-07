@@ -1839,6 +1839,20 @@ impl App {
             match event {
                 Event::DiscoveryLoaded(result) => match result {
                     Ok(replica) => {
+                        let mut throttle = replica.recommendation_throttle.clone();
+                        throttle.last_attempt_at = throttle
+                            .last_attempt_at
+                            .or(self.settings.discovery.refreshed_at);
+                        self.discovery.automatic = crate::discovery::AutoRecommendations::restore(
+                            &throttle,
+                            Instant::now(),
+                            crate::discovery::unix_now(),
+                        );
+                        self.discovery.last_error = self
+                            .discovery
+                            .automatic
+                            .suspended
+                            .then_some(crate::discovery::RecommendationErrorKind::Pairing);
                         self.discovery.draft = replica.document.taste().into();
                         self.discovery.picks = replica.cached_picks.clone();
                         self.discovery.replica = replica;
@@ -1867,12 +1881,14 @@ impl App {
                                         == Some(crate::discovery::RecommendationErrorKind::Pairing)
                                     {
                                         self.discovery.automatic.rearm();
+                                        self.checkpoint_discovery_throttle();
                                         self.discovery.last_error = None;
                                     }
                                     if inputs_changed {
                                         self.invalidate_discovery_request();
                                         self.discovery.automatic.changed(Instant::now(), true);
                                     }
+                                    self.checkpoint_discovery_throttle();
                                     self.discovery.dirty =
                                         self.discovery.replica.document != document;
                                     if draft_unchanged {
@@ -1931,6 +1947,7 @@ impl App {
                             )
                             .then(|| Instant::now() + Duration::from_secs(30));
                             self.discovery.automatic.rearm();
+                            self.checkpoint_discovery_throttle();
                             self.discovery.last_error = None;
                             self.settings.discovery.refreshed_at =
                                 Some(crate::discovery::unix_now());
@@ -1951,6 +1968,9 @@ impl App {
                         }
                         Err(error) => {
                             self.discovery.automatic.failed(error.kind, Instant::now());
+                            self.checkpoint_discovery_throttle();
+                            self.backend
+                                .send(Command::SaveDiscovery(self.discovery.replica.clone()));
                             self.discovery.last_error = Some(error.kind);
                             self.discovery.status = error.message;
                         }
@@ -8425,6 +8445,7 @@ impl App {
                         self.discovery.editing_taste = false;
                         self.invalidate_discovery_request();
                         self.discovery.automatic.changed(Instant::now(), true);
+                        self.checkpoint_discovery_throttle();
                         self.backend
                             .send(Command::SaveDiscovery(self.discovery.replica.clone()));
                         self.discovery.status = gettext(
@@ -8463,6 +8484,9 @@ impl App {
                     self.settings_dirty = true;
                     self.invalidate_discovery_request();
                     self.discovery.automatic.changed(Instant::now(), true);
+                    self.checkpoint_discovery_throttle();
+                    self.backend
+                        .send(Command::SaveDiscovery(self.discovery.replica.clone()));
                 }
             }
             Action::DiscoveryAutomatic(enabled) => {
@@ -8545,6 +8569,7 @@ impl App {
                         self.discovery.dirty = true;
                         self.invalidate_discovery_request();
                         self.discovery.automatic.changed(Instant::now(), false);
+                        self.checkpoint_discovery_throttle();
                         self.backend
                             .send(Command::SaveDiscovery(self.discovery.replica.clone()));
                         self.discovery.status = gettext(
@@ -9918,15 +9943,23 @@ impl App {
             self.discovery.automatic.rearm();
         }
         self.discovery.automatic.attempted(now);
+        self.checkpoint_discovery_throttle();
         self.discovery.last_error = None;
         self.discovery.request += 1;
         self.discovery.busy = true;
         self.discovery.in_flight_request = Some(self.discovery.request);
         self.backend.send(Command::RecommendDiscovery {
             request: self.discovery.request,
-            document: self.discovery.replica.document.clone(),
+            replica: self.discovery.replica.clone(),
             exploration: self.settings.discovery.exploration,
         });
+    }
+
+    fn checkpoint_discovery_throttle(&mut self) {
+        self.discovery.replica.recommendation_throttle = self
+            .discovery
+            .automatic
+            .checkpoint(Instant::now(), crate::discovery::unix_now());
     }
 
     fn check_for_updates(&mut self, manual: bool) {
@@ -16042,6 +16075,24 @@ mod tests {
         assert_eq!(app.discovery.status, "Retry later");
         let after = app.discovery.automatic.retry_after(Instant::now()).unwrap();
         assert!(after <= before && after > Duration::from_secs(590));
+        let stored =
+            serde_json::from_slice(&serde_json::to_vec(&app.discovery.replica).unwrap()).unwrap();
+        let mut reopened = test_app("discovery-reopened-cooldown");
+        reopened.backend.set_offline(true);
+        reopened.auth = app.auth.clone();
+        reopened.handle_backend_events(vec![Event::DiscoveryLoaded(Ok(stored))]);
+        reopened.apply(Action::DiscoveryRecommend, &ctx);
+        assert_eq!(reopened.discovery.request, 0);
+        assert!(!reopened.discovery.busy);
+        assert!(
+            reopened
+                .discovery
+                .automatic
+                .retry_after(Instant::now())
+                .unwrap()
+                > Duration::from_secs(590)
+        );
+        reopened.backend.shutdown();
         app.backend.shutdown();
     }
 

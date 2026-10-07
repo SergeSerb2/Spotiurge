@@ -432,6 +432,9 @@ async fn forward_events(
                 json!({ "t": "playing", "uri": track_id.to_uri().unwrap_or_default(), "position_ms": position_ms })
             }
             PlayerEvent::Paused { position_ms, .. } => {
+                // The decoder is paused but Core Audio keeps requesting frames.
+                // Discard its bounded tail before reporting the pause to Swift.
+                PCM.clear();
                 json!({ "t": "paused", "position_ms": position_ms })
             }
             PlayerEvent::Stopped { .. } => {
@@ -580,6 +583,46 @@ pub extern "C" fn probe_flush() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn a_player_pause_flushes_the_buffer_before_reporting_paused() {
+        extern "C" fn event(line: *const c_char, ctx: *mut c_void) {
+            // SAFETY: this test owns both pointers until forwarding completes.
+            unsafe { *ctx.cast::<String>() = CStr::from_ptr(line).to_str().unwrap().into() };
+        }
+        extern "C" fn credential(_: *const u8, _: usize, _: *mut c_void) {}
+        let mut reported = String::new();
+        let host = Arc::new(Host {
+            on_event: event,
+            on_credentials: credential,
+            ctx: (&mut reported as *mut String) as usize,
+        });
+        PCM.push(&vec![0.25; QUEUE_CAP]);
+        let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
+        sender
+            .send(PlayerEvent::Paused {
+                play_request_id: 1,
+                track_id: librespot_core::SpotifyUri::from_uri(
+                    "spotify:track:0DiWol3AO6WpXZgp0goxAV",
+                )
+                .unwrap(),
+                position_ms: 1234,
+            })
+            .unwrap();
+        drop(sender);
+        forward_events(receiver, host).await;
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&reported).unwrap()["t"],
+            "paused"
+        );
+        let (mut left, mut right) = ([1.0; 64], [1.0; 64]);
+        assert_eq!(PCM.render(&mut left, &mut right), 0);
+        assert_eq!(left, [0.0; 64]);
+        assert_eq!(right, [0.0; 64]);
+        PCM.push(&[0.5, -0.5]);
+        assert_eq!(PCM.render(&mut left, &mut right), 1);
+        assert_eq!((left[0], right[0]), (0.5, -0.5));
+    }
 
     #[test]
     fn render_drains_queue_in_order_pads_silence_and_measures_rms() {

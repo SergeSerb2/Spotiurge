@@ -92,6 +92,12 @@ Saved mixes have a remove control. New saves reuse removed slots, then the
 oldest slot once 100 mix slots exist, so repeated saves do not grow storage
 without bound. Imported older mixes remain readable and removable. AI refresh,
 including manual refresh, respects the service's retry cooldown.
+Attempt times, pending feedback refreshes, pairing suspension and failure
+cooldowns persist per device in the local discovery file, so restarting keeps
+the same limits. They are excluded from cloud sync and AI prompts. A pending
+attempt is saved before AI access; wall-clock restoration bounds clock changes.
+Catalogue matching uses full Unicode case folding followed by NFC, retaining
+accents and explicit remix/live versions.
 
 Pair each desktop once by launching with `SPOTIURGE_CLOUD_TOKEN` in its process
 environment. Obtain it from the private Railway service through a protected

@@ -1,6 +1,18 @@
 import Foundation
 import Security
 
+/// An ended notification cannot start music that was idle or already paused.
+struct InterruptionPlayback {
+    private var wasPlaying = false
+
+    mutating func began(playing: Bool) { wasPlaying = playing }
+
+    mutating func ended(shouldResume: Bool) -> Bool {
+        defer { wasPlaying = false }
+        return wasPlaying && shouldResume
+    }
+}
+
 /// TCP may split the callback at any byte. Parse only a complete request line.
 struct LoopbackRequest {
     private var bytes = Data()

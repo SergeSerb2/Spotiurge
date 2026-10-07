@@ -100,3 +100,7 @@ The later cooldown, saved-mix and probe sign-in findings were fixed and checked
 separately. See [review-fixes-r3/verification.md](review-fixes-r3/verification.md)
 for the full checks (1003/1026 library tests), host-only credential regressions
 and four matched native UI pairs. These do not change the scenery design.
+
+The subsequent [restart/catalogue/probe review fixes](review-fixes-r4.md) passed
+the full checks with 1004/1027 library tests. They preserve the same appearance
+and add no physical-device coverage.

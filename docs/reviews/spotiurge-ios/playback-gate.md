@@ -204,3 +204,12 @@ When Serge resumes device testing, run these with the Spotify app closed:
 
 Raw logs (`.qa/ios-playback/`) stay local and ignored. They hold no audio,
 tokens, credentials or authorization responses.
+
+## Later host-only review fixes
+
+The source now clears buffered PCM on a normal PlayerEvent pause and only
+resumes an interruption if playback was active at its beginning and the system
+requests resumption. Three Rust host tests, Rust Clippy/formatting, Swift host
+regressions and iPhoneOS SDK typechecking passed. No build containing these
+changes was installed or run on Serge's physical phone. These checks do not
+extend the locked-run evidence or complete the remaining gate criteria.

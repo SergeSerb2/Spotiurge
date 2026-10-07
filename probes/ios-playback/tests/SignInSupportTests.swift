@@ -4,6 +4,15 @@ import Security
 @main
 struct SignInSupportTests {
     static func main() throws {
+        var interruption = InterruptionPlayback()
+        precondition(!interruption.ended(shouldResume: true))
+        interruption.began(playing: false)
+        precondition(!interruption.ended(shouldResume: true))
+        interruption.began(playing: true)
+        precondition(!interruption.ended(shouldResume: false))
+        interruption.began(playing: true)
+        precondition(interruption.ended(shouldResume: true))
+        precondition(!interruption.ended(shouldResume: true))
         let line = "GET /login?code=dummy&state=test-state HTTP/1.1\r\n"
         for split in 0...line.utf8.count {
             let bytes = Data(line.utf8)
@@ -55,6 +64,6 @@ struct SignInSupportTests {
         var value: CFTypeRef?
         precondition(SecItemCopyMatching(read as CFDictionary, &value) == errSecSuccess)
         precondition(value as? Data == new)
-        print("PASS: fragmented callback, request bounds, failure preservation, and disposable native Keychain round trip")
+        print("PASS: interruption resume intent, fragmented callback, request bounds, failure preservation, and disposable native Keychain round trip")
     }
 }

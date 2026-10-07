@@ -573,13 +573,13 @@ fn fold_name(text: &str) -> String {
             '\u{2010}'..='\u{2015}' => '-',
             _ => c,
         })
-        .flat_map(char::to_lowercase)
         .collect::<String>()
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ");
+    let case_folded = icu_casemap::CaseMapper::new().fold_string(&folded);
     icu_normalizer::ComposingNormalizer::new_nfc()
-        .normalize_iter(folded.chars())
+        .normalize_iter(case_folded.chars())
         .collect()
 }
 
@@ -797,7 +797,7 @@ pub enum Command {
     SyncDiscovery(crate::discovery::Replica),
     RecommendDiscovery {
         request: u64,
-        document: crate::discovery::Document,
+        replica: crate::discovery::Replica,
         exploration: crate::discovery::Exploration,
     },
     /// Retry catalogue matching for unchecked picks without another AI call.
@@ -1915,9 +1915,12 @@ impl Worker {
                 }
                 Command::RecommendDiscovery {
                     request,
-                    document,
+                    replica,
                     exploration,
                 } => {
+                    let document = replica.document.clone();
+                    let (reply, saved) = tokio::sync::oneshot::channel();
+                    let _ = discovery_writes.send((replica, reply));
                     let prompt = document.taste().to_owned();
                     let events = self.events.clone();
                     let waker = self.waker.clone();
@@ -1928,6 +1931,14 @@ impl Worker {
                         // Bound only the AI stage, so a slow catalogue cannot
                         // discard suggestions that already arrived.
                         let suggestions = tokio::time::timeout(Duration::from_secs(100), async {
+                            // Record the attempt before contacting AI, including
+                            // a restart while the network request is in flight.
+                            saved
+                                .await
+                                .map_err(|_| {
+                                    RecommendationError::unavailable("Discovery storage stopped.")
+                                })?
+                                .map_err(RecommendationError::unavailable)?;
                             let client = crate::http::client_builder(&proxy)
                                 .map_err(RecommendationError::unavailable)?
                                 .redirect(reqwest::redirect::Policy::none())
@@ -6711,6 +6722,10 @@ mod tests {
                 vec!["Beyoncé", "Amélie"],
             ),
             ("\u{1100}\u{1161}", "Artist", "가", vec!["Artist"]),
+            ("STRASSE", "GROSS", "Straße", vec!["Groß"]),
+            ("ΟΣ", "Σ", "ος", vec!["ς"]),
+            ("FFI", "ARTIST", "ﬃ", vec!["Artist"]),
+            ("İ", "Artist", "i\u{307}", vec!["Artist"]),
         ] {
             assert!(discovery_matches(
                 &suggestion(title, artist),
@@ -6722,6 +6737,7 @@ mod tests {
             ("Cafe", "Beyoncé"),
             ("Café", "Beyonce"),
             ("Café (Live)", "Beyoncé"),
+            ("CAFÉ (REMIX)", "Beyoncé"),
         ] {
             assert!(!discovery_matches(
                 &suggestion(title, artist),

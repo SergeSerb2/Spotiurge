@@ -26,6 +26,7 @@ final class Probe {
     private var wasBackgrounded = false
     /// When playback last stopped; the output stops after five idle minutes.
     private var idleSince: Date?
+    private var interruptionPlayback = InterruptionPlayback()
     var onChange: (() -> Void)?
 
     private let evidenceURL = FileManager.default
@@ -174,12 +175,13 @@ final class Probe {
     private func interruption(_ type: AVAudioSession.InterruptionType?, shouldResume: Bool, reason: UInt?) {
         switch type {
         case .began:
+            interruptionPlayback.began(playing: playing)
             record(["t": "interruption_began", "was_playing": playing, "reason": reason ?? 0])
             probe_flush()
             if playing { probe_command(1) }
         case .ended:
             record(["t": "interruption_ended", "should_resume": shouldResume])
-            if shouldResume {
+            if interruptionPlayback.ended(shouldResume: shouldResume) {
                 activateAndRun(reason: "interruption_ended")
                 probe_command(0)
             }

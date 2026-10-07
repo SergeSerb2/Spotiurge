@@ -110,7 +110,53 @@ pub struct AutoRecommendations {
     last_attempt: Option<std::time::Instant>,
 }
 
+/// Local wall-clock checkpoints, never synchronized or sent to AI. Runtime
+/// scheduling remains monotonic; bounded restoration handles clock changes.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct RecommendationThrottle {
+    pub last_attempt_at: Option<u64>,
+    pub retry_at: Option<u64>,
+    pub changed_at: Option<u64>,
+    pub failures: u32,
+    pub suspended: bool,
+}
+
 impl AutoRecommendations {
+    pub fn restore(saved: &RecommendationThrottle, now: std::time::Instant, wall_now: u64) -> Self {
+        Self {
+            failures: saved.failures.min(10),
+            suspended: saved.suspended,
+            last_attempt: saved.last_attempt_at.and_then(|last| {
+                now.checked_sub(std::time::Duration::from_secs(
+                    wall_now.saturating_sub(last).min(600),
+                ))
+            }),
+            retry_at: saved.retry_at.map(|retry| {
+                now + std::time::Duration::from_secs(retry.saturating_sub(wall_now).min(21_600))
+            }),
+            changed_at: saved.changed_at.map(|changed| {
+                now + std::time::Duration::from_secs(changed.saturating_sub(wall_now).min(600))
+            }),
+        }
+    }
+
+    pub fn checkpoint(&self, now: std::time::Instant, wall_now: u64) -> RecommendationThrottle {
+        let deadline = |time: std::time::Instant| {
+            let remaining = time.saturating_duration_since(now);
+            wall_now.saturating_add(remaining.as_secs() + u64::from(remaining.subsec_nanos() > 0))
+        };
+        RecommendationThrottle {
+            last_attempt_at: self
+                .last_attempt
+                .map(|last| wall_now.saturating_sub(now.saturating_duration_since(last).as_secs())),
+            retry_at: self.retry_at.map(deadline),
+            changed_at: self.changed_at.map(deadline),
+            failures: self.failures,
+            suspended: self.suspended,
+        }
+    }
+
     pub fn retry_after(&self, now: std::time::Instant) -> Option<std::time::Duration> {
         self.retry_at
             .filter(|retry| *retry > now)
@@ -151,9 +197,13 @@ impl AutoRecommendations {
             .refreshed_at
             .filter(|time| *time <= wall_now.saturating_add(43_200))
             .unwrap_or(0);
-        Some(std::time::Duration::from_secs(
+        let freshness = std::time::Duration::from_secs(
             refreshed.saturating_add(43_200).saturating_sub(wall_now),
-        ))
+        );
+        Some(self.last_attempt.map_or(freshness, |last| {
+            freshness
+                .max((last + std::time::Duration::from_secs(600)).saturating_duration_since(now))
+        }))
     }
 
     pub fn attempted(&mut self, now: std::time::Instant) {
@@ -461,6 +511,9 @@ pub struct Replica {
     /// Only exact current stamps survive; acknowledged or forgotten edits leave.
     #[serde(default)]
     pub pending_feedback: BTreeMap<String, Stamp>,
+    /// Restart-safe per-installation AI limits, outside the cloud document.
+    #[serde(default)]
+    pub recommendation_throttle: RecommendationThrottle,
 }
 
 impl Default for Replica {
@@ -470,6 +523,7 @@ impl Default for Replica {
             document: Document::default(),
             cached_picks: Vec::new(),
             pending_feedback: BTreeMap::new(),
+            recommendation_throttle: RecommendationThrottle::default(),
         }
     }
 }
@@ -886,6 +940,84 @@ pub(crate) mod tests {
             scheduler
                 .retry_after(now + std::time::Duration::from_secs(600))
                 .is_none()
+        );
+    }
+
+    #[test]
+    fn recommendation_throttles_survive_restart_and_clock_changes() {
+        use std::time::{Duration, Instant};
+        let now = Instant::now();
+        let mut scheduler = AutoRecommendations::default();
+        scheduler.attempted(now);
+        scheduler.rearm();
+        let mut replica = Replica {
+            recommendation_throttle: scheduler.checkpoint(now, 100_000),
+            ..Default::default()
+        };
+        // Exercise the persisted local format, not only an in-memory copy.
+        let path =
+            Path::new("target").join(format!("discovery-throttle-{}.json", rand::random::<u64>()));
+        replica.save(&path).unwrap();
+        let loaded = Replica::load(&path).unwrap();
+        std::fs::remove_file(&path).unwrap();
+        let mut restored =
+            AutoRecommendations::restore(&loaded.recommendation_throttle, now, 100_010);
+        restored.changed(now, false);
+        assert_eq!(
+            restored.due(now, 100_010, &Preferences::default(), true, true, false),
+            Some(Duration::from_secs(590))
+        );
+        let restored = AutoRecommendations::restore(&loaded.recommendation_throttle, now, 100_010);
+        assert_eq!(
+            restored.due(now, 100_010, &Preferences::default(), true, true, true),
+            Some(Duration::from_secs(590))
+        );
+
+        scheduler.failed(RecommendationErrorKind::RateLimited, now);
+        replica.recommendation_throttle = scheduler.checkpoint(now, 100_000);
+        let stored: Replica =
+            serde_json::from_slice(&serde_json::to_vec(&replica).unwrap()).unwrap();
+        assert!(
+            !serde_json::to_string(&stored.document)
+                .unwrap()
+                .contains("retry_at")
+        );
+        let mut restored =
+            AutoRecommendations::restore(&stored.recommendation_throttle, now, 100_010);
+        assert_eq!(restored.retry_after(now), Some(Duration::from_secs(590)));
+        restored.attempted(now + Duration::from_secs(590));
+        restored.failed(
+            RecommendationErrorKind::RateLimited,
+            now + Duration::from_secs(590),
+        );
+        assert_eq!(
+            restored.retry_after(now + Duration::from_secs(590)),
+            Some(Duration::from_secs(1200))
+        );
+        assert!(
+            AutoRecommendations::restore(&stored.recommendation_throttle, now, 100_600)
+                .retry_after(now)
+                .is_none()
+        );
+        let skewed = RecommendationThrottle {
+            last_attempt_at: Some(u64::MAX),
+            retry_at: Some(u64::MAX),
+            failures: u32::MAX,
+            suspended: true,
+            changed_at: None,
+        };
+        let restored = AutoRecommendations::restore(&skewed, now, 100_000);
+        assert_eq!(restored.retry_after(now), Some(Duration::from_secs(21_600)));
+        assert_eq!(restored.failures, 10);
+        assert!(restored.suspended);
+        let legacy: Replica = serde_json::from_str(&format!(
+            r#"{{"device":"{}","document":{{"version":1,"records":{{}}}}}}"#,
+            "a".repeat(32)
+        ))
+        .unwrap();
+        assert_eq!(
+            legacy.recommendation_throttle,
+            RecommendationThrottle::default()
         );
     }
 
