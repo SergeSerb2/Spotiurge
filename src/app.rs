@@ -8479,6 +8479,9 @@ impl App {
                 });
             }
             Action::DiscoveryExploration(exploration) => {
+                if !self.discovery.ready || self.offline {
+                    return;
+                }
                 if self.settings.discovery.exploration != exploration {
                     self.settings.discovery.exploration = exploration;
                     self.settings_dirty = true;
@@ -15617,7 +15620,21 @@ mod tests {
         };
         const OPENING: &str = "Opening your personal discovery workspace…";
         draw(&mut app, egui::vec2(600.0, 800.0));
-        assert!(contains(&draw(&mut app, egui::vec2(600.0, 800.0)), OPENING));
+        let opening = draw(&mut app, egui::vec2(600.0, 800.0));
+        assert!(contains(&opening, OPENING));
+        for label in ["Familiar", "Balanced", "Adventurous"] {
+            assert!(
+                opening
+                    .nodes
+                    .iter()
+                    .any(|(_, node)| { node.label() == Some(label) && node.is_disabled() })
+            );
+        }
+        app.apply(
+            Action::DiscoveryExploration(crate::discovery::Exploration::Adventurous),
+            &ctx,
+        );
+        assert_eq!(app.settings.discovery.exploration, Default::default());
 
         std::fs::create_dir_all(&app.dirs.state).unwrap();
         let corrupt = app.dirs.state.join("corrupt.json");
@@ -15630,6 +15647,15 @@ mod tests {
             let error = crate::discovery::Replica::load(path).unwrap_err();
             app.handle_backend_events(vec![Event::DiscoveryLoaded(Err(error.clone()))]);
             assert!(!app.discovery.ready, "failed storage cannot enable edits");
+            let settings = app.settings.discovery.clone();
+            let replica = serde_json::to_vec(&app.discovery.replica).unwrap();
+            app.apply(
+                Action::DiscoveryExploration(crate::discovery::Exploration::Adventurous),
+                &ctx,
+            );
+            assert_eq!(app.settings.discovery, settings);
+            assert_eq!(serde_json::to_vec(&app.discovery.replica).unwrap(), replica);
+            assert!(!app.settings_dirty);
             for dark in [true, false] {
                 app.palette = if dark {
                     Palette::dark()
@@ -15647,6 +15673,11 @@ mod tests {
                         }),
                         "failed storage keeps recommendations disabled"
                     );
+                    for label in ["Familiar", "Balanced", "Adventurous"] {
+                        assert!(tree.nodes.iter().any(|(_, node)| {
+                            node.label() == Some(label) && node.is_disabled()
+                        }));
+                    }
                 }
             }
         }
@@ -15677,6 +15708,13 @@ mod tests {
                 .any(|(_, node)| { node.label() == Some("Find new picks") && !node.is_disabled() }),
             "a successful load restores recommendations"
         );
+        for label in ["Familiar", "Balanced", "Adventurous"] {
+            assert!(
+                tree.nodes
+                    .iter()
+                    .any(|(_, node)| { node.label() == Some(label) && !node.is_disabled() })
+            );
+        }
         app.backend.shutdown();
         std::fs::remove_dir_all(app.dirs.state.parent().unwrap()).unwrap();
     }

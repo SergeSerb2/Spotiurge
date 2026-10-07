@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Spotifast\n"
 "Report-Msgid-Bugs-To: https://github.com/SergeSerb2/Spotiurge/issues/new?"
 "template=translation.yml\n"
-"POT-Creation-Date: 2026-10-07 04:17-0700\n"
+"POT-Creation-Date: 2026-10-07 05:16-0700\n"
 "PO-Revision-Date: 2026-09-09 13:30+0000\n"
 "Last-Translator: Spotifast contributors\n"
 "Language-Team: Traditional Chinese\n"
@@ -28,12 +28,12 @@ msgstr "暫停 {name}"
 msgid "Play {name}"
 msgstr "播放 {name}"
 
-#: src/ui/sidebar.rs:300 src/app.rs:2557 src/app.rs:17529
+#: src/ui/sidebar.rs:300 src/app.rs:2557 src/app.rs:17567
 #: src/ui/collection.rs:1780 src/ui/collection.rs:1957
 msgid "Playlist"
 msgstr "播放清單"
 
-#: src/ui/sidebar.rs:310 src/app.rs:2531 src/app.rs:17534
+#: src/ui/sidebar.rs:310 src/app.rs:2531 src/app.rs:17572
 #: src/ui/collection.rs:1950 src/ui/home.rs:55 src/ui/keys.rs:258
 #: src/ui/winamp/playlist.rs:653
 msgid "Liked Songs"
@@ -394,7 +394,7 @@ msgstr "純音樂"
 msgid "No timed lyrics for this track."
 msgstr "這首歌沒有同步歌詞。"
 
-#: src/ui/lyrics.rs:393 src/ui/widgets.rs:2501 src/app.rs:10612
+#: src/ui/lyrics.rs:393 src/ui/widgets.rs:2501 src/app.rs:10615
 #: src/ui/collection.rs:813
 msgid "Loading…"
 msgstr "載入中…"
@@ -725,7 +725,7 @@ msgid "Queue cleared"
 msgstr "已清除待播清單"
 
 #. Translators: Keep {date} unchanged. It is a date in YYYY-MM-DD form.
-#: src/app.rs:4599 src/app.rs:17519
+#: src/app.rs:4599 src/app.rs:17557
 #, rust-format
 msgid "Queue {date}"
 msgstr "待播清單 {date}"
@@ -934,130 +934,130 @@ msgstr[0] "有 {count} 個貼上的連結無法加入"
 msgid "Taste saved locally. Sync when you are connected."
 msgstr "音樂偏好已儲存在本機。連線後再同步。"
 
-#: src/app.rs:8545
+#: src/app.rs:8548
 msgid "Syncing preferences, feedback, mixes and AI history…"
 msgstr "正在同步偏好、回饋、混合歌單和 AI 歷史記錄…"
 
-#: src/app.rs:8577
+#: src/app.rs:8580
 msgid "Feedback saved. It will shape your next discoveries."
 msgstr "回饋已儲存。它會影響你的下一輪音樂發現。"
 
-#: src/app.rs:8600
+#: src/app.rs:8603
 msgid "My discovery mix"
 msgstr "我的發現歌單"
 
-#: src/app.rs:8608
+#: src/app.rs:8611
 msgid "Mix saved to Spotiurge. Sync to share it across your devices."
 msgstr "混合歌單已儲存到 Spotiurge。同步後即可在其他裝置上使用。"
 
-#: src/app.rs:9158
+#: src/app.rs:9161
 msgid "Spotify doesn't let apps remove a playlist description, so it was kept"
 msgstr "Spotify 不允許應用程式移除播放清單說明，因此說明已保留"
 
-#: src/app.rs:9202 src/app.rs:9215
+#: src/app.rs:9205 src/app.rs:9218
 msgid "Link copied"
 msgstr "已複製連結"
 
 #. Translators: {count} is a number of song links, always more than one.
-#: src/app.rs:9219
+#: src/app.rs:9222
 #, rust-format
 msgid "{count} link copied"
 msgid_plural "{count} links copied"
 msgstr[0] "已複製 {count} 個連結"
 
-#: src/app.rs:9474
+#: src/app.rs:9477
 msgid ""
 "Spotify doesn't let apps reorder your playlists, so this order is saved on "
 "this computer"
 msgstr ""
 "Spotify 不允許應用程式重新排列你的播放清單，因此這個順序會儲存在這台電腦上"
 
-#: src/app.rs:9534
+#: src/app.rs:9537
 msgid "Restarting local playback"
 msgstr "正在重新啟動本機播放"
 
-#: src/app.rs:9567
+#: src/app.rs:9570
 msgid "Local playback needs Spotify Premium"
 msgstr "本機播放需要 Spotify Premium"
 
-#: src/app.rs:9579
+#: src/app.rs:9582
 msgid "Opening your browser to set up local playback"
 msgstr "正在開啟瀏覽器以設定本機播放"
 
-#: src/app.rs:9596
+#: src/app.rs:9599
 msgid "Play history cleared"
 msgstr "已清除播放紀錄"
 
 #. Translators: {size} is a size in megabytes, such as 12.5.
-#: src/app.rs:9607
+#: src/app.rs:9610
 #, rust-format
 msgid "Cleared {size} MB of artwork"
 msgstr "已清除 {size} MB 的封面圖片"
 
 #. Translators: {error} is an error message.
-#: src/app.rs:9613
+#: src/app.rs:9616
 #, rust-format
 msgid "Couldn't clear artwork: {error}"
 msgstr "無法清除封面圖片：{error}"
 
-#: src/app.rs:9793
+#: src/app.rs:9796
 msgid "Downloading MilkDrop preset packs"
 msgstr "正在下載 MilkDrop 預設集套件"
 
 #. Translators: {name} is the name of a visualizer preset pack.
-#: src/app.rs:9827
+#: src/app.rs:9830
 #, rust-format
 msgid "Downloading {name} presets"
 msgstr "正在下載 {name} 預設集"
 
-#: src/app.rs:10724
+#: src/app.rs:10727
 msgid "Couldn't start playback"
 msgstr "無法開始播放"
 
-#: src/app.rs:10725
+#: src/app.rs:10728
 msgid "Couldn't pause"
 msgstr "無法暫停"
 
-#: src/app.rs:10726
+#: src/app.rs:10729
 msgid "Couldn't skip"
 msgstr "無法跳過"
 
-#: src/app.rs:10727
+#: src/app.rs:10730
 msgid "Couldn't go back"
 msgstr "無法返回"
 
-#: src/app.rs:10728
+#: src/app.rs:10731
 msgid "Couldn't seek"
 msgstr "無法調整播放位置"
 
-#: src/app.rs:10729
+#: src/app.rs:10732
 msgid "Couldn't change the volume"
 msgstr "無法調整音量"
 
-#: src/app.rs:10730
+#: src/app.rs:10733
 msgid "Couldn't change shuffle"
 msgstr "無法切換隨機播放"
 
-#: src/app.rs:10731
+#: src/app.rs:10734
 msgid "Couldn't change repeat"
 msgstr "無法切換重複播放"
 
-#: src/app.rs:10774
+#: src/app.rs:10777
 msgid ""
 "No audio output device was found. Connect or enable one, then press play "
 "again."
 msgstr "找不到音訊輸出裝置。請連接或啟用一個裝置，然後再按一次播放。"
 
-#: src/app.rs:10785
+#: src/app.rs:10788
 msgid ""
 "Spotify doesn't make this playlist's songs available to third-party apps."
 msgstr "Spotify 不提供這個播放清單的歌曲給第三方應用程式。"
 
-#: src/app.rs:10915
+#: src/app.rs:10918
 msgid "Spotify sign-in expired. Sign in again, then retry the cover upload."
 msgstr "Spotify 登入已過期。請重新登入，然後再次嘗試上傳封面。"
 
-#: src/app.rs:10920
+#: src/app.rs:10923
 msgid ""
 "Spotify refused this cover. Check that you own the playlist, then sign in "
 "again to grant image upload permission. If using a personal app, reconnect "
@@ -1066,19 +1066,19 @@ msgstr ""
 "Spotify 拒絕了這張封面。請確認你是播放清單的擁有者，然後重新登入以授予上傳圖"
 "片的權限。如果使用個人應用程式，也請在設定中重新連線。"
 
-#: src/app.rs:10924
+#: src/app.rs:10927
 msgid "Spotify rejected the image size. Choose a smaller image."
 msgstr "Spotify 拒絕了這個圖片大小，請選擇較小的圖片。"
 
 #. Translators: {error} is an error message.
-#: src/app.rs:10927
+#: src/app.rs:10930
 #, rust-format
 msgid "Couldn't upload the cover: {error}. Try again."
 msgstr "無法上傳封面：{error}。請再試一次。"
 
 #. Translators: Keep {track} unchanged. It is the name of the song,
 #. playlist, album, or artist the radio is based on, not translated.
-#: src/app.rs:17539 src/app/radio.rs:38
+#: src/app.rs:17577 src/app/radio.rs:38
 #, rust-format
 msgid "{track} Radio"
 msgstr "{track} 電台"
@@ -1959,11 +1959,11 @@ msgstr "無法載入自訂主題。請執行 spotifast reload-themes 再試一�
 msgid "Popular"
 msgstr "熱門"
 
-#: src/ui/artist.rs:74 src/ui/discovery.rs:1102
+#: src/ui/artist.rs:74 src/ui/discovery.rs:1104
 msgid "Show less"
 msgstr "顯示較少"
 
-#: src/ui/artist.rs:76 src/ui/discovery.rs:1096
+#: src/ui/artist.rs:76 src/ui/discovery.rs:1098
 msgid "See more"
 msgstr "查看更多"
 
@@ -2179,7 +2179,7 @@ msgid "“{name}” will no longer appear in Your Library."
 msgstr "「{name}」將不再顯示於你的音樂庫。"
 
 #: src/ui/dialogs.rs:96 src/ui/dialogs.rs:139 src/ui/dialogs.rs:415
-#: src/ui/dialogs.rs:590 src/ui/login.rs:91 src/ui/discovery.rs:447
+#: src/ui/dialogs.rs:590 src/ui/login.rs:91 src/ui/discovery.rs:449
 msgid "Cancel"
 msgstr "取消"
 
@@ -2638,7 +2638,7 @@ msgstr "找不到「{query}」的相關結果"
 msgid "Check the spelling, or try fewer words."
 msgstr "請檢查拼字，或減少字詞。"
 
-#: src/ui/search.rs:91 src/ui/winamp/playlist.rs:647 src/ui/discovery.rs:953
+#: src/ui/search.rs:91 src/ui/winamp/playlist.rs:647 src/ui/discovery.rs:955
 msgid "Search Spotify"
 msgstr "搜尋 Spotify"
 
@@ -3132,7 +3132,7 @@ msgstr "已儲存的推薦"
 msgid "Find new picks"
 msgstr "探索新推薦"
 
-#: src/ui/discovery.rs:163 src/ui/discovery.rs:699
+#: src/ui/discovery.rs:163 src/ui/discovery.rs:701
 msgid "Finding music…"
 msgstr "正在尋找音樂…"
 
@@ -3144,16 +3144,16 @@ msgstr "全部播放"
 msgid "No playable picks yet."
 msgstr "還沒有可播放的推薦。"
 
-#: src/ui/discovery.rs:248 src/ui/discovery.rs:625
+#: src/ui/discovery.rs:248 src/ui/discovery.rs:627
 msgid "Choose this computer to play discovery tracks and mixes."
 msgstr "選擇這台電腦來播放發現的歌曲和混合歌單。"
 
-#: src/ui/discovery.rs:258 src/ui/discovery.rs:653
+#: src/ui/discovery.rs:258 src/ui/discovery.rs:655
 msgid ""
 "Demo discoveries. Feedback, recommendations and cloud requests are disabled."
 msgstr "音樂發現示範。回饋、推薦和雲端請求均已停用。"
 
-#: src/ui/discovery.rs:263 src/ui/discovery.rs:504
+#: src/ui/discovery.rs:263 src/ui/discovery.rs:506
 msgid "Opening your personal discovery workspace…"
 msgstr "正在開啟你的個人音樂發現空間…"
 
@@ -3221,23 +3221,23 @@ msgstr "探索"
 msgid "Reach further from your usual music"
 msgstr "探索平常不常聽的音樂"
 
-#: src/ui/discovery.rs:398
+#: src/ui/discovery.rs:400
 msgid "Tell Spotiurge what you like"
 msgstr "告訴 Spotiurge 你喜歡什麼"
 
-#: src/ui/discovery.rs:400
+#: src/ui/discovery.rs:402
 msgid "Your taste"
 msgstr "你的音樂偏好"
 
-#: src/ui/discovery.rs:418
+#: src/ui/discovery.rs:420
 msgid "Warm jazz, spacious electronics, a few surprises…"
 msgstr "溫暖的爵士、空靈的電子樂，再來點驚喜…"
 
-#: src/ui/discovery.rs:439
+#: src/ui/discovery.rs:441
 msgid "Save taste"
 msgstr "儲存音樂偏好"
 
-#: src/ui/discovery.rs:464
+#: src/ui/discovery.rs:466
 #, rust-format
 msgid ""
 "This computer is not paired with your private cloud. Quit Spotiurge, set "
@@ -3246,110 +3246,110 @@ msgstr ""
 "這台電腦尚未與你的私有雲配對。結束 Spotiurge，在啟動環境中設定 {variable}，然"
 "後重新開啟。"
 
-#: src/ui/discovery.rs:469
+#: src/ui/discovery.rs:471
 msgid "Your picks are already being prepared. Try again in a moment."
 msgstr "正在為你準備推薦，稍後再試。"
 
-#: src/ui/discovery.rs:474
+#: src/ui/discovery.rs:476
 msgid "The AI is rate limited. Your picks are kept; try again later."
 msgstr "AI 請求已達到頻率限制。你的推薦已保留，稍後再試。"
 
-#: src/ui/discovery.rs:479
+#: src/ui/discovery.rs:481
 msgid "Recommendations are unavailable right now. Your picks are kept."
 msgstr "推薦功能暫時無法使用。你的推薦已保留。"
 
-#: src/ui/discovery.rs:484
+#: src/ui/discovery.rs:486
 msgid "The AI sent an answer Spotiurge could not use. Your picks are kept."
 msgstr "AI 傳回了 Spotiurge 無法使用的內容。你的推薦已保留。"
 
-#: src/ui/discovery.rs:535
+#: src/ui/discovery.rs:537
 msgid "No picks yet. Refresh to find music for your taste."
 msgstr "還沒有推薦。重新整理以探索符合你喜好的音樂。"
 
-#: src/ui/discovery.rs:544
+#: src/ui/discovery.rs:546
 #, rust-format
 msgid "{count} ready to play"
 msgid_plural "{count} ready to play"
 msgstr[0] "{count} 首可播放"
 
-#: src/ui/discovery.rs:555
+#: src/ui/discovery.rs:557
 #, rust-format
 msgid "{count} not found on Spotify"
 msgid_plural "{count} not found on Spotify"
 msgstr[0] "{count} 首未在 Spotify 上找到"
 
-#: src/ui/discovery.rs:567
+#: src/ui/discovery.rs:569
 #, rust-format
 msgid "{count} not checked yet"
 msgid_plural "{count} not checked yet"
 msgstr[0] "{count} 首尚未檢查"
 
-#: src/ui/discovery.rs:579
+#: src/ui/discovery.rs:581
 msgid "Spotify took too long to answer."
 msgstr "Spotify 回應逾時。"
 
-#: src/ui/discovery.rs:582
+#: src/ui/discovery.rs:584
 msgid "Spotify asked Spotiurge to slow down."
 msgstr "Spotify 要求 Spotiurge 降低請求頻率。"
 
-#: src/ui/discovery.rs:586
+#: src/ui/discovery.rs:588
 msgid "Spotiurge has used its Spotify search allowance for now."
 msgstr "Spotiurge 已用完目前的 Spotify 搜尋配額。"
 
-#: src/ui/discovery.rs:589
+#: src/ui/discovery.rs:591
 msgid "Spotify search is unavailable right now."
 msgstr "Spotify 搜尋暫時無法使用。"
 
-#: src/ui/discovery.rs:592
+#: src/ui/discovery.rs:594
 msgid "Sign in to Spotify to check the rest."
 msgstr "登入 Spotify，檢查剩餘歌曲。"
 
-#: src/ui/discovery.rs:697
+#: src/ui/discovery.rs:699
 msgid "Spotify asked to wait. Retry in a moment."
 msgstr "Spotify 要求稍等。過一會兒再試。"
 
-#: src/ui/discovery.rs:707
+#: src/ui/discovery.rs:709
 msgid "Check again"
 msgstr "重新檢查"
 
-#: src/ui/discovery.rs:743
+#: src/ui/discovery.rs:745
 msgid "More like this"
 msgstr "多推薦類似的"
 
-#: src/ui/discovery.rs:744
+#: src/ui/discovery.rs:746
 msgid "Less like this"
 msgstr "少推薦類似的"
 
 #. Translators: {count} is a number of AI suggestions that cannot play.
-#: src/ui/discovery.rs:929
+#: src/ui/discovery.rs:931
 #, rust-format
 msgid "Couldn't play ({count})"
 msgstr "無法播放（{count}）"
 
-#: src/ui/discovery.rs:951
+#: src/ui/discovery.rs:953
 msgid "Not checked on Spotify yet"
 msgstr "尚未在 Spotify 上檢查"
 
-#: src/ui/discovery.rs:952
+#: src/ui/discovery.rs:954
 msgid "Not found on Spotify"
 msgstr "未在 Spotify 上找到"
 
-#: src/ui/discovery.rs:1047
+#: src/ui/discovery.rs:1049
 msgid "Your saved mixes"
 msgstr "你儲存的混合歌單"
 
-#: src/ui/discovery.rs:1060
+#: src/ui/discovery.rs:1062
 msgid "Play mix"
 msgstr "播放混合歌單"
 
-#: src/ui/discovery.rs:1081
+#: src/ui/discovery.rs:1083
 msgid "Remove mix"
 msgstr "刪除歌單"
 
-#: src/ui/discovery.rs:1119
+#: src/ui/discovery.rs:1121
 msgid "Your AI history"
 msgstr "你的 AI 歷史記錄"
 
-#: src/ui/discovery.rs:1124
+#: src/ui/discovery.rs:1126
 msgid "No AI requests yet."
 msgstr "還沒有 AI 請求。"

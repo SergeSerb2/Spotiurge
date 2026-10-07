@@ -14,7 +14,8 @@
 
 use std::collections::VecDeque;
 use std::ffi::{CStr, CString, c_char, c_void};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::future::Future;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex, OnceLock};
 use std::time::Duration;
 
@@ -77,13 +78,22 @@ impl Pcm {
 
     /// Blocks the player thread while the queue is full.
     pub fn push(&self, samples: &[f32]) {
+        self.push_active(samples, &AtomicBool::new(true));
+    }
+
+    fn push_active(&self, samples: &[f32], active: &AtomicBool) {
         let mut queue = self.queue.lock().unwrap_or_else(|p| p.into_inner());
-        while queue.len() + samples.len() > QUEUE_CAP.max(samples.len()) {
+        while active.load(Ordering::Acquire)
+            && queue.len() + samples.len() > QUEUE_CAP.max(samples.len())
+        {
             queue = self
                 .space
                 .wait_timeout(queue, Duration::from_millis(250))
                 .unwrap_or_else(|p| p.into_inner())
                 .0;
+        }
+        if !active.load(Ordering::Acquire) {
+            return;
         }
         queue.extend(samples);
         self.decoded_frames
@@ -135,12 +145,14 @@ impl Pcm {
 
 static PCM: Pcm = Pcm::new();
 
-struct QueueSink;
+struct QueueSink {
+    active: Arc<AtomicBool>,
+}
 
 impl Sink for QueueSink {
     fn write(&mut self, packet: AudioPacket, converter: &mut Converter) -> SinkResult<()> {
         if let AudioPacket::Samples(samples) = packet {
-            PCM.push(&converter.f64_to_f32(&samples));
+            PCM.push_active(&converter.f64_to_f32(&samples), &self.active);
         }
         Ok(())
     }
@@ -165,7 +177,123 @@ struct Probe {
     host: Arc<Host>,
     cache_dir: String,
     device_name: String,
-    spirc: Mutex<Option<Arc<Spirc>>>,
+    connections: Arc<ConnectionAttempts>,
+}
+
+#[derive(Default)]
+struct ConnectionState {
+    generation: u64,
+    task: Option<tokio::task::JoinHandle<()>>,
+    active: Option<Arc<AtomicBool>>,
+    spirc: Option<Arc<Spirc>>,
+}
+
+impl ConnectionState {
+    fn cancel(&mut self) -> Option<tokio::task::JoinHandle<()>> {
+        self.generation = self.generation.wrapping_add(1);
+        if let Some(active) = self.active.take() {
+            active.store(false, Ordering::Release);
+            // Release a decoder blocked on a full queue before Player drops.
+            PCM.space.notify_all();
+        }
+        let task = self.task.take();
+        if let Some(task) = &task {
+            task.abort();
+        }
+        if let Some(spirc) = self.spirc.take() {
+            let _ = spirc.shutdown();
+        }
+        task
+    }
+}
+
+/// One tracked attempt, including authentication and reconnect backoff. A
+/// replacement waits until cancellation has dropped the prior session guards.
+#[derive(Default)]
+struct ConnectionAttempts {
+    state: Mutex<ConnectionState>,
+    serial: tokio::sync::Mutex<()>,
+}
+
+impl ConnectionAttempts {
+    fn start<F: Future<Output = ()> + Send + 'static>(
+        self: &Arc<Self>,
+        runtime: &tokio::runtime::Handle,
+        run: impl FnOnce(u64, Arc<AtomicBool>) -> F + Send + 'static,
+    ) {
+        let mut state = self.state.lock().unwrap_or_else(|p| p.into_inner());
+        drop(state.cancel());
+        let generation = state.generation;
+        let active = Arc::new(AtomicBool::new(true));
+        state.active = Some(Arc::clone(&active));
+        let connections = Arc::clone(self);
+        state.task = Some(runtime.spawn(async move {
+            let _exclusive = connections.serial.lock().await;
+            if connections.is_current(generation) {
+                run(generation, active).await;
+            }
+        }));
+    }
+
+    fn cancel(&self) -> Option<tokio::task::JoinHandle<()>> {
+        self.state
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .cancel()
+    }
+
+    fn is_current(&self, generation: u64) -> bool {
+        self.state
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .generation
+            == generation
+    }
+
+    fn current(&self) -> Option<Arc<Spirc>> {
+        self.state
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .spirc
+            .clone()
+    }
+
+    fn publish(&self, generation: u64, spirc: Arc<Spirc>) -> bool {
+        let mut state = self.state.lock().unwrap_or_else(|p| p.into_inner());
+        if state.generation != generation {
+            return false;
+        }
+        state.spirc = Some(spirc);
+        true
+    }
+}
+
+/// Cancellation also covers a session still authenticating, its event task,
+/// and the Connect loop. Dropping the future must not leave any of them alive.
+struct SessionLifetime<'a> {
+    session: Session,
+    connections: &'a ConnectionAttempts,
+    spirc: Option<Arc<Spirc>>,
+    events: tokio::task::JoinHandle<()>,
+}
+
+impl Drop for SessionLifetime<'_> {
+    fn drop(&mut self) {
+        self.events.abort();
+        if let Some(spirc) = &self.spirc {
+            let _ = spirc.shutdown();
+            let mut state = self
+                .connections
+                .state
+                .lock()
+                .unwrap_or_else(|p| p.into_inner());
+            if state.spirc.as_ref().is_some_and(|s| Arc::ptr_eq(s, spirc)) {
+                state.spirc.take();
+            }
+        }
+        self.session.shutdown();
+        PCM.clear();
+    }
 }
 
 static PROBE: OnceLock<Probe> = OnceLock::new();
@@ -238,7 +366,7 @@ pub unsafe extern "C" fn probe_start(
         }),
         cache_dir,
         device_name,
-        spirc: Mutex::new(None),
+        connections: Arc::default(),
     };
     if PROBE.set(probe).is_err() {
         return -3;
@@ -274,11 +402,16 @@ pub unsafe extern "C" fn probe_connect(kind: u32, data: *const u8, len: usize) -
         _ => return -3,
     };
     let host = Arc::clone(&probe.host);
-    probe.runtime.spawn(async move {
-        if let Err(error) = connect(probe, credentials).await {
-            host.emit(json!({ "t": "error", "stage": "connect", "msg": error }));
-        }
-    });
+    probe.connections.start(
+        probe.runtime.handle(),
+        move |generation, active| async move {
+            if let Err(error) = connect(probe, generation, active, credentials).await
+                && probe.connections.is_current(generation)
+            {
+                host.emit(json!({ "t": "error", "stage": "connect", "msg": error }));
+            }
+        },
+    );
     0
 }
 
@@ -286,19 +419,31 @@ pub unsafe extern "C" fn probe_connect(kind: u32, data: *const u8, len: usize) -
 /// Spotify drops the connection mid-playback (seen after about 13 minutes on
 /// the phone), reconnect with the reusable credential and restore the exact
 /// queue, as the desktop engine does.
-async fn connect(probe: &'static Probe, mut credentials: Credentials) -> Result<(), String> {
+async fn connect(
+    probe: &'static Probe,
+    generation: u64,
+    active: Arc<AtomicBool>,
+    mut credentials: Credentials,
+) -> Result<(), String> {
     const RETRY_DELAYS_S: [u64; 6] = [1, 2, 4, 8, 16, 32];
     let mut pending: Option<Arc<PlaybackSnapshot>> = None;
     let mut failures = 0;
     loop {
-        match run_session(probe, credentials.clone(), pending.clone()).await {
+        if !probe.connections.is_current(generation) {
+            return Ok(());
+        }
+        match run_session(
+            probe,
+            generation,
+            Arc::clone(&active),
+            credentials.clone(),
+            pending.clone(),
+        )
+        .await
+        {
             Ok((None, _)) => {
                 // Silent when a newer session already took over.
-                if probe
-                    .spirc
-                    .lock()
-                    .unwrap_or_else(|p| p.into_inner())
-                    .is_none()
+                if probe.connections.is_current(generation) && probe.connections.current().is_none()
                 {
                     probe.host.emit(json!({ "t": "session_ended" }));
                 }
@@ -328,6 +473,8 @@ async fn connect(probe: &'static Probe, mut credentials: Credentials) -> Result<
 /// while active, with the credential to reconnect with.
 async fn run_session(
     probe: &'static Probe,
+    generation: u64,
+    active: Arc<AtomicBool>,
     credentials: Credentials,
     restore: Option<Arc<PlaybackSnapshot>>,
 ) -> Result<(Option<Arc<PlaybackSnapshot>>, Credentials), String> {
@@ -348,12 +495,20 @@ async fn run_session(
         },
         session.clone(),
         mixer.get_soft_volume(),
-        || Box::new(QueueSink),
+        move || Box::new(QueueSink { active }),
     );
-    tokio::spawn(forward_events(
+    let events = tokio::spawn(forward_events(
         player.get_player_event_channel(),
         Arc::clone(&probe.host),
+        Arc::clone(&probe.connections),
+        generation,
     ));
+    let mut lifetime = SessionLifetime {
+        session: session.clone(),
+        connections: &probe.connections,
+        spirc: None,
+        events,
+    };
     let connected = Spirc::new(
         ConnectConfig {
             name: probe.device_name.clone(),
@@ -370,29 +525,26 @@ async fn run_session(
     // The access point issues the reusable credential before Connect starts,
     // so keep it even when a later step fails: the next launch reconnects
     // without another browser sign-in.
-    if let Some(stored) = session.cache().and_then(|cache| cache.credentials())
+    if probe.connections.is_current(generation)
+        && let Some(stored) = session.cache().and_then(|cache| cache.credentials())
         && let Ok(blob) = serde_json::to_vec(&stored)
     {
         (probe.host.on_credentials)(blob.as_ptr(), blob.len(), probe.host.ctx as *mut c_void);
     }
     let (spirc, task) = connected.map_err(|e| e.to_string())?;
     let spirc = Arc::new(spirc);
+    lifetime.spirc = Some(Arc::clone(&spirc));
+    if !probe.connections.publish(generation, Arc::clone(&spirc)) {
+        return Ok((None, credentials));
+    }
     let restored = match restore {
         Some(snapshot) => spirc.restore_playback(snapshot).is_ok(),
         None => false,
     };
-    *probe.spirc.lock().unwrap_or_else(|p| p.into_inner()) = Some(Arc::clone(&spirc));
     probe
         .host
         .emit(json!({ "t": "connected", "restored": restored }));
     task.await;
-    {
-        // A newer session may already have replaced this one.
-        let mut current = probe.spirc.lock().unwrap_or_else(|p| p.into_inner());
-        if current.as_ref().is_some_and(|c| Arc::ptr_eq(c, &spirc)) {
-            current.take();
-        }
-    }
     let stored = session
         .cache()
         .and_then(|cache| cache.credentials())
@@ -403,8 +555,13 @@ async fn run_session(
 async fn forward_events(
     mut events: tokio::sync::mpsc::UnboundedReceiver<PlayerEvent>,
     host: Arc<Host>,
+    connections: Arc<ConnectionAttempts>,
+    generation: u64,
 ) {
     while let Some(event) = events.recv().await {
+        if !connections.is_current(generation) {
+            return;
+        }
         let value = match event {
             PlayerEvent::TrackChanged { audio_item } => {
                 let artists = match &audio_item.unique_fields {
@@ -470,12 +627,7 @@ async fn forward_events(
 
 fn with_spirc(action: impl FnOnce(&Spirc) -> Result<(), librespot_core::Error>) -> i32 {
     let Some(probe) = PROBE.get() else { return -1 };
-    let Some(spirc) = probe
-        .spirc
-        .lock()
-        .unwrap_or_else(|p| p.into_inner())
-        .clone()
-    else {
+    let Some(spirc) = probe.connections.current() else {
         return -2;
     };
     match action(&spirc) {
@@ -569,9 +721,7 @@ pub extern "C" fn probe_stats() -> ProbeStats {
 #[unsafe(no_mangle)]
 pub extern "C" fn probe_disconnect() {
     let Some(probe) = PROBE.get() else { return };
-    if let Some(spirc) = probe.spirc.lock().unwrap_or_else(|p| p.into_inner()).take() {
-        let _ = spirc.shutdown();
-    }
+    drop(probe.connections.cancel());
 }
 
 /// Drops buffered audio, for a pause the system forced on the app.
@@ -583,6 +733,129 @@ pub extern "C" fn probe_flush() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    struct TestSession {
+        active: Arc<AtomicU64>,
+        cleaned: Arc<AtomicBool>,
+    }
+
+    impl Drop for TestSession {
+        fn drop(&mut self) {
+            self.active.fetch_sub(1, Ordering::SeqCst);
+            self.cleaned.store(true, Ordering::SeqCst);
+        }
+    }
+
+    #[tokio::test]
+    async fn replacements_wait_for_cleanup_and_only_the_latest_attempt_starts() {
+        let connections = Arc::new(ConnectionAttempts::default());
+        let active = Arc::new(AtomicU64::new(0));
+        let cleaned = Arc::new(AtomicBool::new(false));
+        let (started, first) = tokio::sync::oneshot::channel();
+        connections.start(&tokio::runtime::Handle::current(), {
+            let active = Arc::clone(&active);
+            let cleaned = Arc::clone(&cleaned);
+            move |generation, _| async move {
+                assert_eq!(active.fetch_add(1, Ordering::SeqCst), 0);
+                let _session = TestSession { active, cleaned };
+                started.send(generation).unwrap();
+                std::future::pending::<()>().await;
+            }
+        });
+        let old = first.await.unwrap();
+        let superseded = Arc::new(AtomicBool::new(false));
+        connections.start(&tokio::runtime::Handle::current(), {
+            let superseded = Arc::clone(&superseded);
+            move |_, _| async move { superseded.store(true, Ordering::SeqCst) }
+        });
+        let (started, latest) = tokio::sync::oneshot::channel();
+        connections.start(&tokio::runtime::Handle::current(), {
+            let active = Arc::clone(&active);
+            let cleaned = Arc::clone(&cleaned);
+            move |generation, _| async move {
+                assert!(cleaned.load(Ordering::SeqCst));
+                assert_eq!(active.fetch_add(1, Ordering::SeqCst), 0);
+                let _session = TestSession { active, cleaned };
+                started.send(generation).unwrap();
+                std::future::pending::<()>().await;
+            }
+        });
+        let latest = latest.await.unwrap();
+        assert!(!connections.is_current(old));
+        assert!(connections.is_current(latest));
+        assert!(!superseded.load(Ordering::SeqCst));
+        assert!(
+            connections
+                .cancel()
+                .unwrap()
+                .await
+                .unwrap_err()
+                .is_cancelled()
+        );
+        assert_eq!(active.load(Ordering::SeqCst), 0);
+        assert!(!connections.is_current(latest));
+    }
+
+    #[tokio::test]
+    async fn disconnect_cancels_authentication_and_reconnect_backoff() {
+        let connections = Arc::new(ConnectionAttempts::default());
+        for backoff in [false, true] {
+            let continued = Arc::new(AtomicBool::new(false));
+            let (started, ready) = tokio::sync::oneshot::channel();
+            connections.start(&tokio::runtime::Handle::current(), {
+                let continued = Arc::clone(&continued);
+                move |generation, _| async move {
+                    started.send(generation).unwrap();
+                    if backoff {
+                        tokio::time::sleep(Duration::from_secs(60)).await;
+                    } else {
+                        std::future::pending::<()>().await;
+                    }
+                    continued.store(true, Ordering::SeqCst);
+                }
+            });
+            let generation = ready.await.unwrap();
+            assert!(
+                connections
+                    .cancel()
+                    .unwrap()
+                    .await
+                    .unwrap_err()
+                    .is_cancelled()
+            );
+            assert!(!continued.load(Ordering::SeqCst));
+            assert!(!connections.is_current(generation));
+            assert!(connections.current().is_none());
+        }
+    }
+
+    #[test]
+    fn cancellation_releases_a_decoder_waiting_for_queue_space() {
+        let pcm = Arc::new(Pcm::new());
+        pcm.push(&vec![0.25; QUEUE_CAP]);
+        let active = Arc::new(AtomicBool::new(true));
+        let (started, ready) = std::sync::mpsc::channel();
+        let (finished, done) = std::sync::mpsc::channel();
+        let decoder = std::thread::spawn({
+            let pcm = Arc::clone(&pcm);
+            let active = Arc::clone(&active);
+            move || {
+                started.send(()).unwrap();
+                pcm.push_active(&[0.5, -0.5], &active);
+                finished.send(()).unwrap();
+            }
+        });
+        ready.recv_timeout(Duration::from_secs(2)).unwrap();
+        active.store(false, Ordering::Release);
+        pcm.space.notify_all();
+        done.recv_timeout(Duration::from_secs(2)).unwrap();
+        decoder.join().unwrap();
+        assert_eq!(pcm.queue.lock().unwrap().len(), QUEUE_CAP);
+        assert_eq!(
+            pcm.decoded_frames.load(Ordering::Relaxed),
+            (QUEUE_CAP / CHANNELS) as u64
+        );
+    }
 
     #[tokio::test]
     async fn a_player_pause_flushes_the_buffer_before_reporting_paused() {
@@ -598,19 +871,27 @@ mod tests {
             ctx: (&mut reported as *mut String) as usize,
         });
         PCM.push(&vec![0.25; QUEUE_CAP]);
-        let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
-        sender
-            .send(PlayerEvent::Paused {
-                play_request_id: 1,
-                track_id: librespot_core::SpotifyUri::from_uri(
-                    "spotify:track:0DiWol3AO6WpXZgp0goxAV",
-                )
+        let pause = PlayerEvent::Paused {
+            play_request_id: 1,
+            track_id: librespot_core::SpotifyUri::from_uri("spotify:track:0DiWol3AO6WpXZgp0goxAV")
                 .unwrap(),
-                position_ms: 1234,
-            })
-            .unwrap();
+            position_ms: 1234,
+        };
+        let stale = Arc::new(ConnectionAttempts::default());
+        drop(stale.cancel());
+        let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
+        sender.send(pause.clone()).unwrap();
         drop(sender);
-        forward_events(receiver, host).await;
+        forward_events(receiver, Arc::clone(&host), stale, 0).await;
+        assert!(
+            reported.is_empty(),
+            "obsolete sessions cannot report a pause"
+        );
+        assert_eq!(PCM.queue.lock().unwrap().len(), QUEUE_CAP);
+        let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
+        sender.send(pause).unwrap();
+        drop(sender);
+        forward_events(receiver, host, Arc::default(), 0).await;
         assert_eq!(
             serde_json::from_str::<serde_json::Value>(&reported).unwrap()["t"],
             "paused"

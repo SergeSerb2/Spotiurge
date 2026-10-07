@@ -372,7 +372,9 @@ fn exploration(app: &mut App, ui: &mut egui::Ui) {
         .map(|(choice, label, _)| (*choice, label.as_ref()))
         .collect();
     let id = ui.make_persistent_id("discovery-exploration");
-    let strip = ui.scope(|ui| theme::choice_chips(ui, &palette, id, &options, current, false));
+    let strip = ui.add_enabled_ui(app.discovery.ready && !app.offline, |ui| {
+        theme::choice_chips(ui, &palette, id, &options, current, false)
+    });
     // ponytail: choice_chips does not return its chips, so the hints sit on
     // hover-only overlays at its layout (soft-button widths, six points
     // apart). Hover-only widgets never take the click from the chip below.

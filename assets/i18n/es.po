@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Spotifast\n"
 "Report-Msgid-Bugs-To: https://github.com/SergeSerb2/Spotiurge/issues/new?"
 "template=translation.yml\n"
-"POT-Creation-Date: 2026-10-07 04:17-0700\n"
+"POT-Creation-Date: 2026-10-07 05:16-0700\n"
 "PO-Revision-Date: 2026-09-09 13:30+0000\n"
 "Last-Translator: Spotifast contributors\n"
 "Language-Team: Spanish\n"
@@ -28,12 +28,12 @@ msgstr "Pausar {name}"
 msgid "Play {name}"
 msgstr "Reproducir {name}"
 
-#: src/ui/sidebar.rs:300 src/app.rs:2557 src/app.rs:17529
+#: src/ui/sidebar.rs:300 src/app.rs:2557 src/app.rs:17567
 #: src/ui/collection.rs:1780 src/ui/collection.rs:1957
 msgid "Playlist"
 msgstr "Playlist"
 
-#: src/ui/sidebar.rs:310 src/app.rs:2531 src/app.rs:17534
+#: src/ui/sidebar.rs:310 src/app.rs:2531 src/app.rs:17572
 #: src/ui/collection.rs:1950 src/ui/home.rs:55 src/ui/keys.rs:258
 #: src/ui/winamp/playlist.rs:653
 msgid "Liked Songs"
@@ -398,7 +398,7 @@ msgstr "Instrumental"
 msgid "No timed lyrics for this track."
 msgstr "Esta canción no tiene letra sincronizada."
 
-#: src/ui/lyrics.rs:393 src/ui/widgets.rs:2501 src/app.rs:10612
+#: src/ui/lyrics.rs:393 src/ui/widgets.rs:2501 src/app.rs:10615
 #: src/ui/collection.rs:813
 msgid "Loading…"
 msgstr "Cargando…"
@@ -740,7 +740,7 @@ msgid "Queue cleared"
 msgstr "Cola vaciada"
 
 #. Translators: Keep {date} unchanged. It is a date in YYYY-MM-DD form.
-#: src/app.rs:4599 src/app.rs:17519
+#: src/app.rs:4599 src/app.rs:17557
 #, rust-format
 msgid "Queue {date}"
 msgstr "Cola {date}"
@@ -955,42 +955,42 @@ msgstr[1] "No se pudieron añadir {count} enlaces pegados"
 msgid "Taste saved locally. Sync when you are connected."
 msgstr "Gustos guardados localmente. Sincroniza cuando tengas conexión."
 
-#: src/app.rs:8545
+#: src/app.rs:8548
 msgid "Syncing preferences, feedback, mixes and AI history…"
 msgstr "Sincronizando preferencias, comentarios, mixes e historial de AI…"
 
-#: src/app.rs:8577
+#: src/app.rs:8580
 msgid "Feedback saved. It will shape your next discoveries."
 msgstr "Comentarios guardados. Influirán en tus próximos descubrimientos."
 
-#: src/app.rs:8600
+#: src/app.rs:8603
 msgid "My discovery mix"
 msgstr "Mi mix de descubrimientos"
 
-#: src/app.rs:8608
+#: src/app.rs:8611
 msgid "Mix saved to Spotiurge. Sync to share it across your devices."
 msgstr ""
 "Mix guardado en Spotiurge. Sincroniza para tenerlo en todos tus dispositivos."
 
-#: src/app.rs:9158
+#: src/app.rs:9161
 msgid "Spotify doesn't let apps remove a playlist description, so it was kept"
 msgstr ""
 "Spotify no permite a las apps quitar la descripción de una playlist, así que "
 "se conservó"
 
-#: src/app.rs:9202 src/app.rs:9215
+#: src/app.rs:9205 src/app.rs:9218
 msgid "Link copied"
 msgstr "Enlace copiado"
 
 #. Translators: {count} is a number of song links, always more than one.
-#: src/app.rs:9219
+#: src/app.rs:9222
 #, rust-format
 msgid "{count} link copied"
 msgid_plural "{count} links copied"
 msgstr[0] "{count} enlace copiado"
 msgstr[1] "{count} enlaces copiados"
 
-#: src/app.rs:9474
+#: src/app.rs:9477
 msgid ""
 "Spotify doesn't let apps reorder your playlists, so this order is saved on "
 "this computer"
@@ -998,77 +998,77 @@ msgstr ""
 "Spotify no permite a las apps reordenar tus playlists, así que este orden se "
 "guarda en esta computadora"
 
-#: src/app.rs:9534
+#: src/app.rs:9537
 msgid "Restarting local playback"
 msgstr "Reiniciando la reproducción local"
 
-#: src/app.rs:9567
+#: src/app.rs:9570
 msgid "Local playback needs Spotify Premium"
 msgstr "La reproducción local necesita Spotify Premium"
 
-#: src/app.rs:9579
+#: src/app.rs:9582
 msgid "Opening your browser to set up local playback"
 msgstr "Abriendo tu navegador para configurar la reproducción local"
 
-#: src/app.rs:9596
+#: src/app.rs:9599
 msgid "Play history cleared"
 msgstr "Historial de reproducción borrado"
 
 #. Translators: {size} is a size in megabytes, such as 12.5.
-#: src/app.rs:9607
+#: src/app.rs:9610
 #, rust-format
 msgid "Cleared {size} MB of artwork"
 msgstr "Se liberaron {size} MB de carátulas"
 
 #. Translators: {error} is an error message.
-#: src/app.rs:9613
+#: src/app.rs:9616
 #, rust-format
 msgid "Couldn't clear artwork: {error}"
 msgstr "No se pudieron borrar las carátulas: {error}"
 
-#: src/app.rs:9793
+#: src/app.rs:9796
 msgid "Downloading MilkDrop preset packs"
 msgstr "Descargando paquetes de presets de MilkDrop"
 
 #. Translators: {name} is the name of a visualizer preset pack.
-#: src/app.rs:9827
+#: src/app.rs:9830
 #, rust-format
 msgid "Downloading {name} presets"
 msgstr "Descargando los presets de {name}"
 
-#: src/app.rs:10724
+#: src/app.rs:10727
 msgid "Couldn't start playback"
 msgstr "No se pudo iniciar la reproducción"
 
-#: src/app.rs:10725
+#: src/app.rs:10728
 msgid "Couldn't pause"
 msgstr "No se pudo pausar"
 
-#: src/app.rs:10726
+#: src/app.rs:10729
 msgid "Couldn't skip"
 msgstr "No se pudo saltar"
 
-#: src/app.rs:10727
+#: src/app.rs:10730
 msgid "Couldn't go back"
 msgstr "No se pudo volver atrás"
 
-#: src/app.rs:10728
+#: src/app.rs:10731
 msgid "Couldn't seek"
 msgstr "No se pudo cambiar la posición"
 
-#: src/app.rs:10729
+#: src/app.rs:10732
 msgid "Couldn't change the volume"
 msgstr "No se pudo cambiar el volumen"
 
-#: src/app.rs:10730
+#: src/app.rs:10733
 msgid "Couldn't change shuffle"
 msgstr "No se pudo cambiar el modo aleatorio"
 
-#: src/app.rs:10731
+#: src/app.rs:10734
 msgid "Couldn't change repeat"
 msgstr "No se pudo cambiar la repetición"
 
-#: src/app.rs:10774
+#: src/app.rs:10777
 msgid ""
 "No audio output device was found. Connect or enable one, then press play "
 "again."
@@ -1076,20 +1076,20 @@ msgstr ""
 "No se encontró ningún dispositivo de salida de audio. Conecta o activa uno y "
 "vuelve a pulsar Reproducir."
 
-#: src/app.rs:10785
+#: src/app.rs:10788
 msgid ""
 "Spotify doesn't make this playlist's songs available to third-party apps."
 msgstr ""
 "Spotify no pone las canciones de esta playlist a disposición de apps de "
 "terceros."
 
-#: src/app.rs:10915
+#: src/app.rs:10918
 msgid "Spotify sign-in expired. Sign in again, then retry the cover upload."
 msgstr ""
 "La sesión de Spotify caducó. Vuelve a iniciar sesión y reintenta subir la "
 "portada."
 
-#: src/app.rs:10920
+#: src/app.rs:10923
 msgid ""
 "Spotify refused this cover. Check that you own the playlist, then sign in "
 "again to grant image upload permission. If using a personal app, reconnect "
@@ -1099,19 +1099,19 @@ msgstr ""
 "iniciar sesión para conceder el permiso de subir imágenes. Si usas una app "
 "personal, vuelve a conectarla también en Ajustes."
 
-#: src/app.rs:10924
+#: src/app.rs:10927
 msgid "Spotify rejected the image size. Choose a smaller image."
 msgstr "Spotify rechazó el tamaño de la imagen. Elige una imagen más pequeña."
 
 #. Translators: {error} is an error message.
-#: src/app.rs:10927
+#: src/app.rs:10930
 #, rust-format
 msgid "Couldn't upload the cover: {error}. Try again."
 msgstr "No se pudo subir la portada: {error}. Vuelve a intentarlo."
 
 #. Translators: Keep {track} unchanged. It is the name of the song,
 #. playlist, album, or artist the radio is based on, not translated.
-#: src/app.rs:17539 src/app/radio.rs:38
+#: src/app.rs:17577 src/app/radio.rs:38
 #, rust-format
 msgid "{track} Radio"
 msgstr "Radio de {track}"
@@ -2043,11 +2043,11 @@ msgstr ""
 msgid "Popular"
 msgstr "Populares"
 
-#: src/ui/artist.rs:74 src/ui/discovery.rs:1102
+#: src/ui/artist.rs:74 src/ui/discovery.rs:1104
 msgid "Show less"
 msgstr "Ver menos"
 
-#: src/ui/artist.rs:76 src/ui/discovery.rs:1096
+#: src/ui/artist.rs:76 src/ui/discovery.rs:1098
 msgid "See more"
 msgstr "Ver más"
 
@@ -2270,7 +2270,7 @@ msgid "“{name}” will no longer appear in Your Library."
 msgstr "“{name}” ya no aparecerá en Tu biblioteca."
 
 #: src/ui/dialogs.rs:96 src/ui/dialogs.rs:139 src/ui/dialogs.rs:415
-#: src/ui/dialogs.rs:590 src/ui/login.rs:91 src/ui/discovery.rs:447
+#: src/ui/dialogs.rs:590 src/ui/login.rs:91 src/ui/discovery.rs:449
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -2735,7 +2735,7 @@ msgstr "Sin resultados para “{query}”"
 msgid "Check the spelling, or try fewer words."
 msgstr "Revisa la ortografía o prueba con menos palabras."
 
-#: src/ui/search.rs:91 src/ui/winamp/playlist.rs:647 src/ui/discovery.rs:953
+#: src/ui/search.rs:91 src/ui/winamp/playlist.rs:647 src/ui/discovery.rs:955
 msgid "Search Spotify"
 msgstr "Buscar en Spotify"
 
@@ -3239,7 +3239,7 @@ msgstr "Recomendaciones guardadas"
 msgid "Find new picks"
 msgstr "Buscar nuevas recomendaciones"
 
-#: src/ui/discovery.rs:163 src/ui/discovery.rs:699
+#: src/ui/discovery.rs:163 src/ui/discovery.rs:701
 msgid "Finding music…"
 msgstr "Buscando música…"
 
@@ -3251,19 +3251,19 @@ msgstr "Reproducir todo"
 msgid "No playable picks yet."
 msgstr "Aún no hay recomendaciones que se puedan reproducir."
 
-#: src/ui/discovery.rs:248 src/ui/discovery.rs:625
+#: src/ui/discovery.rs:248 src/ui/discovery.rs:627
 msgid "Choose this computer to play discovery tracks and mixes."
 msgstr ""
 "Elige este ordenador para reproducir canciones y mixes de descubrimientos."
 
-#: src/ui/discovery.rs:258 src/ui/discovery.rs:653
+#: src/ui/discovery.rs:258 src/ui/discovery.rs:655
 msgid ""
 "Demo discoveries. Feedback, recommendations and cloud requests are disabled."
 msgstr ""
 "Descubrimientos de demo. Los comentarios, las recomendaciones y las "
 "solicitudes a la nube están desactivados."
 
-#: src/ui/discovery.rs:263 src/ui/discovery.rs:504
+#: src/ui/discovery.rs:263 src/ui/discovery.rs:506
 msgid "Opening your personal discovery workspace…"
 msgstr "Abriendo tu espacio personal de descubrimientos…"
 
@@ -3331,23 +3331,23 @@ msgstr "Aventurero"
 msgid "Reach further from your usual music"
 msgstr "Explora más allá de tu música habitual"
 
-#: src/ui/discovery.rs:398
+#: src/ui/discovery.rs:400
 msgid "Tell Spotiurge what you like"
 msgstr "Dile a Spotiurge qué te gusta"
 
-#: src/ui/discovery.rs:400
+#: src/ui/discovery.rs:402
 msgid "Your taste"
 msgstr "Tus gustos"
 
-#: src/ui/discovery.rs:418
+#: src/ui/discovery.rs:420
 msgid "Warm jazz, spacious electronics, a few surprises…"
 msgstr "Jazz cálido, electrónica envolvente, algunas sorpresas…"
 
-#: src/ui/discovery.rs:439
+#: src/ui/discovery.rs:441
 msgid "Save taste"
 msgstr "Guardar gustos"
 
-#: src/ui/discovery.rs:464
+#: src/ui/discovery.rs:466
 #, rust-format
 msgid ""
 "This computer is not paired with your private cloud. Quit Spotiurge, set "
@@ -3356,122 +3356,122 @@ msgstr ""
 "Este equipo no está vinculado a tu nube privada. Cierra Spotiurge, configura "
 "{variable} en su entorno de inicio y vuelve a abrirlo."
 
-#: src/ui/discovery.rs:469
+#: src/ui/discovery.rs:471
 msgid "Your picks are already being prepared. Try again in a moment."
 msgstr ""
 "Tus recomendaciones ya se están preparando. Vuelve a intentarlo en un "
 "momento."
 
-#: src/ui/discovery.rs:474
+#: src/ui/discovery.rs:476
 msgid "The AI is rate limited. Your picks are kept; try again later."
 msgstr ""
 "La IA ha alcanzado su límite de solicitudes. Tus recomendaciones se "
 "conservan; vuelve a intentarlo más tarde."
 
-#: src/ui/discovery.rs:479
+#: src/ui/discovery.rs:481
 msgid "Recommendations are unavailable right now. Your picks are kept."
 msgstr ""
 "Las recomendaciones no están disponibles ahora mismo. Tus recomendaciones se "
 "conservan."
 
-#: src/ui/discovery.rs:484
+#: src/ui/discovery.rs:486
 msgid "The AI sent an answer Spotiurge could not use. Your picks are kept."
 msgstr ""
 "La IA envió una respuesta que Spotiurge no pudo usar. Tus recomendaciones se "
 "conservan."
 
-#: src/ui/discovery.rs:535
+#: src/ui/discovery.rs:537
 msgid "No picks yet. Refresh to find music for your taste."
 msgstr ""
 "Aún no hay recomendaciones. Actualiza para encontrar música a tu gusto."
 
-#: src/ui/discovery.rs:544
+#: src/ui/discovery.rs:546
 #, rust-format
 msgid "{count} ready to play"
 msgid_plural "{count} ready to play"
 msgstr[0] "{count} lista para reproducir"
 msgstr[1] "{count} listas para reproducir"
 
-#: src/ui/discovery.rs:555
+#: src/ui/discovery.rs:557
 #, rust-format
 msgid "{count} not found on Spotify"
 msgid_plural "{count} not found on Spotify"
 msgstr[0] "{count} no encontrada en Spotify"
 msgstr[1] "{count} no encontradas en Spotify"
 
-#: src/ui/discovery.rs:567
+#: src/ui/discovery.rs:569
 #, rust-format
 msgid "{count} not checked yet"
 msgid_plural "{count} not checked yet"
 msgstr[0] "{count} aún sin comprobar"
 msgstr[1] "{count} aún sin comprobar"
 
-#: src/ui/discovery.rs:579
+#: src/ui/discovery.rs:581
 msgid "Spotify took too long to answer."
 msgstr "Spotify tardó demasiado en responder."
 
-#: src/ui/discovery.rs:582
+#: src/ui/discovery.rs:584
 msgid "Spotify asked Spotiurge to slow down."
 msgstr "Spotify le pidió a Spotiurge que redujera el ritmo de las solicitudes."
 
-#: src/ui/discovery.rs:586
+#: src/ui/discovery.rs:588
 msgid "Spotiurge has used its Spotify search allowance for now."
 msgstr "Spotiurge ha agotado por ahora su cuota de búsquedas en Spotify."
 
-#: src/ui/discovery.rs:589
+#: src/ui/discovery.rs:591
 msgid "Spotify search is unavailable right now."
 msgstr "La búsqueda de Spotify no está disponible ahora mismo."
 
-#: src/ui/discovery.rs:592
+#: src/ui/discovery.rs:594
 msgid "Sign in to Spotify to check the rest."
 msgstr "Inicia sesión en Spotify para comprobar el resto."
 
-#: src/ui/discovery.rs:697
+#: src/ui/discovery.rs:699
 msgid "Spotify asked to wait. Retry in a moment."
 msgstr "Spotify pidió que esperaras. Vuelve a intentarlo en un momento."
 
-#: src/ui/discovery.rs:707
+#: src/ui/discovery.rs:709
 msgid "Check again"
 msgstr "Volver a comprobar"
 
-#: src/ui/discovery.rs:743
+#: src/ui/discovery.rs:745
 msgid "More like this"
 msgstr "Más como esto"
 
-#: src/ui/discovery.rs:744
+#: src/ui/discovery.rs:746
 msgid "Less like this"
 msgstr "Menos como esto"
 
 #. Translators: {count} is a number of AI suggestions that cannot play.
-#: src/ui/discovery.rs:929
+#: src/ui/discovery.rs:931
 #, rust-format
 msgid "Couldn't play ({count})"
 msgstr "No se pudo reproducir ({count})"
 
-#: src/ui/discovery.rs:951
+#: src/ui/discovery.rs:953
 msgid "Not checked on Spotify yet"
 msgstr "Aún sin comprobar en Spotify"
 
-#: src/ui/discovery.rs:952
+#: src/ui/discovery.rs:954
 msgid "Not found on Spotify"
 msgstr "No se encontró en Spotify"
 
-#: src/ui/discovery.rs:1047
+#: src/ui/discovery.rs:1049
 msgid "Your saved mixes"
 msgstr "Tus mixes guardados"
 
-#: src/ui/discovery.rs:1060
+#: src/ui/discovery.rs:1062
 msgid "Play mix"
 msgstr "Reproducir mix"
 
-#: src/ui/discovery.rs:1081
+#: src/ui/discovery.rs:1083
 msgid "Remove mix"
 msgstr "Eliminar mix"
 
-#: src/ui/discovery.rs:1119
+#: src/ui/discovery.rs:1121
 msgid "Your AI history"
 msgstr "Tu historial de AI"
 
-#: src/ui/discovery.rs:1124
+#: src/ui/discovery.rs:1126
 msgid "No AI requests yet."
 msgstr "Aún no hay solicitudes a la IA."

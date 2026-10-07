@@ -1847,7 +1847,8 @@ impl Worker {
             if self.restoring_proxy
                 && !matches!(
                     &command,
-                    Command::ProxyRestored { .. }
+                    Command::LoadDiscovery
+                        | Command::ProxyRestored { .. }
                         | Command::ApplyProxy { .. }
                         | Command::SignIn { .. }
                         | Command::SignOut
@@ -5631,6 +5632,34 @@ mod authorization_tests {
         });
         assert_eq!(worker.waiting_for_proxy.len(), 1);
         assert_eq!(worker.engine_config.proxy, ProxyConfig::Off);
+    }
+
+    #[test]
+    fn local_discovery_load_does_not_wait_for_proxy_credentials() {
+        let (runtime, mut worker, events) = worker("discovery-before-proxy");
+        worker.restoring_proxy = true;
+        let (commands, receiver) = mpsc::unbounded_channel();
+        commands.send(Command::LoadDiscovery).unwrap();
+        let runner = runtime.spawn(async move {
+            worker.run(receiver).await;
+            worker
+        });
+        let loaded = runtime.block_on(async {
+            tokio::time::timeout(Duration::from_secs(2), async {
+                loop {
+                    match events.try_recv() {
+                        Ok(Event::DiscoveryLoaded(result)) => break result,
+                        _ => tokio::task::yield_now().await,
+                    }
+                }
+            })
+            .await
+        });
+        commands.send(Command::Shutdown).unwrap();
+        let worker = runtime.block_on(runner).unwrap();
+        assert!(loaded.unwrap().is_ok());
+        assert!(worker.restoring_proxy, "no credential result was required");
+        assert!(worker.waiting_for_proxy.is_empty());
     }
 
     /// A session that drops on its own comes back at the level being heard,

@@ -213,3 +213,11 @@ requests resumption. Three Rust host tests, Rust Clippy/formatting, Swift host
 regressions and iPhoneOS SDK typechecking passed. No build containing these
 changes was installed or run on Serge's physical phone. These checks do not
 extend the locked-run evidence or complete the remaining gate criteria.
+
+A later host review found overlapping Rust connection attempts. Each attempt now
+has a tracked cancellation handle and generation; replacements wait for the prior
+session to be cleaned up. Disconnect cancels pending authentication and reconnect
+backoff, obsolete sessions cannot publish or forward player events, and a cancelled
+decoder leaves its full PCM queue wait. All six Rust host tests and Clippy pass.
+This source was not installed or exercised on the physical iPhone and adds no
+device evidence.

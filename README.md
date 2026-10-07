@@ -83,7 +83,9 @@ saved per device; taste and feedback synchronize through the private store.
 **Save this mix** keeps an ordered Spotiurge mix without creating a Spotify
 playlist. Home shows the eight newest saved mixes; **See more** reveals 24 more
 at a time, and **Show less** returns to eight. **Sync my devices** exchanges taste preferences, feedback, mixes and AI
-history. Previous discoveries remain cached when AI is unavailable. Feedback
+history. Previous discoveries remain cached when AI is unavailable. Local discovery
+loads independently of proxy credential restoration. Exploration and edits stay
+disabled until loading succeeds, preserving an unreadable state file. Feedback
 retains the newest 500 records, counting cleared ratings. A shared logical cutoff
 prevents forgotten ratings from returning from an old offline device. Older
 feedback below that cutoff is discarded; a bounded local pending-stamp map keeps new unsent ratings and clears across restarts, then advances them above the imported cutoff before uploading. Upgrade

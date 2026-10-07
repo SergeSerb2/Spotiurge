@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spotiurge PR #2: failed-load exploration guard</title>
+<style>
+body{margin:0;color:var(--foreground,#edf2ee);background:var(--background,#141a17);font:14px system-ui}
+p{line-height:1.5}a{color:var(--accent,#8fceab)}.controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0}
+button,select{font:inherit;padding:7px 10px;border:1px solid var(--border,#53635a);border-radius:7px;color:inherit;background:var(--card,#202a24)}
+button[aria-pressed=true]{background:var(--primary,#dce9df);color:var(--primary-foreground,#141a17)}
+.images{display:grid;grid-template-columns:1fr 1fr;gap:12px}.images.single{grid-template-columns:1fr}
+figure{margin:0;min-width:0}img{display:block;width:100%;height:auto;border-radius:8px}figcaption{font-weight:600;margin-bottom:8px}
+.meta{font-size:12px;color:var(--muted-foreground,#a4b4a9);overflow-wrap:anywhere}@media(max-width:500px){.images{grid-template-columns:1fr}}
+</style></head><body>
+<p>Matching native Mac demo captures of a failed discovery load. The exploration controls are now disabled; the action also rejects edits until loading succeeds.</p>
+<div class="controls">
+<button id="prev">Previous</button>
+<label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option></select></label>
+<label>Window <select id="size"><option value="normal">1440 × 900</option><option value="narrow">900 × 760</option></select></label>
+<button id="next">Next</button>
+<button data-view="both" aria-pressed="true">Compare</button><button data-view="before" aria-pressed="false">Before</button><button data-view="after" aria-pressed="false">After</button>
+</div>
+<div class="images" id="images"><figure id="before"><figcaption>Before</figcaption><img alt="Baseline, exploration enabled after a failed load"><p class="meta">Recorded r3 baseline, ce7a42e plus its working changes.</p></figure><figure id="after"><figcaption>After</figcaption><img alt="Candidate, exploration disabled after a failed load"><p class="meta">Candidate: current startup review fixes.</p></figure></div>
+<p class="meta">Synthetic data; no real playback, credentials or network access. Both phases use the same page, data, failure, theme and size. <a href="verification.md">Evidence and limits</a> · <a href="captures.json">Exact source/image hashes</a> · <a href="https://github.com/SergeSerb2/Spotiurge/pull/2">PR #2</a></p>
+<script>
+const shots={"before-dark-normal": "before-dark-normal.jpg", "before-dark-narrow": "before-dark-narrow.jpg", "before-light-normal": "before-light-normal.jpg", "before-light-narrow": "before-light-narrow.jpg", "after-dark-normal": "after-dark-normal.jpg", "after-dark-narrow": "after-dark-narrow.jpg", "after-light-normal": "after-light-normal.jpg", "after-light-narrow": "after-light-narrow.jpg"};
+const theme=document.querySelector('#theme'),size=document.querySelector('#size');
+function draw(){for(const phase of ['before','after'])document.querySelector('#'+phase+' img').src=shots[phase+'-'+theme.value+'-'+size.value];}
+theme.onchange=size.onchange=draw;
+const states=[['dark','normal'],['dark','narrow'],['light','normal'],['light','narrow']];
+for(const [id,delta] of [['prev',-1],['next',1]])document.querySelector('#'+id).onclick=()=>{const i=states.findIndex(s=>s[0]===theme.value&&s[1]===size.value);[theme.value,size.value]=states[(i+delta+4)%4];draw();};
+for(const button of document.querySelectorAll('[data-view]'))button.onclick=()=>{const view=button.dataset.view;document.querySelector('#images').classList.toggle('single',view!=='both');for(const phase of ['before','after'])document.querySelector('#'+phase).hidden=view!=='both'&&view!==phase;for(const other of document.querySelectorAll('[data-view]'))other.setAttribute('aria-pressed',String(other===button));};
+draw();
+</script></body></html>

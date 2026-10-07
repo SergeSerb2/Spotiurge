@@ -109,3 +109,8 @@ The later [diagnostic and sign-in identity fixes](review-fixes-r5.md) add an
 actual-file reopen regression and correct the browser-visible fork name.
 That record also distinguishes the r7 package's restored state from its failed
 live catalogue retry, without claiming new playback or listening-quality proof.
+
+The [startup and connection fixes](review-fixes-r6/verification.md) protect failed
+loads from exploration edits and load local discovery independently of proxy
+credential restoration. Four matched native pairs show the disabled controls.
+Host-only probe connection cancellation tests do not extend the physical gate.
