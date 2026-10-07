@@ -23,6 +23,7 @@ enum Palette {
     static let room = Color(dark: 0x0E1110, light: 0xF4F6F4)
     static let panel = Color(dark: 0x141A17, light: 0xFFFFFF)
     static let surface = Color(dark: 0x1A221E, light: 0xEAF0EB)
+    static let grouped = Color(dark: 0x1A221E, light: 0xFFFFFF)
     static let surfaceActive = Color(dark: 0x2C3A32, light: 0xC9D1CA)
     static let outline = Color(dark: 0x2E3B34, light: 0xD8DED9)
     static let text = Color(dark: 0xF3F6F3, light: 0x161A17)
@@ -104,7 +105,9 @@ struct Room: View {
 
 extension View {
     func roomBackground() -> some View {
-        scrollContentBackground(.hidden).background { Room() }
+        scrollContentBackground(.hidden)
+            .scrollEdgeEffectStyle(.hard, for: .bottom)
+            .background { Room() }
     }
 }
 
@@ -140,6 +143,31 @@ struct LampButtonStyle: ButtonStyle {
             .background(enabled ? Palette.lamp : Palette.surfaceActive, in: .circle)
             .scaleEffect(configuration.isPressed ? 0.94 : 1)
             .animation(.easeOut(duration: Motion.feedback), value: configuration.isPressed)
+    }
+}
+
+/// Keep disabled labels readable without losing their native disabled semantics.
+/// A custom style avoids the system plain/glass styles' additional opacity.
+struct ReadableButtonStyle: ButtonStyle {
+    var glass = false
+    var ink: Color = Palette.text
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var enabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        if glass {
+            let label = configuration.label
+                .foregroundStyle(enabled ? ink : (scheme == .dark ? Palette.dim : Palette.disabled))
+                .padding(.horizontal, 14)
+                .frame(minHeight: 44)
+            if enabled {
+                label.glassEffect(.regular.interactive(), in: .capsule)
+            } else {
+                label.background(scheme == .dark ? Color.white.opacity(0.08) : Palette.surfaceActive, in: .capsule)
+            }
+        } else {
+            configuration.label.foregroundStyle(enabled ? ink : Palette.disabled)
+        }
     }
 }
 

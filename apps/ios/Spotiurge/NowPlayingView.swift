@@ -1,5 +1,5 @@
 // The floating console (tab-bar accessory) and the Now Playing sheet.
-// Play/pause is the amber lamp while playing; the transport answers at
+// Play/pause is the moss play key while playing; the transport answers at
 // once and engine events confirm it.
 
 import SpotiurgeCore
@@ -40,16 +40,17 @@ struct MiniPlayer: View {
             .sensoryFeedback(.impact(weight: .light), trigger: player.playing)
             if placement != .inline {
                 Button { player.next() } label: {
-                    Image(systemName: "forward.fill").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
+                    Image(systemName: "forward.fill").font(.system(size: 15, weight: .semibold))
                         .frame(width: 44, height: 44).contentShape(.rect)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ReadableButtonStyle())
                 .disabled(player.nowPlaying == nil)
                 .accessibilityLabel("Next")
             }
         }
         .padding(.leading, 12)
         .padding(.trailing, 4)
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 }
 

@@ -20,11 +20,11 @@ struct HomeView: View {
         @Bindable var discovery = discovery
         NavigationStack {
             List {
-                if demo { DemoBanner().roomRow() }
-                header.roomRow().listRowSeparator(.hidden)
+                if demo { DemoBanner().roomRow(block: true) }
+                header.roomRow(block: true).listRowSeparator(.hidden)
                 ExplorationPicker(selection: discovery.exploration, onSelect: discovery.setExploration)
-                    .roomRow().listRowSeparator(.hidden)
-                statusLines.roomRow().listRowSeparator(.hidden)
+                    .roomRow(block: true)
+                statusLines.roomRow(block: true).listRowSeparator(.hidden)
                 ForEach(discovery.playable, id: \.self) { pick in pickRow(pick) }
                 if !discovery.unmatched.isEmpty { unmatched }
                 mixes
@@ -60,7 +60,7 @@ struct HomeView: View {
                         }
                         .frame(width: 44, height: 44)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ReadableButtonStyle())
                     .glassEffect(.regular.interactive(), in: .circle)
                     .disabled(discovery.busy || demo)
                     .accessibilityLabel(discovery.busy ? "Finding music" : "Find new picks")
@@ -136,7 +136,7 @@ struct HomeView: View {
             if discovery.picks.contains(where: { !$0.checked }) && !demo && account.signedIn {
                 Button("Check again") { discovery.retryMatches() }
                     .font(Typeface.inter(14, .semibold))
-                    .buttonStyle(.glass)
+                    .buttonStyle(ReadableButtonStyle(glass: true))
                     .disabled(discovery.busy)
             }
         }
@@ -176,7 +176,7 @@ struct HomeView: View {
                 .font(Typeface.body).foregroundStyle(Palette.secondary)
             Button(hasTaste ? "Tune taste" : "Write your taste") { discovery.editingTaste = true }
                 .font(Typeface.inter(15, .semibold))
-                .buttonStyle(.glass)
+                .buttonStyle(ReadableButtonStyle(glass: true))
                 .disabled(demo)
         }
         .padding(16)
@@ -223,7 +223,7 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         Button("Search Spotify") { searchFor("\(pick.suggestion.title) \(pick.suggestion.artist)") }
                             .font(Typeface.inter(13, .semibold))
-                            .buttonStyle(.glass)
+                            .buttonStyle(ReadableButtonStyle(glass: true))
                     }
                     .frame(minHeight: 56)
                     .accessibilityElement(children: .combine)
@@ -250,7 +250,7 @@ struct HomeView: View {
                         Button("Play mix", systemImage: "play.fill") { playMix(mix.uris) }
                             .labelStyle(.iconOnly)
                             .frame(width: 44, height: 44)
-                            .buttonStyle(.glass)
+                            .buttonStyle(ReadableButtonStyle(glass: true))
                     }
                     .frame(minHeight: 56)
                     .roomRow()
@@ -310,21 +310,27 @@ struct DiscoveryOptions: View {
                     dismiss()
                     discovery.editingTaste = true
                 }
+                .listRowBackground(Palette.grouped)
                 Button("Save this mix", systemImage: "square.and.arrow.down") {
                     discovery.saveMix()
                     dismiss()
                 }
                 .disabled(discovery.playable.isEmpty)
+                .listRowBackground(Palette.grouped)
                 Button(discovery.syncing ? "Syncing…" : "Sync my devices", systemImage: "arrow.triangle.2.circlepath") {
                     discovery.sync(manual: true)
                     dismiss()
                 }
                 .disabled(discovery.syncing)
+                .listRowBackground(Palette.grouped)
                 Toggle("Automatic picks", systemImage: "sparkles", isOn: Binding(get: { discovery.preferences.automatic }, set: discovery.setAutomatic))
                     .tint(Palette.lamp)
+                    .listRowBackground(Palette.grouped)
             }
             .font(Typeface.body)
             .foregroundStyle(Palette.text)
+            .contentMargins(.top, 8, for: .scrollContent)
+            .buttonStyle(ReadableButtonStyle())
             .scrollContentBackground(.hidden)
             .navigationTitle("Discovery options")
             .navigationBarTitleDisplayMode(.inline)

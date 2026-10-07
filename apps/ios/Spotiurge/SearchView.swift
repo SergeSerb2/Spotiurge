@@ -17,15 +17,15 @@ struct SearchView: View {
     var body: some View {
         NavigationStack {
             List {
-                if demo { DemoBanner().roomRow() }
+                if demo { DemoBanner().roomRow(block: true) }
                 if !demo && !account.signedIn {
-                    SignInPrompt().roomRow().listRowSeparator(.hidden)
+                    SignInPrompt().roomRow(block: true).listRowSeparator(.hidden)
                 } else if query.trimmingCharacters(in: .whitespaces).isEmpty {
-                    Notice(text: "Search songs, albums and playlists on Spotify.", symbol: "magnifyingglass").roomRow().listRowSeparator(.hidden)
+                    Notice(text: "Search songs, albums and playlists on Spotify.", symbol: "magnifyingglass").roomRow(block: true)
                 } else {
-                    if let error { Notice(text: error, symbol: "exclamationmark.circle").roomRow() }
+                    if let error { Notice(text: error, symbol: "exclamationmark.circle").roomRow(block: true) }
                     if !searching && error == nil && results == SearchResults() {
-                        Notice(text: "No results for \u{201C}\(query)\u{201D}.").roomRow()
+                        Notice(text: "No results for \u{201C}\(query)\u{201D}.").roomRow(block: true)
                     }
                     if !results.tracks.isEmpty {
                         Section {
@@ -56,7 +56,7 @@ struct SearchView: View {
                         } header: { SectionTitle(text: "Playlists") }
                     }
                 }
-                if let notice = player.notice { Notice(text: notice, symbol: "speaker.slash").roomRow() }
+                if let notice = player.notice { Notice(text: notice, symbol: "speaker.slash").roomRow(block: true) }
             }
             .listStyle(.plain)
             .roomBackground()

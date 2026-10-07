@@ -323,3 +323,37 @@ func feedbackEdit(_ index: Int, clear: Bool = false) -> (String, Value?) {
     try remote.document.merge(local.document)
     #expect(remote.document == local.document)
 }
+
+@Test func `unsent offline ratings survive an advanced floor and an acknowledged rating stays forgotten`() throws {
+    var local = device("a")
+    let key = "feedback:\(uri)"
+    let value = Value.feedback(uri: uri, title: "Song", artist: "Artist", rating: .love)
+    try local.edit(key, value)
+    let snapshot = local.document
+    let bytes = try JSONEncoder().encode(local)
+    var restarted = try JSONDecoder().decode(Replica.self, from: bytes)
+    restarted.device = String(repeating: "c", count: 32)
+    var remote = Document()
+    remote.records[DiscoveryLimits.feedbackFloor] = Record(stamp: Stamp(counter: 100, device: String(repeating: "b", count: 32)), value: nil)
+    try restarted.mergeForSync(remote)
+    #expect(restarted.document.records[key]?.value == value)
+    #expect(restarted.document.records[key]?.stamp.counter == 101)
+    try local.mergeSynced(restarted.document, snapshot: snapshot)
+    #expect(local.pendingFeedback.isEmpty)
+    remote.records[DiscoveryLimits.feedbackFloor]!.stamp.counter = 200
+    try local.mergeForSync(remote)
+    #expect(local.document.records[key] == nil)
+}
+
+@Test func `effective inputs include forgotten feedback but exclude stamp changes`() throws {
+    var local = device("a")
+    try local.edit("feedback:\(uri)", .feedback(uri: uri, title: "Song", artist: "Artist", rating: .love))
+    let before = local.document
+    var remote = Document()
+    remote.records[DiscoveryLimits.feedbackFloor] = Record(stamp: Stamp(counter: 100, device: String(repeating: "b", count: 32)), value: nil)
+    try local.document.merge(remote)
+    #expect(!before.sameInputs(as: local.document))
+    var stampOnly = before
+    stampOnly.records["feedback:\(uri)"]!.stamp.counter += 1
+    #expect(before.sameInputs(as: stampOnly))
+}

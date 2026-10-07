@@ -166,6 +166,20 @@ final class StubCloud: URLProtocol, @unchecked Sendable {
         #expect(StubCloud.seen.allSatisfy { !$0.url!.absoluteString.contains(secret) && $0.value(forHTTPHeaderField: "Authorization") == "Bearer \(secret)" })
     }
 
+    @Test func `sync uploads a pending rating above the remote retention clock`() async throws {
+        var local = device("a")
+        try local.edit("feedback:\(uri)", .feedback(uri: uri, title: "Song", artist: "Artist", rating: .love))
+        var remote = Document()
+        remote.records[DiscoveryLimits.feedbackFloor] = Record(stamp: Stamp(counter: 100, device: String(repeating: "b", count: 32)), value: nil)
+        let snapshot = #"{"revision":4,"document":"# + String(decoding: try remote.encoded(), as: UTF8.self) + "}"
+        StubCloud.seen = []
+        StubCloud.replies = [(200, Data(snapshot.utf8)), (200, Data(#"{"revision":5}"#.utf8))]
+        let uploaded = try await client().sync(local)
+        #expect(uploaded.records["feedback:\(uri)"]?.stamp.counter == 101)
+        #expect(uploaded.rating(uri) == .love)
+        #expect(StubCloud.seen.last?.httpMethod == "PUT")
+    }
+
     @Test func `recommendations send taste and ratings only and map refusals`() async throws {
         var local = device("a")
         try local.edit("taste", taste("Warm jazz"))

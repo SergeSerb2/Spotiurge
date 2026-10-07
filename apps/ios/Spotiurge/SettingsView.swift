@@ -28,9 +28,11 @@ struct SettingsView: View {
                     .padding(.vertical, 4)
                     .accessibilityElement(children: .combine)
                 }
+                .listRowBackground(Palette.grouped)
 
                 if demo {
                     Section { DemoBanner().listRowInsets(EdgeInsets()) }
+                        .listRowBackground(Palette.grouped)
                 }
 
                 Section {
@@ -49,10 +51,12 @@ struct SettingsView: View {
                             .disabled(demo)
                     }
                 } header: {
-                    Text("Spotify")
+                    Text("Spotify").foregroundStyle(Palette.secondary)
                 } footer: {
                     Text("Library, search and matching AI picks use Spotify's Web API through the shared app the desktop uses. The grant is kept in this iPhone's Keychain.")
+                        .foregroundStyle(Palette.secondary)
                 }
+                .listRowBackground(Palette.grouped)
 
                 Section {
                     if demo {
@@ -75,12 +79,14 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    Text("Playback on this iPhone")
+                    Text("Playback on this iPhone").foregroundStyle(Palette.secondary)
                 } footer: {
                     Text(Player.includesEngine
                          ? "Development engine: Spotiurge's own librespot build from the playback probe, playing through this app's audio session. It still announces the stock librespot iPhone identity, which Spotify refuses, until the identity fix ships in a pinned fork. Spotify Premium is required. Spotiurge never controls the Spotify app instead."
                          : "This build has no playback engine, so nothing plays here. Spotiurge never controls the Spotify app instead.")
+                        .foregroundStyle(Palette.secondary)
                 }
+                .listRowBackground(Palette.grouped)
 
                 Section {
                     LabeledContent("Status", value: pairingStatus)
@@ -104,10 +110,12 @@ struct SettingsView: View {
                         Button("Unpair this iPhone", role: .destructive) { discovery.unpair() }
                     }
                 } header: {
-                    Text("Private cloud")
+                    Text("Private cloud").foregroundStyle(Palette.secondary)
                 } footer: {
                     Text("Syncs your taste, ratings, saved mixes and AI history with your other devices, and brokers recommendations. The token is stored only in this iPhone's Keychain, bound to this origin.")
+                        .foregroundStyle(Palette.secondary)
                 }
+                .listRowBackground(Palette.grouped)
 
                 Section {
                     Toggle("Automatic picks", isOn: Binding(get: { discovery.preferences.automatic }, set: discovery.setAutomatic))
@@ -116,29 +124,41 @@ struct SettingsView: View {
                         .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets())
                 } header: {
-                    Text("Discovery")
+                    Text("Discovery").foregroundStyle(Palette.secondary)
                 } footer: {
                     Text("Recommendations always use GPT-6 Luna through your private cloud's existing subscription, with no other model. Automatic picks refresh at most every twelve hours, and soon after you change your taste or exploration.")
+                        .foregroundStyle(Palette.secondary)
                 }
+                .listRowBackground(Palette.grouped)
 
-                Section("What leaves this iPhone") {
+                Section {
                     Text("To your private cloud: your taste text, ratings (title, artist, rating and track URI), saved mixes and AI history. For recommendations, only the taste text and the titles, artists and ratings of up to 100 ratings. To Spotify: sign-in, library reads, searches and playback. No telemetry. Spotify grants never reach the private cloud or the AI.")
                         .font(Typeface.detail).foregroundStyle(Palette.secondary)
+                } header: {
+                    Text("What leaves this iPhone").foregroundStyle(Palette.secondary)
                 }
+                .listRowBackground(Palette.grouped)
 
                 Section {
                     Toggle("Show demo data", isOn: Binding(get: { demoScenario != nil }, set: { demoScenario = $0 ? .home : nil }))
                         .tint(Palette.lamp)
                 } footer: {
                     Text("Synthetic picks and library for trying the interface. Nothing is saved, synced or sent while it is on.")
+                        .foregroundStyle(Palette.secondary)
                 }
+                .listRowBackground(Palette.grouped)
 
-                Section("About") {
+                Section {
                     LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
                     Text("Spotiurge is Serge's personal fork of Spotifast, under the MIT License. Music comes from Spotify; Spotify Premium is required for playback.")
                         .font(Typeface.detail).foregroundStyle(Palette.secondary)
+                } header: {
+                    Text("About").foregroundStyle(Palette.secondary)
                 }
+                .listRowBackground(Palette.grouped)
             }
+            .foregroundStyle(Palette.text, Palette.secondary)
+            .buttonStyle(ReadableButtonStyle())
             .font(Typeface.body)
             .roomBackground()
             .navigationTitle("Settings")

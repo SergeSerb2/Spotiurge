@@ -277,6 +277,11 @@ public struct Document: Codable, Hashable, Sendable {
         return ""
     }
 
+    /// Stamp-only changes are immaterial; removed feedback is an input change.
+    public func sameInputs(as other: Document) -> Bool {
+        taste == other.taste && feedback == other.feedback
+    }
+
     public var hasInputs: Bool {
         !taste.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             || records.values.contains { if case .feedback = $0.value { true } else { false } }
@@ -377,16 +382,45 @@ public struct Replica: Codable, Sendable {
     public var document: Document
     /// Local catalogue matches, excluded from the cloud document and AI input.
     public var cachedPicks: [Pick]
+    /// Current unsynced rating stamps; local only, bounded by retained feedback.
+    public var pendingFeedback: [String: Stamp] = [:]
 
     enum CodingKeys: String, CodingKey {
         case device, document
         case cachedPicks = "cached_picks"
+        case pendingFeedback = "pending_feedback"
     }
 
     public init(device: String = newDeviceID(), document: Document = Document(), cachedPicks: [Pick] = []) {
         self.device = device
         self.document = document
         self.cachedPicks = cachedPicks
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        device = try container.decode(String.self, forKey: .device)
+        document = try container.decode(Document.self, forKey: .document)
+        cachedPicks = try container.decodeIfPresent([Pick].self, forKey: .cachedPicks) ?? []
+        pendingFeedback = try container.decodeIfPresent([String: Stamp].self, forKey: .pendingFeedback) ?? [:]
+    }
+
+    /// Import the remote clock without confusing fresh offline intent with old replicas.
+    public mutating func mergeForSync(_ remote: Document) throws(DiscoveryError) {
+        let pending = pendingFeedback.compactMap { key, stamp -> (key: String, value: Value?)? in
+            guard let record = document.records[key], record.stamp == stamp else { return nil }
+            return (key, record.value)
+        }
+        var merged = self
+        try merged.document.merge(remote)
+        let lost = pending.filter { merged.document.records[$0.key] == nil }
+        if !lost.isEmpty { try merged.editMany(lost) }
+        merged.keepCurrentPending()
+        self = merged
+    }
+
+    private mutating func keepCurrentPending() {
+        pendingFeedback = pendingFeedback.filter { document.records[$0.key]?.stamp == $0.value }
     }
 
     /// Merge an acknowledged sync without undoing edits made after its snapshot.
@@ -402,7 +436,11 @@ public struct Replica: Codable, Sendable {
             .filter { merged.document.records[$0.key] != $0.value }
             .map { (key: $0.key, value: $0.value.value) }
         if !edits.isEmpty { try merged.editMany(edits) }
-        document = merged.document
+        if let snapshot {
+            merged.pendingFeedback = merged.pendingFeedback.filter { snapshot.records[$0.key]?.stamp != $0.value }
+        }
+        merged.keepCurrentPending()
+        self = merged
     }
 
     public mutating func edit(_ key: String, _ value: Value?) throws(DiscoveryError) {
@@ -440,7 +478,13 @@ public struct Replica: Codable, Sendable {
         try candidate.validateRecords()
         candidate.compactFeedback()
         try candidate.validate()
+        for (key, record) in candidate.records where key.hasPrefix("feedback:") && key != DiscoveryLimits.feedbackFloor {
+            if document.records[key] != record && record.stamp.device == device && record.stamp.counter == highest + 1 {
+                pendingFeedback[key] = record.stamp
+            }
+        }
         document = candidate
+        keepCurrentPending()
     }
 
     /// Reads a stored replica. Backups and restored copies must not keep a
@@ -459,7 +503,12 @@ public struct Replica: Codable, Sendable {
             throw DiscoveryError("Cannot read discovery state. The original file is preserved.")
         }
         try replica.document.validate()
+        guard replica.pendingFeedback.count <= DiscoveryLimits.feedbackLimit,
+              replica.pendingFeedback.allSatisfy({ key, stamp in
+                  key.hasPrefix("feedback:") && key != DiscoveryLimits.feedbackFloor && replica.document.records[key]?.stamp == stamp
+              }) else { throw DiscoveryError("Invalid pending discovery feedback.") }
         replica.document.compactFeedback()
+        replica.keepCurrentPending()
         if replica.cachedPicks.count > 12 { throw DiscoveryError("Invalid cached discovery results.") }
         if !isDeviceID(replica.device) { throw DiscoveryError("Invalid discovery installation identity.") }
         replica.device = newDeviceID()

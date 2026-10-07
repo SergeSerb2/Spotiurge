@@ -425,9 +425,7 @@ final class DiscoveryModel {
                 status = error.message
                 return
             }
-            let inputsChanged = replica.document.records.contains { key, record in
-                (key == "taste" || key.hasPrefix("feedback:")) && before.records[key]?.value != record.value
-            }
+            let inputsChanged = !before.sameInputs(as: replica.document)
             if lastError == .pairing {
                 automatic.rearm()
                 lastError = nil

@@ -5,7 +5,7 @@ interface contract in `DESIGN.md` and the phone brief in
 `.impeccable/surfaces/ios-interface.md`. The forest/mist palette, quiet bundled
 mountain scene and flat mint ridge mark match the desktop and T3 Pretty. The
 background stays static; Liquid Glass belongs to native navigation and controls.
-Artwork no longer causes a second request for ambient lighting.
+Artwork no longer causes a second request for ambient lighting. Native hard scroll-edge treatment keeps content beneath the tab bar and mini-player blurred, and the compact accessory caps Dynamic Type at XXX Large. Full-width blocks have equal 16-point margins; Settings hints, grouped surfaces and disabled controls use the shared forest/mist tokens.
 
 **Status: developmental, not for distribution.** The production iOS
 architecture is still gated by `docs/reviews/spotiurge-ios/playback-gate.md`.
@@ -33,7 +33,7 @@ TestFlight build or App Store Connect record exists.
   Spotify Web API. The app uses the desktop's shared app and asks only for read
   scopes.
 - **Now Playing.** The floating mini-player sits in the tab-bar accessory. The
-  Now Playing sheet shows the cover-lit room, a read-only position, the
+  Now Playing sheet shows the scenery, a read-only position, the
   transport and feedback.
 - **Settings.** Spotify sign-in, playback status, pairing and sync, discovery
   options, what leaves the phone, the demo-data switch and attribution.
@@ -94,6 +94,16 @@ Limits:
 There is no telemetry. Spotify grants never go to the private cloud or the AI.
 The cloud token, the Web API refresh grant and the playback credential are
 separate Keychain items. They use `AfterFirstUnlockThisDeviceOnly`.
+
+## Feedback retention
+
+The shared version-one document retains at most 500 ratings and clears, with a
+logical retention cutoff. A bounded local `pending_feedback` stamp map persists
+fresh unsent feedback across restarts. Sync imports the remote clock and
+re-expresses pending ratings pruned by its cutoff before uploading, while
+acknowledged old replicas stay forgotten. Acknowledgments clear only dispatched
+stamps; edits made during a sync remain pending. Removed recommendation inputs
+invalidate in-flight AI answers. The pending map never reaches the cloud or AI.
 
 ## Safeguards (beyond the probe scaffold)
 

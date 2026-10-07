@@ -114,7 +114,7 @@ public struct CloudClient: Sendable {
     /// Fetch, merge, and write back under `If-Match`; a concurrent writer
     /// (409) makes it refetch and merge again, up to three times.
     public func sync(_ replica: Replica) async throws(DiscoveryError) -> Document {
-        var document = replica.document
+        var replica = replica
         for _ in 0..<3 {
             let get = try await request("v1/state", method: "GET", timeout: 15)
             let (data, status): (Data, Int)
@@ -125,18 +125,18 @@ public struct CloudClient: Sendable {
             guard let remote = try? JSONDecoder().decode(Snapshot.self, from: data) else {
                 throw DiscoveryError("Invalid private cloud response. Local state is preserved.")
             }
-            try document.merge(remote.document)
+            try replica.mergeForSync(remote.document)
             var put = try await request("v1/state", method: "PUT", timeout: 15)
             put.setValue(String(remote.revision), forHTTPHeaderField: "If-Match")
             let body: Data
-            do { body = try document.encoded() } catch { throw DiscoveryError("Cannot encode discovery state.") }
+            do { body = try replica.document.encoded() } catch { throw DiscoveryError("Cannot encode discovery state.") }
             let written: Int
             do { (_, written) = try await send(put, body: body) } catch {
                 throw DiscoveryError("Sync was interrupted. Your local edits are kept.")
             }
             if written == 409 { continue }
             try Self.check(written)
-            return document
+            return replica.document
         }
         throw DiscoveryError("Sync met concurrent edits. Retry to merge the latest state.")
     }

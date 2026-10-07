@@ -188,11 +188,10 @@ struct FeedbackButtons: View {
         } label: {
             Image(systemName: on ? symbol + ".fill" : symbol)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(on ? (value == .love ? Palette.lampText : Palette.text) : Palette.dim)
                 .frame(width: 44, height: 44)
                 .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ReadableButtonStyle(ink: on ? (value == .love ? Palette.lampText : Palette.text) : Palette.dim))
         .accessibilityLabel(label)
         .accessibilityAddTraits(on ? .isSelected : [])
     }
@@ -220,9 +219,10 @@ struct Notice: View {
 
 extension View {
     /// Content rows sit on the room, not on glass.
-    func roomRow() -> some View {
+    func roomRow(block: Bool = false) -> some View {
         listRowBackground(Color.clear)
+            .listRowSeparator(block ? .hidden : .visible)
             .listRowSeparatorTint(Palette.outline)
-            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 8))
+            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: block ? 16 : 8))
     }
 }

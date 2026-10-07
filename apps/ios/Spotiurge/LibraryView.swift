@@ -15,12 +15,12 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             List {
-                if demo { DemoBanner().roomRow() }
+                if demo { DemoBanner().roomRow(block: true) }
                 if !demo && !account.signedIn {
-                    SignInPrompt().roomRow().listRowSeparator(.hidden)
+                    SignInPrompt().roomRow(block: true).listRowSeparator(.hidden)
                 } else {
                     if let error = account.libraryError, !demo {
-                        Notice(text: error, symbol: "exclamationmark.circle").roomRow()
+                        Notice(text: error, symbol: "exclamationmark.circle").roomRow(block: true)
                     }
                     NavigationLink {
                         TrackList(title: "Liked Songs", tracks: saved)
@@ -61,7 +61,7 @@ struct LibraryView: View {
                         SectionTitle(text: "Playlists").padding(.top, 8)
                     }
                 }
-                if let notice = player.notice { Notice(text: notice, symbol: "speaker.slash").roomRow() }
+                if let notice = player.notice { Notice(text: notice, symbol: "speaker.slash").roomRow(block: true) }
             }
             .listStyle(.plain)
             .roomBackground()
@@ -109,7 +109,7 @@ struct SignInPrompt: View {
             }
             Button(account.state == .signingIn ? "Waiting for Spotify…" : "Sign in to Spotify") { account.signIn() }
                 .font(Typeface.inter(15, .semibold))
-                .buttonStyle(.glass)
+                .buttonStyle(ReadableButtonStyle(glass: true))
                 .disabled(account.state == .signingIn)
         }
         .padding(16)

@@ -9,9 +9,9 @@ related_targets: ["DESIGN.md",".impeccable/surfaces/ios-spotiurge.md",".impeccab
 
 Status: a working native candidate, built on October 6 and 7, 2026, to the
 whole-app visual scope Serge approved. It was built code first, with no
-concept images. Evidence is Simulator only; the original amber captures are being replaced:
-`docs/reviews/spotiurge-ios/interface-review.html` and
-`interface-captures.json`. The production architecture stays gated by
+concept images. Evidence is Simulator only. The 26-state scenery before/after viewer is
+`docs/reviews/spotiurge-ios/scenery/index.html`, with exact image/build hashes in
+`scenery/captures.json`. Historical state differences are marked explicitly. The production architecture stays gated by
 `docs/reviews/spotiurge-ios/playback-gate.md`. Physical-phone checks are
 stopped at Serge's request.
 
@@ -88,6 +88,13 @@ stopped at Serge's request.
 - **Demo.** Demo data is labelled on every screen, is a separate session, and
   disables feedback, refresh and cloud requests. The one real session is
   suspended while it shows.
+
+## Finish corrections
+
+- Native hard bottom scroll-edge treatment blurs content below the mini-player and tab bar; the accessory caps Dynamic Type at XXX Large.
+- Full-width blocks use symmetric 16-point margins and no stray dividers.
+- Settings hints and disabled controls use explicit readable ink; disabled CTAs use neutral opaque pills.
+- Dark grouped Settings/options rows use forest surfaces; light uses white.
 
 ## Open items
 
