@@ -175,7 +175,7 @@ pub async fn sync(
             .map_err(|_| "Sync is offline. Your local edits are kept.")?;
         status(&response)?;
         let remote: Snapshot = response_json(response).await?;
-        replica.document.merge(&remote.document)?;
+        replica.merge_for_sync(&remote.document)?;
         let response = client
             .put(url.clone())
             .bearer_auth(&token)

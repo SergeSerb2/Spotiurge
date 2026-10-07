@@ -111,7 +111,7 @@ the cutoff; an acknowledged sync re-expresses feedback changed after its snapsho
 above the imported clock, preserving immediate local intent. The cutoff itself
 is never re-stamped as a user edit. Offline feedback older than the cutoff is
 forgotten, even if a device's wall clock is later. Mixes, taste and AI history
-are unaffected. All devices must upgrade to enforce this retention policy.
+are unaffected. All devices must upgrade to enforce this retention policy. A bounded local `pending_feedback` stamp map distinguishes new, unsent ratings from old replica data. On sync it imports the remote clock and restamps only pending ratings removed by the cutoff before uploading. Successful acknowledgments clear the dispatched stamps; edits made during sync remain pending. This map is atomically saved with local state and never enters the cloud document or AI prompts.
 
 Recommendation generations are invalidated by saved taste, feedback, exploration
 changes or imported taste/feedback. The superseded request retains its worker

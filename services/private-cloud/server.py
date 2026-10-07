@@ -1,4 +1,5 @@
 """Single-user Spotiurge store and CLIProxyAPI bridge. No Spotify grants/audio."""
+from contextlib import closing
 import hmac
 import json
 import os
@@ -78,7 +79,7 @@ class Store:
     def __init__(self, path):
         self.path = str(path)
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        with self.connect() as db:
+        with closing(self.connect()) as db, db:
             db.execute("CREATE TABLE IF NOT EXISTS state (id INTEGER PRIMARY KEY, revision INTEGER NOT NULL, document TEXT NOT NULL)")
             db.execute("INSERT OR IGNORE INTO state VALUES (1, 0, ?)", (encode_json(EMPTY).decode(),))
 
@@ -86,14 +87,14 @@ class Store:
         return sqlite3.connect(self.path, timeout=5)
 
     def read(self):
-        with self.connect() as db:
+        with closing(self.connect()) as db, db:
             revision, document = db.execute("SELECT revision, document FROM state WHERE id=1").fetchone()
         return {"revision": revision, "document": json.loads(document)}
 
     def write(self, revision, document):
         if not valid_document(document):
             raise ValueError("Invalid state")
-        with self.connect() as db:
+        with closing(self.connect()) as db, db:
             updated = db.execute("UPDATE state SET revision=revision+1, document=? WHERE id=1 AND revision=?", (encode_json(document).decode(), revision)).rowcount
         return bool(updated)
 

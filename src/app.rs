@@ -1862,15 +1862,7 @@ impl App {
                             {
                                 Ok(()) => {
                                     let inputs_changed =
-                                        self.discovery.replica.document.records.iter().any(
-                                            |(key, record)| {
-                                                (key == "taste" || key.starts_with("feedback:"))
-                                                    && before
-                                                        .records
-                                                        .get(key)
-                                                        .is_none_or(|old| old.value != record.value)
-                                            },
-                                        );
+                                        !before.same_inputs(&self.discovery.replica.document);
                                     if self.discovery.last_error
                                         == Some(crate::discovery::RecommendationErrorKind::Pairing)
                                     {

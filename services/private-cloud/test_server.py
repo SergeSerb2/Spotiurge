@@ -40,6 +40,40 @@ class PrivateCloudTests(unittest.TestCase):
             with error:
                 return error.code, json.load(error)
 
+    def test_every_operation_closes_its_sqlite_connection(self):
+        class TrackedConnection:
+            def __init__(self, connection):
+                self.connection = connection
+                self.closed = False
+            def __enter__(self):
+                self.connection.__enter__()
+                return self
+            def __exit__(self, *args):
+                return self.connection.__exit__(*args)
+            def execute(self, *args):
+                return self.connection.execute(*args)
+            def close(self):
+                self.closed = True
+                self.connection.close()
+
+        import sqlite3
+        original = sqlite3.connect
+        connections = []
+        def tracked(*args, **kwargs):
+            db = TrackedConnection(original(*args, **kwargs))
+            connections.append(db)
+            return db
+        with patch("server.sqlite3.connect", side_effect=tracked):
+            store = Store(self.path)
+            state = store.read()
+            self.assertTrue(store.write(state["revision"], state["document"]))
+            self.assertFalse(store.write(state["revision"], state["document"]))
+            self.assertTrue(all(db.closed for db in connections))
+            with patch("server.json.loads", side_effect=ValueError("test decode failure")):
+                with self.assertRaises(ValueError):
+                    store.read()
+            self.assertTrue(all(db.closed for db in connections))
+
     def test_feedback_cutoff_tombstone_round_trips_in_the_version_one_schema(self):
         document = {"version": 1, "records": {"feedback:retention": {
             "stamp": {"counter": 1600, "device": "a" * 32}, "value": None}}}

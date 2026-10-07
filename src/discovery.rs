@@ -383,6 +383,12 @@ impl Document {
         }
     }
 
+    /// Compare effective recommendation inputs, including removed feedback.
+    /// Compare the same newest 100 ordered ratings the model receives.
+    pub fn same_inputs(&self, other: &Self) -> bool {
+        self.taste() == other.taste() && self.feedback() == other.feedback()
+    }
+
     pub fn has_inputs(&self) -> bool {
         !self.taste().trim().is_empty()
             || self
@@ -443,6 +449,10 @@ pub struct Replica {
     /// Local catalogue matches, excluded from the cloud document and AI input.
     #[serde(default)]
     pub cached_picks: Vec<Pick>,
+    /// Unsynced local ratings, persisted separately from the cloud document.
+    /// Only exact current stamps survive; acknowledged or forgotten edits leave.
+    #[serde(default)]
+    pub pending_feedback: BTreeMap<String, Stamp>,
 }
 
 impl Default for Replica {
@@ -451,11 +461,49 @@ impl Default for Replica {
             device: format!("{:032x}", rand::random::<u128>()),
             document: Document::default(),
             cached_picks: Vec::new(),
+            pending_feedback: BTreeMap::new(),
         }
     }
 }
 
 impl Replica {
+    /// Import a cloud clock before uploading. A new offline rating may be
+    /// below its retention floor; distinguish unsent intent from old replicas.
+    pub fn merge_for_sync(&mut self, remote: &Document) -> Result<(), String> {
+        let pending = self
+            .pending_feedback
+            .iter()
+            .filter_map(|(key, stamp)| {
+                self.document
+                    .records
+                    .get(key)
+                    .filter(|record| &record.stamp == stamp)
+                    .map(|record| (key.clone(), record.value.clone()))
+            })
+            .collect::<Vec<_>>();
+        let mut merged = self.clone();
+        merged.document.merge(remote)?;
+        let lost = pending
+            .into_iter()
+            .filter(|(key, _)| !merged.document.records.contains_key(key))
+            .collect::<Vec<_>>();
+        if !lost.is_empty() {
+            merged.edit_many(lost)?;
+        }
+        merged.keep_current_pending();
+        *self = merged;
+        Ok(())
+    }
+
+    fn keep_current_pending(&mut self) {
+        self.pending_feedback.retain(|key, stamp| {
+            self.document
+                .records
+                .get(key)
+                .is_some_and(|record| &record.stamp == stamp)
+        });
+    }
+
     /// Merge an acknowledged sync without undoing edits made after its snapshot.
     pub fn merge_synced(
         &mut self,
@@ -487,7 +535,16 @@ impl Replica {
         if !edits.is_empty() {
             merged.edit_many(edits)?;
         }
-        self.document = merged.document;
+        if let Some(snapshot) = snapshot {
+            merged.pending_feedback.retain(|key, stamp| {
+                snapshot
+                    .records
+                    .get(key)
+                    .is_none_or(|sent| &sent.stamp != stamp)
+            });
+        }
+        merged.keep_current_pending();
+        *self = merged;
         Ok(())
     }
 
@@ -564,7 +621,19 @@ impl Replica {
         candidate.validate_records()?;
         candidate.compact_feedback();
         candidate.validate()?;
+        for (key, record) in &candidate.records {
+            if key.starts_with("feedback:")
+                && key != FEEDBACK_FLOOR
+                && self.document.records.get(key) != Some(record)
+                && record.stamp.device == self.device
+                && record.stamp.counter == counter
+            {
+                self.pending_feedback
+                    .insert(key.clone(), record.stamp.clone());
+            }
+        }
         self.document = candidate;
+        self.keep_current_pending();
         Ok(())
     }
 
@@ -584,7 +653,21 @@ impl Replica {
         let mut replica: Self = serde_json::from_slice(&bytes)
             .map_err(|_| "Cannot read discovery state. The original file is preserved.")?;
         replica.document.validate()?;
+        if replica.pending_feedback.len() > FEEDBACK_LIMIT
+            || replica.pending_feedback.iter().any(|(key, stamp)| {
+                key == FEEDBACK_FLOOR
+                    || !key.starts_with("feedback:")
+                    || replica
+                        .document
+                        .records
+                        .get(key)
+                        .is_none_or(|record| &record.stamp != stamp)
+            })
+        {
+            return Err("Invalid pending discovery feedback.".into());
+        }
         replica.document.compact_feedback();
+        replica.keep_current_pending();
         if replica.cached_picks.len() > 12 {
             return Err("Invalid cached discovery results.".into());
         }
@@ -803,6 +886,103 @@ pub(crate) mod tests {
                 rating: Rating::Love,
             }),
         )
+    }
+
+    #[test]
+    fn unsent_offline_ratings_survive_a_new_remote_floor_and_restart() {
+        let mut local = device('a');
+        let (key, value) = feedback_edit(0, false);
+        local.edit(key.clone(), value.clone()).unwrap();
+        let bytes = serde_json::to_vec(&local).unwrap();
+        let mut restarted: Replica = serde_json::from_slice(&bytes).unwrap();
+        restarted.device = "c".repeat(32);
+        let mut remote = Document::default();
+        remote.records.insert(
+            FEEDBACK_FLOOR.into(),
+            Record {
+                stamp: Stamp {
+                    counter: 100,
+                    device: "b".repeat(32),
+                },
+                value: None,
+            },
+        );
+        restarted.merge_for_sync(&remote).unwrap();
+        assert_eq!(restarted.document.records[&key].value, value);
+        assert_eq!(restarted.document.records[&key].stamp.counter, 101);
+        let uploaded = restarted.document.clone();
+        let snapshot = local.document.clone();
+        local.merge_synced(&uploaded, Some(&snapshot)).unwrap();
+        assert_eq!(local.document, uploaded);
+        assert!(local.pending_feedback.is_empty());
+        // Once acknowledged, this is an old replica, not fresh user intent.
+        remote
+            .records
+            .get_mut(FEEDBACK_FLOOR)
+            .unwrap()
+            .stamp
+            .counter = 200;
+        local.merge_for_sync(&remote).unwrap();
+        assert!(!local.document.records.contains_key(&key));
+        assert!(local.pending_feedback.is_empty());
+    }
+
+    #[test]
+    fn pending_rating_clears_and_later_edits_remain_atomic_and_bounded() {
+        let mut local = device('a');
+        let (key, value) = feedback_edit(0, false);
+        local.edit(key.clone(), value).unwrap();
+        let snapshot = local.document.clone();
+        local.edit(key.clone(), None).unwrap();
+        let mut remote = Document::default();
+        remote.records.insert(
+            FEEDBACK_FLOOR.into(),
+            Record {
+                stamp: Stamp {
+                    counter: 100,
+                    device: "b".repeat(32),
+                },
+                value: None,
+            },
+        );
+        local.merge_synced(&remote, Some(&snapshot)).unwrap();
+        assert_eq!(local.document.records[&key].stamp.counter, 101);
+        assert!(local.document.records[&key].value.is_none());
+        assert_eq!(local.pending_feedback.len(), 1);
+        let sent = local.document.clone();
+        local.merge_synced(&sent, Some(&sent)).unwrap();
+        assert!(local.pending_feedback.is_empty());
+        for index in 1..=FEEDBACK_LIMIT + 100 {
+            let (key, value) = feedback_edit(index, false);
+            local.edit(key, value).unwrap();
+        }
+        assert_eq!(local.pending_feedback.len(), FEEDBACK_LIMIT);
+    }
+
+    #[test]
+    fn effective_inputs_detect_feedback_removed_by_an_advanced_floor() {
+        let mut replica = device('a');
+        let (key, value) = feedback_edit(0, false);
+        replica.edit(key, value).unwrap();
+        let before = replica.document.clone();
+        let mut after = before.clone();
+        after.records.insert(
+            FEEDBACK_FLOOR.into(),
+            Record {
+                stamp: Stamp {
+                    counter: 10,
+                    device: "b".repeat(32),
+                },
+                value: None,
+            },
+        );
+        after.compact_feedback();
+        assert!(!before.same_inputs(&after));
+        let mut newer_clock = before.clone();
+        for record in newer_clock.records.values_mut() {
+            record.stamp.counter += 1;
+        }
+        assert!(before.same_inputs(&newer_clock));
     }
 
     #[test]

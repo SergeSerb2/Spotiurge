@@ -86,7 +86,7 @@ at a time, and **Show less** returns to eight. **Sync my devices** exchanges tas
 history. Previous discoveries remain cached when AI is unavailable. Feedback
 retains the newest 500 records, counting cleared ratings. A shared logical cutoff
 prevents forgotten ratings from returning from an old offline device. Older
-feedback below that cutoff is discarded; new ratings advance above it. Upgrade
+feedback below that cutoff is discarded; a bounded local pending-stamp map keeps new unsent ratings and clears across restarts, then advances them above the imported cutoff before uploading. Upgrade
 all devices to enforce this bound. Saved mixes and taste remain separate.
 
 Pair each desktop once by launching with `SPOTIURGE_CLOUD_TOKEN` in its process
