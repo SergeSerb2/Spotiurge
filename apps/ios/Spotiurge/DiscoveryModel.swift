@@ -268,9 +268,14 @@ final class DiscoveryModel {
         guard ready, !demo else { return }
         let uris = playable.compactMap(\.track?.uri)
         guard !uris.isEmpty else { return }
-        edit("mix:\(newDeviceID())", .mix(title: "My discovery mix", uris: Array(uris.prefix(100)))) {
-            status = "Mix saved. It syncs to your devices when you are online."
+        do { try replica.saveMix(title: "My discovery mix", uris: Array(uris.prefix(100))) } catch {
+            status = error.message
+            return
         }
+        status = "Mix saved. It syncs to your devices when you are online."
+        persist()
+        requestSyncSoon()
+        schedule()
     }
 
     func deleteMix(_ key: String) {
@@ -280,6 +285,8 @@ final class DiscoveryModel {
 
     func recommend(automatic isAutomatic: Bool = false) {
         guard ready, !demo, !suspended, !busy, inFlight == nil else { return }
+        let now = ContinuousClock.now
+        guard automatic.retryAfter(now: now) == nil else { return }
         if !isAutomatic && draft != replica.document.taste {
             do { try replica.edit("taste", .taste(text: limitPrompt(draft))) } catch {
                 status = error.message
@@ -296,8 +303,8 @@ final class DiscoveryModel {
             status = problem.message
             return
         }
-        if !isAutomatic { automatic.rearm() }
-        automatic.attempted(now: .now)
+        if !isAutomatic && lastError == .pairing { automatic.rearm() }
+        automatic.attempted(now: now)
         lastError = nil
         request += 1
         busy = true

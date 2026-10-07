@@ -381,6 +381,22 @@ struct ModelLifecycle {
         model.suspend()
     }
 
+    @Test func `manual refresh cannot bypass a rate limited recommendation`() async {
+        StubNetwork.reset(["POST /v1/recommendations": .init(status: 429)])
+        let model = makeDiscovery(FakeSecrets([cloudKey: cloudToken]))
+        model.load()
+        #expect(await eventually { model.ready && !model.syncing })
+        model.draft = "Warm, spacious electronics."
+        model.recommend()
+        #expect(await eventually { !model.busy && model.lastError == .rateLimited })
+        let sent = StubNetwork.seen.filter { $0 == "POST /v1/recommendations" }.count
+        for _ in 0..<3 { model.recommend() }
+        await settle()
+        #expect(sent == 1)
+        #expect(StubNetwork.seen.filter { $0 == "POST /v1/recommendations" }.count == sent)
+        model.suspend()
+    }
+
     // MARK: Pairing (F7)
 
     @Test func `a locked Keychain is not an unpaired phone`() async {

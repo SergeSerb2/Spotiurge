@@ -15,6 +15,7 @@ import CryptoKit
 import Foundation
 import Network
 import Security
+import SpotiurgeCore
 import UIKit
 
 struct KeychainError: Error, Equatable {
@@ -215,36 +216,41 @@ final class PKCESignIn: NSObject, ASWebAuthenticationPresentationContextProvidin
             return
         }
         connection.start(queue: .main)
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 16_384) { [weak self] data, _, _, _ in
-            // Only the request line matters: "GET /login?code=…&state=… HTTP/1.1".
-            let line = data.flatMap { String(data: $0, encoding: .utf8) }?.split(separator: "\r\n").first.map(String.init) ?? ""
-            let parts = line.split(separator: " ", omittingEmptySubsequences: false)
-            let target = parts.count == 3 && parts[0] == "GET" ? URLComponents(string: "http://127.0.0.1\(parts[1])") : nil
-            let isCallback = target?.path == "/login"
-            let items = target?.queryItems ?? []
-            let code = items.first { $0.name == "code" }?.value
-            let validState = items.filter { $0.name == "state" }.map(\.value) == [state]
-            let body = isCallback ? "Spotiurge: you can return to the app." : "Not found"
-            let reply = "HTTP/1.1 \(isCallback ? "200 OK" : "404 Not Found")\r\ncontent-type: text/plain\r\ncontent-length: \(body.utf8.count)\r\ncache-control: no-store\r\nconnection: close\r\n\r\n\(body)"
-            connection.send(content: Data(reply.utf8), completion: .contentProcessed { _ in connection.cancel() })
+        read(connection, request: LoopbackRequest(), state: state, verifier: verifier)
+    }
+
+    private func read(_ connection: NWConnection, request: LoopbackRequest, state: String, verifier: String) {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 16_384) { [weak self] data, _, complete, error in
             Task { @MainActor in
-                // Favicon and other paths do not end the flow.
-                guard let self, isCallback, self.continuation != nil, !self.redirected else { return }
-                guard let code, !code.isEmpty, validState else {
-                    self.session?.cancel()
-                    self.finish(.failure(SignInError("Spotify refused the sign-in, or it did not match this request.")))
-                    return
-                }
-                self.redirected = true
-                self.session?.cancel()
+                guard let self, self.continuation != nil, !self.redirected else { connection.cancel(); return }
+                var request = request
                 do {
-                    self.finish(.success(try await Self.token([
-                        "grant_type": "authorization_code", "code": code, "redirect_uri": self.grant.redirect,
-                        "client_id": self.grant.clientID, "code_verifier": verifier,
-                    ])))
-                } catch {
-                    self.finish(.failure(error))
-                }
+                    guard let line = try request.append(data ?? Data()) else {
+                        if complete || error != nil { connection.cancel() }
+                        else { self.read(connection, request: request, state: state, verifier: verifier) }
+                        return
+                    }
+                    let redirect = LoopbackRequest.redirect(line, state: state)
+                    let isCallback = redirect != .stray
+                    let body = isCallback ? "Spotiurge: you can return to the app." : "Not found"
+                    let reply = "HTTP/1.1 \(isCallback ? "200 OK" : "404 Not Found")\r\ncontent-type: text/plain\r\ncontent-length: \(body.utf8.count)\r\ncache-control: no-store\r\nconnection: close\r\n\r\n\(body)"
+                    connection.send(content: Data(reply.utf8), completion: .contentProcessed { _ in connection.cancel() })
+                    switch redirect {
+                    case .stray: return
+                    case .refused:
+                        self.session?.cancel()
+                        self.finish(.failure(SignInError("Spotify refused the sign-in, or it did not match this request.")))
+                    case .code(let code):
+                        self.redirected = true
+                        self.session?.cancel()
+                        do {
+                            self.finish(.success(try await Self.token([
+                                "grant_type": "authorization_code", "code": code, "redirect_uri": self.grant.redirect,
+                                "client_id": self.grant.clientID, "code_verifier": verifier,
+                            ])))
+                        } catch { self.finish(.failure(error)) }
+                    }
+                } catch { connection.cancel() }
             }
         }
     }

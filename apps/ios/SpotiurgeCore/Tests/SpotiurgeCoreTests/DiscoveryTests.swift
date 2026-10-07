@@ -357,3 +357,43 @@ func feedbackEdit(_ index: Int, clear: Bool = false) -> (String, Value?) {
     stampOnly.records["feedback:\(uri)"]!.stamp.counter += 1
     #expect(before.sameInputs(as: stampOnly))
 }
+
+@Test func `manual retry obeys the deadline`() {
+    let now = ContinuousClock.now
+    var scheduler = AutoRecommendations()
+    scheduler.failed(.rateLimited, now: now)
+    #expect(scheduler.retryAfter(now: now) == .seconds(600))
+    #expect(scheduler.retryAfter(now: now + .seconds(599)) != nil)
+    #expect(scheduler.retryAfter(now: now + .seconds(600)) == nil)
+}
+
+@Test func `mix slots stay bounded and removal survives stale sync`() throws {
+    var local = device("a")
+    for index in 0..<2500 { try local.saveMix(title: "Mix \(index)", uris: [uri]) }
+    #expect(local.document.records.count == DiscoveryLimits.mixLimit)
+    let key = local.document.records.keys.sorted().first!
+    let stale = local.document
+    try local.edit(key, nil)
+    try local.document.merge(stale)
+    #expect(local.document.records[key]?.value == nil)
+    try local.saveMix(title: "Replacement", uris: [uri])
+    #expect(local.document.records.count == DiscoveryLimits.mixLimit)
+    #expect(local.document.records[key]?.value == .mix(title: "Replacement", uris: [uri]))
+}
+
+@Test func `loopback request lines accept every TCP split and reject malformed callbacks`() throws {
+    let bytes = Data("GET /login?code=dummy&state=test-state HTTP/1.1\r\n".utf8)
+    for split in 0...bytes.count {
+        var request = LoopbackRequest()
+        let first = try request.append(bytes.prefix(split))
+        if split < bytes.count { #expect(first == nil) }
+        let complete = try first ?? request.append(bytes.suffix(bytes.count - split))
+        #expect(complete.map { LoopbackRequest.redirect($0, state: "test-state") } == .code("dummy"))
+    }
+    #expect(LoopbackRequest.redirect("GET /favicon.ico HTTP/1.1", state: "x") == .stray)
+    #expect(LoopbackRequest.redirect("GET /login-extra?code=x&state=x HTTP/1.1", state: "x") == .stray)
+    #expect(LoopbackRequest.redirect("GET /login?code=x&state=wrong HTTP/1.1", state: "x") == .refused)
+    #expect(LoopbackRequest.redirect("GET /login?code=x&state=x&state=x HTTP/1.1", state: "x") == .refused)
+    var oversized = LoopbackRequest()
+    #expect(throws: (any Error).self) { try oversized.append(Data(repeating: 65, count: 16_385)) }
+}

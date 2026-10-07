@@ -99,7 +99,13 @@ There is no telemetry. Spotify grants never go to the private cloud or the AI.
 The cloud token, the Web API refresh grant and the playback credential are
 separate Keychain items. They use `AfterFirstUnlockThisDeviceOnly`.
 
-## Feedback retention
+## Mix slots and feedback retention
+
+Saved mixes can be removed. New saves reuse removed slots first, then the oldest
+slot once 100 exist, matching desktop; imported legacy slots remain readable
+and removable. Manual recommendation requests honor the AI retry deadline.
+The loopback sign-in parser waits for a complete bounded request line, including
+when TCP splits the state or CRLF across callbacks.
 
 The shared version-one document retains at most 500 ratings and clears, with a
 logical retention cutoff. A bounded local `pending_feedback` stamp map persists

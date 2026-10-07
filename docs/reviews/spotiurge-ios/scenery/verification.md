@@ -32,10 +32,10 @@ explicitly marked rather than described as matching states.
 
 ## Actually checked
 
-- Platform-neutral Swift core: **37 tests passed**, including merge/CAS, bounded
+- Platform-neutral Swift core: **40 tests passed**, including merge/CAS, bounded
   feedback, pending offline ratings, matching, limits and Python server wire
   compatibility. Uses local dummy data and protocol stubs.
-- Hosted model lifecycle suite: **13 tests passed** in the Simulator, including
+- Hosted model lifecycle suite: **14 tests passed** in the Simulator, including
   a native Keychain round trip with a disposable test grant. The host is ad-hoc
   signed; unsigned hosts lacked the entitlement and that failed attempt is not
   counted as a pass. Tests were retained unchanged.
@@ -69,3 +69,12 @@ iPad were not measured. Static Reduce Motion captures prove layout only.
 No TestFlight upload, App Store Connect record or production provisioning has
 been created for this development app. Use the playback gate record and signing
 preparation notes before selecting a production architecture.
+
+## Post-capture functional fixes
+
+The desktop's final review fixes were also ported here: manual requests preserve
+AI cooldowns, repeated mix saves reuse bounded slots, and Spotify sign-in waits
+for a complete bounded callback line. Core and hosted suites were rerun, including
+a scripted 429/manual-repeat regression. The unsigned generic device build also
+passed with this code. The visual design is unchanged; the capture manifest
+continues to identify the exact earlier builds used for those images.

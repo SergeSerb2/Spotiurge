@@ -11,6 +11,7 @@ public enum DiscoveryLimits {
     public static let maxPromptBytes = 4000
     /// Live AI history entries per document, matching the newest ten shown.
     public static let historyLimit = 10
+    public static let mixLimit = 100
     public static let maxRecords = 2000
     public static let feedbackLimit = 500
     static let feedbackFloor = "feedback:retention"
@@ -451,6 +452,17 @@ public struct Replica: Codable, Sendable {
     /// adds one; after that it overwrites the oldest history key, live or
     /// tombstone. Live entries beyond the limit become tombstones in the same
     /// write. Independent feedback retention also applies to every edit.
+    /// Reuse removed slots, then the oldest slot once 100 already exist.
+    public mutating func saveMix(title: String, uris: [String]) throws(DiscoveryError) {
+        let mixes = document.records.filter { $0.key.hasPrefix("mix:") }
+        let oldest: (Dictionary<String, Record>.Element, Dictionary<String, Record>.Element) -> Bool = {
+            $0.value.stamp == $1.value.stamp ? $0.key < $1.key : $0.value.stamp < $1.value.stamp
+        }
+        let removed = mixes.filter { $0.value.value == nil }.min(by: oldest)
+        let target = removed?.key ?? (mixes.count >= DiscoveryLimits.mixLimit ? mixes.min(by: oldest)?.key : nil)
+        try edit(target ?? "mix:\(newDeviceID())", .mix(title: title, uris: uris))
+    }
+
     public mutating func recordHistory(prompt: String, suggestions: [Suggestion]) throws(DiscoveryError) {
         var history = document.records
             .filter { $0.key.hasPrefix("history:") }
@@ -572,6 +584,11 @@ public struct AutoRecommendations: Sendable {
     var lastAttempt: ContinuousClock.Instant?
 
     public init() {}
+
+    public func retryAfter(now: ContinuousClock.Instant) -> Duration? {
+        guard let retryAt, retryAt > now else { return nil }
+        return retryAt - now
+    }
 
     public mutating func changed(now: ContinuousClock.Instant, exploration: Bool) {
         var due = now + .milliseconds(exploration ? 1500 : 45_000)
