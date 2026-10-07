@@ -88,3 +88,12 @@ including a saved-429/reopen regression and a disposable native Keychain round
 trip. The Simulator test build and unsigned generic iPhoneOS build passed with
 the engine omitted. No physical phone, live AI/catalogue/cloud round or
 TestFlight upload was tested in this round.
+
+The subsequent startup fix disables exploration before a successful local load
+and guards the writer against every pre-load save, including pairing after a
+load failure. All 16 hosted Simulator tests pass, with an actual corrupt-file
+fixture proving exploration and pairing preserve its bytes. The ad-hoc test
+build and unsigned generic iPhoneOS build pass with the engine omitted. Core
+source is unchanged from the 42-test run. This small disabled-control state is
+compile/lifecycle verified; the earlier capture manifest is not presented as
+new visual evidence for that state. Physical-device operations remain stopped.

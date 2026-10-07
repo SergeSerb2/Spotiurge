@@ -156,6 +156,8 @@ invalidate in-flight AI answers. The pending map never reaches the cloud or AI.
     until first unlock. Saves are written by one writer, and the latest
     snapshot wins.
   - Each load gets a fresh writer identity.
+  - Exploration and replica writes require a successful load. A failed load
+    cannot be replaced by the default replica, even when pairing is changed.
   - Merges use per-record Lamport clocks. An acknowledged sync never undoes a
     newer local edit.
 

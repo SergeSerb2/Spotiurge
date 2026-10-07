@@ -399,6 +399,30 @@ struct ModelLifecycle {
 
     // MARK: Pairing (F7)
 
+    @Test func `failed loading preserves the original file during exploration and pairing`() async throws {
+        StubNetwork.reset()
+        let suite = "spotiurge-load-failure-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        let file = FileManager.default.temporaryDirectory.appending(path: "discovery-load-failure-\(UUID().uuidString).json")
+        defer { defaults.removePersistentDomain(forName: suite); try? FileManager.default.removeItem(at: file) }
+        let original = Data("recoverable invalid discovery file".utf8)
+        try original.write(to: file)
+        let model = DiscoveryModel(file: file, defaults: defaults, secrets: FakeSecrets().store, session: StubNetwork.session)
+        model.setAutomatic(false)
+        model.setExploration(.adventurous)
+        #expect(model.exploration == .balanced)
+        model.load()
+        #expect(await eventually { !model.status.isEmpty })
+        #expect(!model.ready)
+        model.setExploration(.adventurous)
+        #expect(model.exploration == .balanced)
+        #expect(model.pair(endpoint: endpoint, token: String(decoding: cloudToken, as: UTF8.self)) == nil)
+        await settle()
+        #expect(try Data(contentsOf: file) == original)
+        #expect(StubNetwork.seen.isEmpty)
+        model.suspend()
+    }
+
     @Test func `reopening keeps a saved recommendation cooldown`() async throws {
         StubNetwork.reset(["POST /v1/recommendations": .init(status: 429)])
         let suite = "spotiurge-restart-\(UUID().uuidString)"

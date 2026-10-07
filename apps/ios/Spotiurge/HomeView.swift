@@ -23,6 +23,7 @@ struct HomeView: View {
                 if demo { DemoBanner().roomRow(block: true) }
                 header.roomRow(block: true).listRowSeparator(.hidden)
                 ExplorationPicker(selection: discovery.exploration, onSelect: discovery.setExploration)
+                    .disabled(!discovery.ready)
                     .roomRow(block: true)
                 statusLines.roomRow(block: true).listRowSeparator(.hidden)
                 ForEach(discovery.playable, id: \.self) { pick in pickRow(pick) }

@@ -242,7 +242,7 @@ final class DiscoveryModel {
     }
 
     func setExploration(_ value: Exploration) {
-        guard preferences.exploration != value else { return }
+        guard ready, preferences.exploration != value else { return }
         preferences.exploration = value
         savePreferences()
         guard !demo else { return }
@@ -520,7 +520,7 @@ final class DiscoveryModel {
 
     /// One writer, latest snapshot wins, through an atomic replace off the main actor.
     private func persist() {
-        guard !demo else { return }
+        guard ready, !demo else { return }
         replica.recommendationThrottle = automatic.checkpoint(now: .now, wallNow: UInt64(Date().timeIntervalSince1970))
         var snapshot = replica
         snapshot.cachedPicks = Array(picks.prefix(12))
