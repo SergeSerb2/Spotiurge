@@ -1,0 +1,326 @@
+{
+  "phase": "candidate",
+  "baseline": null,
+  "baseline_note": "No earlier Spotiurge iPhone interface exists. The playback probe screen is a plain laboratory with different content and state, so it is not used as a before image.",
+  "source_commit": "47fd38e5843a56a85e05f507807cf7f8d543a295",
+  "source_state": "development apps/ios source added to the source_commit baseline; exact build inputs below",
+  "binary": "Spotiurge.app Debug-iphonesimulator, arm64, development engine linked (probes/ios-playback/engine at the stock crmne/librespot 23fc42c pin)",
+  "binary_sha256": {
+    "Spotiurge": "a4c5a4ac296cb45e0fad240162e0407a7a27ff87ebf6f390e1a60857b8f4a9f6",
+    "Spotiurge.debug.dylib": "50be94fa11907b71efd9eece39c859dca04187f00db60ca5ce504fb88c8f0542"
+  },
+  "platform": "iOS Simulator, iPhone 18 Pro, iOS 27.0, Xcode 27.0 (27A266a), macOS arm64 host",
+  "status_bar": "simctl status_bar override 9:41, full battery, wifi",
+  "capture": "agent-device screenshot at native 1206x2622 (--pixel-density 3), downscaled to 603x1311 with sips; simctl launches and agent-device controls",
+  "network": "Demo captures make no requests. Real captures were taken unsigned and unpaired, so no Spotify, private-cloud or AI request was made.",
+  "physical_device": "none: no physical iPhone was used",
+  "captures": [
+    {
+      "surface": "error",
+      "theme": "dark",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo error",
+      "state": "Rate-limited AI with 7 picks not checked on Spotify",
+      "dimensions": "603x1311",
+      "filename": "interface-error-dark.png",
+      "sha256": "9d27d75cb51590ce532790a6effe5405fd0f00978662a35b1626db3bdb18135a"
+    },
+    {
+      "surface": "error",
+      "theme": "light",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo error",
+      "state": "Rate-limited AI with 7 picks not checked on Spotify",
+      "dimensions": "603x1311",
+      "filename": "interface-error-light.png",
+      "sha256": "44919aacf25a3eb325a8d64161f2ee1358251151ddf5f4f0e59b0fa8a143bd73"
+    },
+    {
+      "surface": "home-ax-reducedmotion",
+      "theme": "dark",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo home; Reduce Motion on; content size accessibility-large",
+      "state": "Home at an accessibility text size with Reduce Motion",
+      "dimensions": "603x1311",
+      "filename": "interface-home-ax-reducedmotion-dark.png",
+      "sha256": "89a4d0f1ca1d036354581fe8d56121be464f1ae22ec7d26f7eaa3737748cd2ad"
+    },
+    {
+      "surface": "home",
+      "theme": "dark",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo home",
+      "state": "Home: 10 matched picks, 2 not found; current track paused at 1:23 (synthetic demo)",
+      "dimensions": "603x1311",
+      "filename": "interface-home-dark.png",
+      "sha256": "75bbad8fdc953bde55f4e49c4ff26dad21242f03d04fb1f486885db7b2e9873e"
+    },
+    {
+      "surface": "home",
+      "theme": "light",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo home",
+      "state": "Home: 10 matched picks, 2 not found; current track paused at 1:23 (synthetic demo)",
+      "dimensions": "603x1311",
+      "filename": "interface-home-light.png",
+      "sha256": "eeaab8a2e04bb1e019eb35de0e95e0925f93b174b9ff5a59ce989aa82dd0a1a8"
+    },
+    {
+      "surface": "library",
+      "theme": "dark",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo home, Library tab",
+      "state": "Library: Liked Songs and playlists",
+      "dimensions": "603x1311",
+      "filename": "interface-library-dark.png",
+      "sha256": "9ca7456fabe99855ba119b1e7b578b2e18d2efaeb6c648b9afcdb5c10d38b52b"
+    },
+    {
+      "surface": "library",
+      "theme": "light",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo home, Library tab",
+      "state": "Library: Liked Songs and playlists",
+      "dimensions": "603x1311",
+      "filename": "interface-library-light.png",
+      "sha256": "b2eeffca5099713cff4153cecc7b39178793c7b6322f51a2a714824e99391b41"
+    },
+    {
+      "surface": "library-signedout",
+      "theme": "dark",
+      "data": "real",
+      "launch": "no launch arguments, Library tab",
+      "state": "Library before Spotify sign-in",
+      "dimensions": "603x1311",
+      "filename": "interface-library-signedout-dark.png",
+      "sha256": "cd807c57c5e5e6e812a9210920f0bcaa2e7c0ad30d3a1b22d53a4e0c62da8488"
+    },
+    {
+      "surface": "library-signedout",
+      "theme": "light",
+      "data": "real",
+      "launch": "no launch arguments, Library tab",
+      "state": "Library before Spotify sign-in",
+      "dimensions": "603x1311",
+      "filename": "interface-library-signedout-light.png",
+      "sha256": "7930b81889577bc1ab1dadde0b9f178622b58c5f5dde709f687250822f65dcb6"
+    },
+    {
+      "surface": "nowplaying-ax-reducedmotion",
+      "theme": "dark",
+      "data": "demo",
+      "launch": "as above, tap mini-player",
+      "state": "Now Playing at an accessibility text size",
+      "dimensions": "603x1311",
+      "filename": "interface-nowplaying-ax-reducedmotion-dark.png",
+      "sha256": "8cda17624ec699e9f72fc4ea7bb7cfb980ab7edc17cb45418e0d3faa2163ad04"
+    },
+    {
+      "surface": "nowplaying",
+      "theme": "dark",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo home, tap mini-player",
+      "state": "Now Playing sheet",
+      "dimensions": "603x1311",
+      "filename": "interface-nowplaying-dark.png",
+      "sha256": "00e59aba2f43cb1ecd4535316602143b48f0b32e435fc0e28b1bd9150dfcc9c1"
+    },
+    {
+      "surface": "nowplaying",
+      "theme": "light",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo home, tap mini-player",
+      "state": "Now Playing sheet",
+      "dimensions": "603x1311",
+      "filename": "interface-nowplaying-light.png",
+      "sha256": "c90801a1527d9c31fb4e6a6ae77f99be17d261b5953ab0ca3799e82c17e19864"
+    },
+    {
+      "surface": "onboarding",
+      "theme": "dark",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo onboarding",
+      "state": "Empty desk before any taste",
+      "dimensions": "603x1311",
+      "filename": "interface-onboarding-dark.png",
+      "sha256": "c319d50721d5ff48be8f7fa4b1a8814c5ffcfa5c1266869132705d2f41d47c79"
+    },
+    {
+      "surface": "onboarding",
+      "theme": "light",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo onboarding",
+      "state": "Empty desk before any taste",
+      "dimensions": "603x1311",
+      "filename": "interface-onboarding-light.png",
+      "sha256": "fac403b291afb0ce6eaad23bf1751e8cb613713eb23ac45656df4b51aa3d2c41"
+    },
+    {
+      "surface": "options",
+      "theme": "dark",
+      "data": "real",
+      "launch": "no launch arguments, tap More discovery options",
+      "state": "Discovery options sheet (opaque overlay, amber switch)",
+      "dimensions": "603x1311",
+      "filename": "interface-options-dark.png",
+      "sha256": "9ab2109345ba576c925dc934eb6d269de9a30c501bb9dc1c7722df4804aa364b"
+    },
+    {
+      "surface": "options",
+      "theme": "light",
+      "data": "real",
+      "launch": "no launch arguments, tap More discovery options",
+      "state": "Discovery options sheet (opaque overlay, amber switch)",
+      "dimensions": "603x1311",
+      "filename": "interface-options-light.png",
+      "sha256": "df4aae2a0a91e996e68d36f37015e6edb9915a84d612d6f80ee34606bab0e5e5"
+    },
+    {
+      "surface": "real-unpaired",
+      "theme": "dark",
+      "data": "real",
+      "launch": "fresh install, no launch arguments",
+      "state": "Real first launch: no taste, not paired, engine linked but not signed in",
+      "dimensions": "603x1311",
+      "filename": "interface-real-unpaired-dark.png",
+      "sha256": "03b5f2f176e448aa6a3351c52db43a93aba61c3f34525afa378802f852ecdcf7"
+    },
+    {
+      "surface": "real-unpaired",
+      "theme": "light",
+      "data": "real",
+      "launch": "fresh install, no launch arguments",
+      "state": "Real first launch: no taste, not paired, engine linked but not signed in",
+      "dimensions": "603x1311",
+      "filename": "interface-real-unpaired-light.png",
+      "sha256": "737232665611cf1117ecb156d38656686c599191bd808d8593f0e0c2a20a7ee5"
+    },
+    {
+      "surface": "search",
+      "theme": "dark",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo home, Search tab, query \"bon\"",
+      "state": "Search results for bon (demo catalogue), keyboard submitted and hidden",
+      "dimensions": "603x1311",
+      "filename": "interface-search-dark.png",
+      "sha256": "daba5063bf8e36ca9c6e1474a01672c081cd412095c652be8c8791ace56a5091"
+    },
+    {
+      "surface": "search",
+      "theme": "light",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo home, Search tab, query \"bon\"",
+      "state": "Search results for bon (demo catalogue), keyboard submitted and hidden",
+      "dimensions": "603x1311",
+      "filename": "interface-search-light.png",
+      "sha256": "ebb05b5deb414f40f2528e83b96ad7aade1aa933150be4c1b05fb5155e843794"
+    },
+    {
+      "surface": "settings",
+      "theme": "dark",
+      "data": "real",
+      "launch": "no launch arguments, Settings tab",
+      "state": "Settings: Spotify, playback engine, private cloud, discovery, data disclosure",
+      "dimensions": "603x1311",
+      "filename": "interface-settings-dark.png",
+      "sha256": "df157be25de4642a3eaaa798f1d93a0f7c61fe54b3cdc67d0f80bef6e32b86f2"
+    },
+    {
+      "surface": "settings-demo",
+      "theme": "dark",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo home, Settings tab",
+      "state": "Settings with demo data on",
+      "dimensions": "603x1311",
+      "filename": "interface-settings-demo-dark.png",
+      "sha256": "23976a2dcbdeb5214ffe4ac183d1ad26d1d53b14f48b7f0f662a2d83c8f1f5b1"
+    },
+    {
+      "surface": "settings-demo",
+      "theme": "light",
+      "data": "demo",
+      "launch": "-SpotiurgeDemo home, Settings tab",
+      "state": "Settings with demo data on",
+      "dimensions": "603x1311",
+      "filename": "interface-settings-demo-light.png",
+      "sha256": "10f83711a6b06a1e80bf4aecc9bf3aafb28cea8876f81eee7b92cb7556b9afd8"
+    },
+    {
+      "surface": "settings",
+      "theme": "light",
+      "data": "real",
+      "launch": "no launch arguments, Settings tab",
+      "state": "Settings: Spotify, playback engine, private cloud, discovery, data disclosure",
+      "dimensions": "603x1311",
+      "filename": "interface-settings-light.png",
+      "sha256": "5c757b9ded8d75e32823874e8d94c8359fc0d83335749ed529dc546ef7240ad9"
+    },
+    {
+      "surface": "taste",
+      "theme": "dark",
+      "data": "real",
+      "launch": "fresh install, tap Write your taste",
+      "state": "Taste editor sheet (opaque overlay)",
+      "dimensions": "603x1311",
+      "filename": "interface-taste-dark.png",
+      "sha256": "80cbce802ba758149fa6875923cea0f9e9bb9af31c66d7df4cf7dcf6b7927160"
+    },
+    {
+      "surface": "taste",
+      "theme": "light",
+      "data": "real",
+      "launch": "fresh install, tap Write your taste",
+      "state": "Taste editor sheet (opaque overlay)",
+      "dimensions": "603x1311",
+      "filename": "interface-taste-light.png",
+      "sha256": "b2be66548264762fb5f2502a97162175e07ff4cbe774aecc4fd93217edc88336"
+    }
+  ],
+  "capture_run": "2026-10-07 final r3 after F1-F7 and L1-L3 fixes",
+  "source_files_sha256": {
+    "apps/ios/.gitignore": "bf412108412d964288a24411f3a4794a0421ede7794c5188b21173549faaf8cc",
+    "apps/ios/Spotiurge.xcodeproj/project.pbxproj": "b61b3fea137cb2937b74af79f6e48c43cbdf186605fac127f61cc22acc83a3af",
+    "apps/ios/Spotiurge/Account.swift": "12cfadac2cba90dc1b5841566fea617bc6f2c40c97fb13ee57d880b980f72b11",
+    "apps/ios/Spotiurge/Assets.xcassets/AppIcon.appiconset/Contents.json": "d17787ea251c46cb0c95cb27acbd45efaed0945da88cfd0407875adadfd2da67",
+    "apps/ios/Spotiurge/Assets.xcassets/AppIcon.appiconset/spotiurge-1024.png": "1fb11e917c6b2d9c8f3208e191a6bafb21c23d78f5a27ffb07d8be88e88641cd",
+    "apps/ios/Spotiurge/Assets.xcassets/Contents.json": "80b0b2e5ce5f42d06c9cea0234147e7f2bea58ef205c47ce3a82f0abe4b64465",
+    "apps/ios/Spotiurge/Assets.xcassets/LaunchBackground.colorset/Contents.json": "e1e02ea5e0a05aa44ccaa8babe65475fe233e9f87694fc975b3d3a1f77b708f5",
+    "apps/ios/Spotiurge/Bridging.h": "72e3e9a68d0ae574462cc185a64e09f6f56622002b6638d2a440c5a88502d997",
+    "apps/ios/Spotiurge/Components.swift": "a69d86baaa17ad7d4a49d3eb534507298b446e41035825ce76c189e231ff2a52",
+    "apps/ios/Spotiurge/Credentials.swift": "4581a5fbc183b8e25ed948928f2e72dd62aef09aea5d4d856db0ab6b21b1535e",
+    "apps/ios/Spotiurge/Demo.swift": "53eb0c1f59af24fe27b8c7f02ea0dedff14feccc5327be5b2f158de9cd70b893",
+    "apps/ios/Spotiurge/DiscoveryModel.swift": "e2aea7a1989866e83698483d0c0bfc921ff61ee55674368d9b5f203efa8e7dc3",
+    "apps/ios/Spotiurge/HomeView.swift": "db171f54987fe399f11cc475e00497e77ea019c4dd7a79def58dbf30bca518e6",
+    "apps/ios/Spotiurge/Info.plist": "ebb964f590dbd257d30eb7c0a7700bbd8e551220337f4e7806d33197de3ffb32",
+    "apps/ios/Spotiurge/InterVariable.ttf": "1e916824dcf56d5624d22dc647aed0e74317a53254030b63b603a19f02429832",
+    "apps/ios/Spotiurge/LibraryView.swift": "afc61781eb224b8767caddabf4f01712a2dd591163a610d4eee4905ad4b494f7",
+    "apps/ios/Spotiurge/NowPlayingView.swift": "a533ea538e94c6d68c411edf024509494ad231ec02e22d2019d30c1dccf3d0b1",
+    "apps/ios/Spotiurge/Player.swift": "e0d817ae1bdba39c7e37cb93a5f570ec5253e16e6c642c717f6e7f1eb96b537c",
+    "apps/ios/Spotiurge/SearchView.swift": "2f29504727b67ecfab7c39d11f8393cd3a6151620256f75239d1e263a6e35ae7",
+    "apps/ios/Spotiurge/SettingsView.swift": "c6672c49bab0631f04f32e09cceec2b672a09515718962fc79905e0e891e7997",
+    "apps/ios/Spotiurge/SpotiurgeApp.swift": "c08fe7d581aba3f18c6b92aced78e65cb0f473ccf087d038ea43369f544cdf7e",
+    "apps/ios/Spotiurge/Theme.swift": "08cb355547a1a8c4d5f897c52b6f237951bcedca9efcda96aa951b109e77809a",
+    "apps/ios/SpotiurgeCore/Package.swift": "f650715d31ea48d34489e8afe29932e6564394483e418d6c81fba8d2c97e37e4",
+    "apps/ios/SpotiurgeCore/Sources/SpotiurgeCore/Cloud.swift": "477f565328fc7983636b8d69330325e2117cff2f6a88ad7a552e4a28c265fb61",
+    "apps/ios/SpotiurgeCore/Sources/SpotiurgeCore/Discovery.swift": "0c5e4b4a97d2666a145b0c4e9deb0ec1897fb16d6d9140dcd5615388750121ec",
+    "apps/ios/SpotiurgeCore/Sources/SpotiurgeCore/Matching.swift": "30c09e79cc06612ab9da729e2c625f25800781eab4e0ec186608b4ec7f1eac5d",
+    "apps/ios/SpotiurgeCore/Sources/SpotiurgeCore/SpotifyWeb.swift": "8f4d8175255e765d0ddd06bf42b21cc462d9d5762e4e51119ec4fea855cecc9e",
+    "apps/ios/SpotiurgeCore/Tests/SpotiurgeCoreTests/DiscoveryTests.swift": "67d4743a608e963d8dd724d861229308015d31d98db7139ead89bce14dc6dbb8",
+    "apps/ios/SpotiurgeCore/Tests/SpotiurgeCoreTests/MatchingAndCloudTests.swift": "2c733107e818162985f0895cd1bccd6b935ed7dfed913c838a89f407316f9f26",
+    "apps/ios/SpotiurgeTests/ModelLifecycleTests.swift": "b9e6631d8eac6d699f20bbfa7628560a82dd15e27dfdd62bd743dadbd0a3f1d2",
+    "apps/ios/build.sh": "304296b58f225af0c41a6a045cfe64a38f1da266083ea09cec67e20781b46884",
+    "assets/brand/png/spotiurge-1024.png": "1fb11e917c6b2d9c8f3208e191a6bafb21c23d78f5a27ffb07d8be88e88641cd",
+    "probes/ios-playback/engine/Cargo.lock": "9416c766e0ce3bbd1ad1ff64d0f537c68b836ce95d0333281384a641edb34cba",
+    "probes/ios-playback/engine/Cargo.toml": "24b1249598b156d20f3e16eb891e57b27c01e5c143a5be4e996a831f5149ba62",
+    "probes/ios-playback/engine/include/probe_engine.h": "71ae985ca02aee02175869e3c76d67261856013d529310a372cbdfc555b51f0f",
+    "probes/ios-playback/engine/src/lib.rs": "d92196673cec235068dcfea2630561c598a85be9370d8f0b94d343da3b04db69"
+  },
+  "source_manifest_sha256": "b1eaa4d67458a318d75f93c1d6c9c310688d41277c16f291e7a3a19d71960534",
+  "baseline_build_inputs": {
+    "Cargo.lock": {
+      "commit": "47fd38e5843a56a85e05f507807cf7f8d543a295",
+      "sha256": "ff7af8fffd8b1591bea5c3d6a8f70a6e01ac9781c31f98b18fe0f08dd92840b3",
+      "use": "fastframe-fonts source pin for staged Inter; development engine uses its own unchanged Cargo.lock"
+    }
+  }
+}

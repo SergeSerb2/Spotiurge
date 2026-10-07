@@ -2,18 +2,23 @@
 
 Serge resumed iOS on October 6, 2026 after connecting his real iPhone; desktop
 delivery continues in parallel. There is no production iOS target yet. Choosing
-one before real independent
-background playback is proven would violate the product brief. The official
+one before real independent background playback is proven would violate the
+product brief. The official
 Spotify iOS SDK controls the Spotify app and cannot satisfy that requirement.
 See the [probe acceptance plan](../../docs/_reference/spotiurge-architecture.md#ios-architecture-gate-and-signing-preparation).
 
 Xcode 27.0 and an Apple Development identity are available for team `78A5P57U23`.
-CoreDevice reports the physical iPhone 17 Pro Max on iOS 27.2 as wired, paired,
-booted and Developer Mode enabled. Instruments still reports it offline; a
-signed installation and launch will verify actual runtime readiness. Existing
-development profiles for other apps include this phone, but no Spotiurge
-profile exists yet. Distribution signing, a Spotiurge App Store Connect record
-and upload access are unverified. A simulator does not satisfy the gate.
+The recorded device runs used an iPhone 17 Pro Max on iOS 27.2, connected by
+cable with Developer Mode enabled. The signed playback probe used its own
+bundle ID and a team-managed development profile. Build 8 proved 17 minutes
+22 seconds of independent locked playback with four natural track changes
+and automatic recovery from a session disconnect. The complete gate remains
+open for interruption, route changes and Connect handoff in both directions.
+Phone checks stopped at Serge's request after build 9 was installed. See the
+[redacted gate record](../../docs/reviews/spotiurge-ios/playback-gate.md).
+Distribution signing, a Spotiurge App Store Connect record and upload access
+are unverified.
+A simulator does not satisfy the gate.
 
 Opus 5.5 leads an isolated playback probe before the production architecture
 decision. Its mobile design brief follows the desktop's smoked glass, amber
@@ -43,3 +48,11 @@ using it. After the playback gate passes and the chosen iOS target exists:
 No app record, distribution profile, archive or TestFlight build is claimed by
 this preparation. Do not upload a remote-controller substitute as an independent
 player. No signing secrets or provisioning files are committed.
+
+A developmental SwiftUI interface candidate lives in [`apps/ios`](../../apps/ios/README.md).
+It uses its own development bundle ID, `com.sergeserbinenko.spotiurge.dev`,
+and keeps `com.sergeserbinenko.spotiurge` reserved for the chosen production
+target. It has been built and captured only on the iOS Simulator; no signed
+device build, archive or upload has been made from it. Its playback engine is
+the probe's stock-pinned librespot, which Spotify refuses on iOS until the
+identity fix is in a pinned fork, so it is not a TestFlight candidate.

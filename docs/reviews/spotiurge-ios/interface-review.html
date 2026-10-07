@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spotiurge for iPhone: interface candidate review</title>
+<style>
+  :root { color-scheme: dark light; --bg: #0b0d12; --panel: #14171f; --text: #f3f2ef; --dim: #a7adbb; --rim: #2a2f3c; }
+  @media (prefers-color-scheme: light) { :root { --bg: #e9ebf1; --panel: #fcfcfe; --text: #15171c; --dim: #4d5463; --rim: #d5d9e3; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 Inter, -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  p, li { color: var(--dim); }
+  .bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 16px 0; padding: 12px; background: var(--panel); border: 1px solid var(--rim); border-radius: 14px; }
+  .group { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--rim); border-radius: 999px; }
+  button, select { font: inherit; color: var(--text); background: transparent; border: 0; border-radius: 999px; padding: 6px 14px; min-height: 36px; cursor: pointer; }
+  select { border: 1px solid var(--rim); background: var(--panel); }
+  button[aria-pressed="true"] { background: var(--text); color: var(--bg); font-weight: 600; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .stage { display: grid; grid-template-columns: minmax(280px, 420px) 1fr; gap: 24px; align-items: start; }
+  figure { margin: 0; background: var(--panel); border: 1px solid var(--rim); border-radius: 18px; padding: 12px; }
+  figure img { width: 100%; height: auto; display: block; border-radius: 10px; }
+  figcaption { font-size: 13px; color: var(--dim); margin-top: 8px; }
+  .note { padding: 16px; background: var(--panel); border: 1px solid var(--rim); border-radius: 14px; }
+  .missing { padding: 48px 16px; text-align: center; color: var(--dim); border: 1px dashed var(--rim); border-radius: 10px; }
+  code { font-size: 13px; }
+  @media (max-width: 760px) { .stage { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Spotiurge for iPhone: developmental interface candidate</h1>
+  <p>Native SwiftUI candidate in <code>apps/ios</code>, captured on the iOS Simulator (iPhone 18 Pro, iOS 27.0). Provenance and hashes: <a href="interface-captures.json">interface-captures.json</a>. No physical iPhone was used. Demo captures use synthetic data and say so on screen.</p>
+
+  <div class="bar" role="toolbar" aria-label="Review controls">
+    <label>Surface <select id="surface" aria-label="Surface"></select></label>
+    <span class="group" role="group" aria-label="Theme">
+      <button data-theme="dark" aria-pressed="true">Dark</button>
+      <button data-theme="light" aria-pressed="false">Light</button>
+    </span>
+    <span class="group" role="group" aria-label="Comparison">
+      <button id="before" aria-pressed="false">Before</button>
+      <button id="after" aria-pressed="true">After</button>
+    </span>
+    <span class="group" role="group" aria-label="Step">
+      <button id="prev">Previous</button>
+      <button id="next">Next</button>
+    </span>
+  </div>
+
+  <div class="stage">
+    <figure>
+      <div id="shot"></div>
+      <figcaption id="caption"></figcaption>
+    </figure>
+    <div class="note">
+      <h2 style="margin-top:0;font-size:17px">What this shows</h2>
+      <ul>
+        <li>The desktop control-room language on a phone: Inter ranked by weight, the cover-lit room (amber key light and teal counter-light when nothing plays), system Liquid Glass only on controls, content on the room.</li>
+        <li>One amber lamp for live state: primary play discs, the current tab, the playing row's lamp bar, EQ glyph and lamp-text title, a selected Love, and switches (DESIGN.md's recorded exceptions). Choices use the neutral inverted pill; errors and cautions stay neutral.</li>
+        <li>Opaque overlays: the taste editor and Discovery options sheets sit on the overlay colour; Now Playing on the room. The For you options are a sheet, not a translucent menu.</li>
+        <li>Honest states: playback reports "Not signed in" or "unavailable" and never controls the Spotify app; unmatched picks are counted and collapsed; an unpaired phone says so.</li>
+        <li>Accessibility sizes stack the exploration channels instead of truncating them, and Now Playing scrolls.</li>
+      </ul>
+      <h2 style="font-size:17px">No baseline</h2>
+      <p>There is no earlier Spotiurge iPhone interface. The playback probe's laboratory screen shows different content and state, so it is not offered as a before image. Before is disabled rather than faked.</p>
+      <h2 style="font-size:17px">Not shown or not verified</h2>
+      <ul>
+        <li>Signed-in Spotify library, search and catalogue matching against real data; a paired private-cloud sync; a real GPT-6 Luna answer.</li>
+        <li>Audio: the linked development engine uses the stock librespot identity that Spotify refuses on iOS.</li>
+        <li>Motion smoothness, the 220 ms fader glide and 600 ms room cross-fade in motion, and live Reduce Motion changes. The Reduce Motion captures are static.</li>
+        <li>Any physical-iPhone run of this app, VoiceOver walkthrough, iPad, landscape.</li>
+      </ul>
+    </div>
+  </div>
+</main>
+<script>
+const surfaces = [
+  ["home", "Home: For you desk (demo)"],
+  ["nowplaying", "Now Playing sheet (demo)"],
+  ["library", "Library (demo)"],
+  ["search", "Search, query “bon” (demo)"],
+  ["settings-demo", "Settings with demo data on"],
+  ["error", "Home: AI rate limited, picks not checked (demo)"],
+  ["onboarding", "Home: before any taste (demo)"],
+  ["real-unpaired", "Home: real first launch, unpaired"],
+  ["taste", "Taste editor sheet (real)"],
+  ["options", "Discovery options sheet (real)"],
+  ["settings", "Settings (real, unpaired)"],
+  ["library-signedout", "Library before sign-in (real)"],
+  ["home-ax-reducedmotion", "Home: accessibility text size, Reduce Motion (demo, dark only)"],
+  ["nowplaying-ax-reducedmotion", "Now Playing: accessibility text size, Reduce Motion (demo, dark only)"],
+];
+const darkOnly = new Set(["home-ax-reducedmotion", "nowplaying-ax-reducedmotion"]);
+let index = 0, theme = "dark";
+const select = document.getElementById("surface");
+surfaces.forEach(([id, label], i) => select.add(new Option(label, i)));
+document.getElementById("before").disabled = true;
+document.getElementById("before").title = "No baseline exists for this new interface";
+function render() {
+  const [id, label] = surfaces[index];
+  const shownTheme = darkOnly.has(id) ? "dark" : theme;
+  select.value = index;
+  document.querySelectorAll("[data-theme]").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset.theme === theme));
+    b.disabled = darkOnly.has(id) && b.dataset.theme === "light";
+  });
+  const file = `interface-${id}-${shownTheme}.png`;
+  document.getElementById("shot").innerHTML = `<img src="${file}" alt="${label}, ${shownTheme} theme" loading="lazy">`;
+  document.getElementById("caption").textContent = `After (candidate): ${label}, ${shownTheme}. ${file}`;
+}
+select.onchange = () => { index = Number(select.value); render(); };
+document.querySelectorAll("[data-theme]").forEach(b => b.onclick = () => { theme = b.dataset.theme; render(); });
+document.getElementById("prev").onclick = () => { index = (index + surfaces.length - 1) % surfaces.length; render(); };
+document.getElementById("next").onclick = () => { index = (index + 1) % surfaces.length; render(); };
+render();
+</script>
+</body>
+</html>
