@@ -362,9 +362,16 @@ final class DiscoveryModel {
     // MARK: - Results (src/app.rs Event::Discovery*)
 
     private func finishRecommendation(id: Int, prompt: String, _ result: Result<(picks: [Pick], outcome: CatalogueOutcome), RecommendationFailure>) {
-        if inFlight == id { inFlight = nil }
+        let completedActive = inFlight == id
+        if completedActive { inFlight = nil }
         defer { schedule() }
-        guard id == request else { return }
+        guard id == request else {
+            if completedActive, case .failure(let failure) = result,
+               [.busy, .rateLimited, .pairing].contains(failure.kind) {
+                recommendationFailed(failure)
+            }
+            return
+        }
         busy = false
         switch result {
         case .success(let resolved):
@@ -382,11 +389,15 @@ final class DiscoveryModel {
             persist()
             requestSyncSoon()
         case .failure(let failure):
-            automatic.failed(failure.kind, now: .now)
-            lastError = failure.kind
-            status = failure.message
-            persist()
+            recommendationFailed(failure)
         }
+    }
+
+    private func recommendationFailed(_ failure: RecommendationFailure) {
+        automatic.failed(failure.kind, now: .now)
+        lastError = failure.kind
+        status = failure.message
+        persist()
     }
 
     private func finishMatches(id: Int, _ resolved: (picks: [Pick], outcome: CatalogueOutcome)) {

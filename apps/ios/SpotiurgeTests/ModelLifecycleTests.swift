@@ -351,6 +351,33 @@ struct ModelLifecycle {
         #expect(secrets.value(Keychain.playback) == Data("fresh credential".utf8))
     }
 
+    @Test func `synchronous connection rejection is visible and revokes credential callbacks`() {
+        defer { Player.credentialCallbacks.revoke() }
+        for result: Int32 in [-1, -2, -3, 1] {
+            let original = Data("unusable saved credential".utf8)
+            let secrets = FakeSecrets([Keychain.playback: original])
+            let player = Player(secrets: secrets.store)
+            Player.credentialCallbacks.begin()
+            let rejected = Player.credentialCallbacks.ticket()!
+            player.receiveEngineEvent(#"{"t":"connected"}"#)
+            player.receiveEngineEvent(#"{"t":"playing","position_ms":1000}"#)
+            player.receiveConnectionResult(result)
+            if case .failed(let message) = player.engine {
+                #expect(message.contains("Sign in again"))
+            } else { Issue.record("Rejected credential did not produce a visible failure") }
+            #expect(!player.playing && Player.credentialCallbacks.ticket() == nil)
+            player.receiveCredential(Data("stale write".utf8), ticket: rejected)
+            #expect(secrets.value(Keychain.playback) == original)
+            Player.credentialCallbacks.begin()
+            player.receiveConnectionResult(0)
+            #expect(Player.credentialCallbacks.ticket() != nil)
+            #expect(!Player.credentialCallbacks.accepts(rejected))
+            player.receiveEngineEvent(#"{"t":"connected"}"#)
+            player.receiveEngineEvent(#"{"t":"playing","position_ms":1000}"#)
+            #expect(player.engine == .ready && player.playing)
+        }
+    }
+
     @Test func `reconnecting clears playback until connected and playing return`() {
         let player = Player(secrets: FakeSecrets().store)
         player.receiveEngineEvent(#"{"t":"connected"}"#)
@@ -441,6 +468,44 @@ struct ModelLifecycle {
         #expect(sent == 1)
         #expect(StubNetwork.seen.filter { $0 == "POST /v1/recommendations" }.count == sent)
         model.suspend()
+    }
+
+    @Test func `superseded recommendations still install service throttles`() async throws {
+        let refusals: [(kind: RecommendationErrorKind, reply: StubNetwork.Reply)] = [
+            (.busy, .init(status: 429, body: Data(#"{"code":"busy"}"#.utf8))),
+            (.rateLimited, .init(status: 429)),
+            (.pairing, .init(status: 401)),
+        ]
+        for exploration in [false, true] {
+            for (kind, reply) in refusals {
+                StubNetwork.reset(hold: ["POST /v1/recommendations"])
+                let model = makeDiscovery(FakeSecrets([cloudKey: cloudToken]))
+                model.load()
+                try #require(await eventually { model.ready && !model.syncing })
+                model.draft = "Jazz"
+                model.recommend()
+                try #require(await eventually { StubNetwork.seen.contains("POST /v1/recommendations") })
+                if exploration { model.setExploration(.adventurous) }
+                else { model.draft = "Soul"; model.saveTaste() }
+                let document = model.replica.document
+                model.recommend()
+                #expect(StubNetwork.seen.filter { $0 == "POST /v1/recommendations" }.count == 1)
+                StubNetwork.release("POST /v1/recommendations", reply)
+                try #require(await eventually { model.lastError == kind })
+                #expect(model.replica.document == document && model.picks.isEmpty)
+                let saved = model.replica.recommendationThrottle
+                if kind == .pairing { #expect(saved.suspended) }
+                else {
+                    let minimum: UInt64 = kind == .busy ? 10 : 590
+                    #expect((saved.retryAt ?? 0) > UInt64(Date().timeIntervalSince1970) + minimum)
+                    model.recommend()
+                }
+                model.setAutomatic(true)
+                await settle()
+                #expect(StubNetwork.seen.filter { $0 == "POST /v1/recommendations" }.count == 1)
+                model.suspend()
+            }
+        }
     }
 
     // MARK: Pairing (F7)

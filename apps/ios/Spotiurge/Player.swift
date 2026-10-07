@@ -318,6 +318,16 @@ final class Player {
         updateNowPlayingInfo()
     }
 
+    /// Synchronous ABI rejection cannot rely on a later engine event.
+    func receiveConnectionResult(_ result: Int32) {
+        guard !demo, !Self.credentialCallbacks.connectionStarted(result) else { return }
+        engine = .failed("Playback could not start. Sign in again to replace the credential, forget it, or restart Spotiurge.")
+        setPlaying(false, at: positionMs(at: .now))
+        idleSince = idleSince ?? .now
+        resumeAfterInterruption = false
+        notice = nil
+    }
+
     #if SPOTIURGE_ENGINE
     private func connect(kind: UInt32, _ data: Data) {
         Self.credentialCallbacks.revoke()
@@ -325,7 +335,7 @@ final class Player {
         Self.credentialCallbacks.begin()
         engine = .connecting
         let result = data.withUnsafeBytes { probe_connect(kind, $0.bindMemory(to: UInt8.self).baseAddress, data.count) }
-        if result != 0 { engine = .failed("The playback engine refused the credential.") }
+        receiveConnectionResult(result)
     }
 
     private func load(_ uri: String) {

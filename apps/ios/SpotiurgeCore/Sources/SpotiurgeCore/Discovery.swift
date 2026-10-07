@@ -383,14 +383,15 @@ public struct Replica: Codable, Sendable {
     public var document: Document
     /// Local catalogue matches, excluded from the cloud document and AI input.
     public var cachedPicks: [Pick]
-    /// Current unsynced rating stamps; local only, bounded by retained feedback.
-    public var pendingFeedback: [String: Stamp] = [:]
+    /// Current unsynced record stamps; local only, bounded by retained records.
+    public var pendingEdits: [String: Stamp] = [:]
     public var recommendationThrottle = RecommendationThrottle()
 
     enum CodingKeys: String, CodingKey {
         case device, document
         case cachedPicks = "cached_picks"
-        case pendingFeedback = "pending_feedback"
+        case pendingEdits = "pending_edits"
+        case legacyPendingFeedback = "pending_feedback"
         case recommendationThrottle = "recommendation_throttle"
     }
 
@@ -405,13 +406,26 @@ public struct Replica: Codable, Sendable {
         device = try container.decode(String.self, forKey: .device)
         document = try container.decode(Document.self, forKey: .document)
         cachedPicks = try container.decodeIfPresent([Pick].self, forKey: .cachedPicks) ?? []
-        pendingFeedback = try container.decodeIfPresent([String: Stamp].self, forKey: .pendingFeedback) ?? [:]
+        guard !(container.contains(.pendingEdits) && container.contains(.legacyPendingFeedback)) else {
+            throw DecodingError.dataCorruptedError(forKey: .pendingEdits, in: container, debugDescription: "Duplicate pending discovery fields.")
+        }
+        pendingEdits = try container.decodeIfPresent([String: Stamp].self, forKey: .pendingEdits)
+            ?? container.decodeIfPresent([String: Stamp].self, forKey: .legacyPendingFeedback) ?? [:]
         recommendationThrottle = try container.decodeIfPresent(RecommendationThrottle.self, forKey: .recommendationThrottle) ?? RecommendationThrottle()
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(device, forKey: .device)
+        try container.encode(document, forKey: .document)
+        try container.encode(cachedPicks, forKey: .cachedPicks)
+        try container.encode(pendingEdits, forKey: .pendingEdits)
+        try container.encode(recommendationThrottle, forKey: .recommendationThrottle)
     }
 
     /// Import the remote clock without confusing fresh offline intent with old replicas.
     public mutating func mergeForSync(_ remote: Document) throws(DiscoveryError) {
-        let pending = pendingFeedback.compactMap { key, stamp -> (key: String, record: Record)? in
+        let pending = pendingEdits.compactMap { key, stamp -> (key: String, record: Record)? in
             guard let record = document.records[key], record.stamp == stamp else { return nil }
             return (key, record)
         }
@@ -425,11 +439,12 @@ public struct Replica: Codable, Sendable {
     }
 
     private mutating func keepCurrentPending() {
-        pendingFeedback = pendingFeedback.filter { document.records[$0.key]?.stamp == $0.value }
+        pendingEdits = pendingEdits.filter { document.records[$0.key]?.stamp == $0.value }
     }
 
     /// Merge an acknowledged sync without undoing edits made after its snapshot.
     public mutating func mergeSynced(_ remote: Document, snapshot: Document?) throws(DiscoveryError) {
+        guard snapshot != nil else { try mergeForSync(remote); return }
         let changed = snapshot.map { snapshot in
             document.records.filter { $0.key != DiscoveryLimits.feedbackFloor && snapshot.records[$0.key] != $0.value }
         } ?? [:]
@@ -442,7 +457,7 @@ public struct Replica: Codable, Sendable {
             .map { (key: $0.key, value: $0.value.value) }
         if !edits.isEmpty { try merged.editMany(edits) }
         if let snapshot {
-            merged.pendingFeedback = merged.pendingFeedback.filter { snapshot.records[$0.key]?.stamp != $0.value }
+            merged.pendingEdits = merged.pendingEdits.filter { snapshot.records[$0.key]?.stamp != $0.value }
         }
         merged.keepCurrentPending()
         self = merged
@@ -494,9 +509,9 @@ public struct Replica: Codable, Sendable {
         try candidate.validateRecords()
         candidate.compactFeedback()
         try candidate.validate()
-        for (key, record) in candidate.records where key.hasPrefix("feedback:") && key != DiscoveryLimits.feedbackFloor {
+        for (key, record) in candidate.records where key != DiscoveryLimits.feedbackFloor {
             if document.records[key] != record && record.stamp.device == device && record.stamp.counter == highest + 1 {
-                pendingFeedback[key] = record.stamp
+                pendingEdits[key] = record.stamp
             }
         }
         document = candidate
@@ -519,10 +534,10 @@ public struct Replica: Codable, Sendable {
             throw DiscoveryError("Cannot read discovery state. The original file is preserved.")
         }
         try replica.document.validate()
-        guard replica.pendingFeedback.count <= DiscoveryLimits.feedbackLimit,
-              replica.pendingFeedback.allSatisfy({ key, stamp in
-                  key.hasPrefix("feedback:") && key != DiscoveryLimits.feedbackFloor && replica.document.records[key]?.stamp == stamp
-              }) else { throw DiscoveryError("Invalid pending discovery feedback.") }
+        guard replica.pendingEdits.count <= replica.document.records.count,
+              replica.pendingEdits.allSatisfy({ key, stamp in
+                  key != DiscoveryLimits.feedbackFloor && replica.document.records[key]?.stamp == stamp
+              }) else { throw DiscoveryError("Invalid pending discovery edits.") }
         replica.document.compactFeedback()
         replica.keepCurrentPending()
         if replica.cachedPicks.count > 12 { throw DiscoveryError("Invalid cached discovery results.") }

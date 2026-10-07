@@ -31,4 +31,11 @@ public final class CredentialCallbackGate: @unchecked Sendable {
         lock.lock(); defer { lock.unlock() }
         return enabled && generation == ticket
     }
+
+    /// A synchronous C ABI rejection starts no task and emits no later event.
+    public func connectionStarted(_ result: Int32) -> Bool {
+        guard result == 0 else { revoke(); return false }
+        return true
+    }
+
 }

@@ -339,7 +339,7 @@ func feedbackEdit(_ index: Int, clear: Bool = false) -> (String, Value?) {
     #expect(restarted.document.records[key]?.value == value)
     #expect(restarted.document.records[key]?.stamp.counter == 101)
     try local.mergeSynced(restarted.document, snapshot: snapshot)
-    #expect(local.pendingFeedback.isEmpty)
+    #expect(local.pendingEdits.isEmpty)
     remote.records[DiscoveryLimits.feedbackFloor]!.stamp.counter = 200
     try local.mergeForSync(remote)
     #expect(local.document.records[key] == nil)
@@ -460,13 +460,13 @@ func `unsent offline ratings override higher cloud records then acknowledge`(rat
     try reopened.mergeForSync(remote)
     #expect(reopened.document.records[key]?.value == edit)
     #expect(reopened.document.records[key]?.stamp.counter == 101)
-    #expect(reopened.pendingFeedback[key] == reopened.document.records[key]?.stamp)
+    #expect(reopened.pendingEdits[key] == reopened.document.records[key]?.stamp)
     let pending = reopened.document
     try reopened.mergeForSync(remote)
     #expect(reopened.document == pending)
     try remote.merge(pending)
     try reopened.mergeSynced(remote, snapshot: pending)
-    #expect(reopened.pendingFeedback.isEmpty)
+    #expect(reopened.pendingEdits.isEmpty)
     remote.records[key]!.stamp.counter = 200
     remote.records[key]!.value = value
     try reopened.mergeForSync(remote)
@@ -479,4 +479,65 @@ func `unsent offline ratings override higher cloud records then acknowledge`(rat
     #expect(LoopbackRequest.redirect("GET /login?code=x HTTP/1.1", state: "new") == .stray)
     #expect(LoopbackRequest.redirect("GET /login?error=access_denied&state=new HTTP/1.1", state: "new") == .refused)
     #expect(LoopbackRequest.redirect("GET /login?code=next&state=new HTTP/1.1", state: "new") == .code("next"))
+}
+
+@Test func `all unsent records survive restart cloud clock imports conflicts and acknowledgment`() throws {
+    let history = Value.history(prompt: "old prompt", suggestions: [Suggestion(title: "Song", artist: "Artist", reason: "")])
+    let cases: [(key: String, prior: Value?, intent: Value?)] = [
+        ("taste", .taste(text: "old taste"), .taste(text: "new taste")),
+        ("taste", .taste(text: "old taste"), nil),
+        ("mix:fixture", .mix(title: "old mix", uris: []), nil),
+        ("mix:fixture", .mix(title: "old mix", uris: []), .mix(title: "changed mix", uris: [])),
+        ("history:fixture", history, nil),
+    ]
+    let directory = FileManager.default.temporaryDirectory.appending(path: "spotiurge-pending-edits-\(UUID().uuidString)")
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let file = directory.appending(path: "state.json")
+    for (key, prior, intent) in cases {
+        var local = device("a")
+        try local.edit(key, prior)
+        let acknowledged = local.document
+        try local.mergeSynced(acknowledged, snapshot: acknowledged)
+        #expect(local.pendingEdits.isEmpty)
+        var remote = acknowledged
+        remote.records[key]!.stamp = Stamp(counter: 100, device: String(repeating: "b", count: 32))
+        try local.edit(key, intent)
+        try local.save(to: file)
+        let dispatched = local.document
+        var worker = try Replica.load(from: file)
+        try worker.mergeForSync(remote)
+        #expect(worker.document.records[key]?.value == intent)
+        #expect(worker.document.records[key]?.stamp.counter == 101)
+        remote.records[key]!.stamp.counter = 150
+        try worker.mergeForSync(remote)
+        let uploaded = worker.document
+        #expect(uploaded.records[key]?.stamp.counter == 151)
+        try worker.mergeForSync(remote)
+        #expect(worker.document == uploaded)
+        #expect(worker.pendingEdits[key] == uploaded.records[key]?.stamp)
+        var live = try Replica.load(from: file)
+        try live.mergeSynced(uploaded, snapshot: dispatched)
+        #expect(live.document == uploaded && live.pendingEdits.isEmpty)
+        remote.records[key]!.stamp.counter = 200
+        try live.mergeForSync(remote)
+        #expect(live.document == remote && live.pendingEdits.isEmpty)
+    }
+}
+
+@Test func `legacy pending ratings migrate and an unacknowledged import keeps taste`() throws {
+    var local = device("a")
+    try local.edit("feedback:\(uri)", .feedback(uri: uri, title: "Song", artist: "Artist", rating: .love))
+    var object = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(local)) as? [String: Any])
+    object["pending_feedback"] = object.removeValue(forKey: "pending_edits")
+    let migrated = try JSONDecoder().decode(Replica.self, from: JSONSerialization.data(withJSONObject: object))
+    #expect(migrated.pendingEdits == local.pendingEdits)
+    let saved = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(migrated)) as? [String: Any])
+    #expect(saved["pending_feedback"] == nil && saved["pending_edits"] != nil)
+    try local.edit("taste", .taste(text: "pending taste"))
+    var remote = device("b")
+    for _ in 0..<10 { try remote.edit("taste", .taste(text: "cloud taste")) }
+    try local.mergeSynced(remote.document, snapshot: nil)
+    #expect(local.document.taste == "pending taste")
+    #expect(local.document.records["taste"]!.stamp.counter > 10)
+    #expect(local.pendingEdits["taste"] != nil)
 }

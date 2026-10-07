@@ -137,3 +137,22 @@ Unsigned no-engine generic iPhoneOS compilation and engine-enabled source
 typechecking pass. Core source is unchanged from the prior 45-test run. These
 tests do not open Spotify's browser page or authenticate; the physical phone
 remained untouched. The previously approved scenery appearance is unchanged.
+
+The next review correction journals every unsent record rather than feedback
+alone, including taste, mix/history changes and tombstones. It reads the older
+`pending_feedback` field, writes `pending_edits`, and retains only current stamps
+within the document's record bound. Cloud clock imports preserve that pending
+intent; acknowledgments clear only dispatched stamps. A sync import without a
+dispatched snapshot acknowledges nothing. The journal stays local and the
+version-one cloud document is unchanged.
+
+Superseded active AI requests now persist Busy, RateLimited and Pairing throttle
+state while discarding obsolete content. Synchronous playback ABI refusal
+revokes callbacks, pauses status and shows a recovery error without deleting
+the saved credential. All 47 core tests and 21 hosted Simulator tests pass,
+including file reload/CAS/ack/migration cases, held URLProtocol refusals after
+input changes, and the actual player result handler with dummy credentials.
+The result bundle reports 21 passed, zero failed or skipped. Unsigned no-engine
+generic iPhoneOS compilation and engine-enabled source typechecking pass.
+No physical phone access, browser OAuth, live AI/cloud round, audio or TestFlight
+upload occurred. The approved scenery appearance is preserved.

@@ -111,12 +111,15 @@ The loopback sign-in parser waits for a complete bounded request line, including
 when TCP splits the state or CRLF across callbacks.
 
 The shared version-one document retains at most 500 ratings and clears, with a
-logical retention cutoff. A bounded local `pending_feedback` stamp map persists
-fresh unsent feedback across restarts. Sync imports the remote clock and
-re-expresses pending ratings pruned by its cutoff before uploading, while
-acknowledged old replicas stay forgotten. Acknowledgments clear only dispatched
-stamps; edits made during a sync remain pending. Removed recommendation inputs
-invalidate in-flight AI answers. The pending map never reaches the cloud or AI.
+logical retention cutoff. A local `pending_edits` stamp journal, bounded by the
+retained record count, persists every unsent taste, feedback, mix/history edit
+and deletion across restarts. Legacy `pending_feedback` entries migrate when
+read. Sync imports the remote clock and re-expresses pending records that would
+otherwise lose, including feedback pruned by its cutoff, before uploading.
+Acknowledgments clear only dispatched stamps; edits made during sync remain
+pending. An import without a dispatched snapshot acknowledges nothing. Removed
+inputs invalidate AI content while request-wide busy/rate-limit/pairing states
+still apply. The journal never reaches the cloud or AI.
 
 ## Safeguards (beyond the probe scaffold)
 
@@ -125,6 +128,10 @@ invalidate in-flight AI answers. The pending map never reaches the cloud or AI.
   attempt with a retryable port error. Canceled listener, browser and request
   callbacks cannot affect a replacement sign-in. The ten-minute deadline also
   covers listener startup.
+- **Connection rejection.** A synchronous playback-credential rejection revokes
+  pending callbacks, pauses live status and shows how to sign in, Forget or
+  restart. It preserves the saved item for explicit recovery and prevents a
+  foreground retry of that revoked connection.
 - **Randomness.** PKCE verifier and state generation fail closed if
   `SecRandomCopyBytes` fails.
 - **Keychain.**
