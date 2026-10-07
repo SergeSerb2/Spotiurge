@@ -7,6 +7,9 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $Binary = (Resolve-Path $Binary).Path
+if (-not [IO.Path]::IsPathRooted($OutputDir)) {
+    $OutputDir = Join-Path (Get-Location).ProviderPath $OutputDir
+}
 $OutputDir = [IO.Path]::GetFullPath($OutputDir)
 New-Item -ItemType Directory -Force $OutputDir | Out-Null
 & $Compiler "/DVersion=$Version" "/DArch=$Arch" "/DBinary=$Binary" "/DOutputDir=$OutputDir" (Join-Path $PSScriptRoot 'spotiurge.iss')

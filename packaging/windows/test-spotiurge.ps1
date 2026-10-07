@@ -6,6 +6,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $Installer = (Resolve-Path $Installer).Path
 $Binary = (Resolve-Path $Binary).Path
+if (-not [IO.Path]::IsPathRooted($WorkDir)) {
+    $WorkDir = Join-Path (Get-Location).ProviderPath $WorkDir
+}
 $WorkDir = [IO.Path]::GetFullPath($WorkDir)
 $uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{6CA54290-9AB4-468A-8436-76EFF996B96B}_is1'
 if ((Test-Path $uninstallKey) -or (Test-Path "$env:LOCALAPPDATA\Programs\Spotiurge")) {

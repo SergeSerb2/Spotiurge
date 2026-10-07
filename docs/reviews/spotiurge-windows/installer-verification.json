@@ -1,0 +1,10 @@
+{
+  "install": "passed",
+  "upgrade": "passed",
+  "uninstall": "passed",
+  "productName": "Spotiurge",
+  "profilePreserved": true,
+  "upstreamRegistrationPreserved": true,
+  "installerSha256": "0c838df6f2ec0b7054b3ee952ae1e63129741b2a4f710b7c1b6a1d93bdb09d43",
+  "executableSha256": "e24da70975721cb687b936120773f800ac40284a118ce841ac02c0e942f9f088"
+}

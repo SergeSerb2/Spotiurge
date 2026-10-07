@@ -22,12 +22,13 @@ Spotiurge for Windows 10/11 (64-bit)
 
    Paste the token only into the masked prompt. The app removes it from its
    environment and stores it in Windows Credential Manager for the default
-   https://private-cloud-production.up.railway.app origin. On Home, use Sync
-   to import saved taste, feedback and mixes from your Mac. No Settings pairing
-   form exists in this preview. Subsequent launches need no token.
+   https://private-cloud-production.up.railway.app origin. On Home, open the
+   three-dot discovery menu and choose "Sync my devices" to import saved taste,
+   feedback and mixes from your Mac. Subsequent launches need no token.
 5. Home recommends automatically from saved taste and intentional feedback.
    Choose Familiar, Balanced or Adventurous; rate tracks to improve future
-   picks. Luna is the only recommendation model, through CLIProxyAPI.
+   picks. Use "Tune taste" in the same menu to edit your preferences. GPT-6 Luna
+   is the only recommendation model, through CLIProxyAPI.
 6. Choose This computer for local playback. Spotify Connect hands album and
    playlist playback to another signed-in device. Unchecked suggestions cannot
    play until matched against Spotify; Retry matching does not spend another
