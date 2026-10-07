@@ -448,10 +448,6 @@ public struct Replica: Codable, Sendable {
         try editMany([(key: key, value: value)])
     }
 
-    /// Store an AI result in a bounded set of history keys. Below the limit it
-    /// adds one; after that it overwrites the oldest history key, live or
-    /// tombstone. Live entries beyond the limit become tombstones in the same
-    /// write. Independent feedback retention also applies to every edit.
     /// Reuse removed slots, then the oldest slot once 100 already exist.
     public mutating func saveMix(title: String, uris: [String]) throws(DiscoveryError) {
         let mixes = document.records.filter { $0.key.hasPrefix("mix:") }
@@ -463,6 +459,10 @@ public struct Replica: Codable, Sendable {
         try edit(target ?? "mix:\(newDeviceID())", .mix(title: title, uris: uris))
     }
 
+    /// Store an AI result in a bounded set of history keys. Below the limit it
+    /// adds one; after that it overwrites the oldest history key, live or
+    /// tombstone. Live entries beyond the limit become tombstones in the same
+    /// write. Independent feedback retention also applies to every edit.
     public mutating func recordHistory(prompt: String, suggestions: [Suggestion]) throws(DiscoveryError) {
         var history = document.records
             .filter { $0.key.hasPrefix("history:") }
