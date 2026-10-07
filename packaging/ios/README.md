@@ -20,12 +20,13 @@ Distribution signing, a Spotiurge App Store Connect record and upload access
 are unverified.
 A simulator does not satisfy the gate.
 
-Opus 5.5 leads an isolated playback probe before the production architecture
-decision. Its mobile design brief follows the desktop's smoked glass, amber
-Surge mark, cover-lit surfaces and finite selection motion. A controller or
-synthetic tone can diagnose a component, but cannot pass independent Spotify
-background playback. The probe must not replace unrelated installed apps or
-reuse their provisioning identities.
+The isolated playback probe informs the production architecture decision.
+The developmental interface now follows the desktop's forest/mist palette,
+mountain scenery, flat ridge mark and finite selection motion. Opus 5.5's
+current role is design review only. A controller or synthetic tone can diagnose
+a component, but cannot pass independent Spotify background playback. The
+probe must not replace unrelated installed apps or reuse their provisioning
+identities.
 
 `ExportOptions.plist.example` prepares automatic App Store Connect upload for
 that team. Confirm team membership and reserve the fork-owned bundle ID before

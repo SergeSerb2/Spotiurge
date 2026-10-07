@@ -5,7 +5,11 @@ interface contract in `DESIGN.md` and the phone brief in
 `.impeccable/surfaces/ios-interface.md`. The forest/mist palette, quiet bundled
 mountain scene and flat mint ridge mark match the desktop and T3 Pretty. The
 background stays static; Liquid Glass belongs to native navigation and controls.
-Artwork no longer causes a second request for ambient lighting. Native hard scroll-edge treatment keeps content beneath the tab bar and mini-player blurred, and the compact accessory caps Dynamic Type at XXX Large. Full-width blocks have equal 16-point margins; Settings hints, grouped surfaces and disabled controls use the shared forest/mist tokens.
+Artwork no longer causes a second request for ambient lighting. Native hard
+scroll-edge treatment keeps content beneath the tab bar and mini-player
+blurred, and the compact accessory caps Dynamic Type at XXX Large. Full-width
+blocks have equal 16-point margins; Settings hints, grouped surfaces and disabled
+controls use the shared forest/mist tokens.
 
 **Status: developmental, not for distribution.** The production iOS
 architecture is still gated by `docs/reviews/spotiurge-ios/playback-gate.md`.
@@ -198,7 +202,9 @@ The package tests do four things:
 
 The `iOS core` workflow runs those package tests and wire checks on GitHub.
 Hosted app-model tests and app builds are checked locally. Results and the
-26 native Simulator captures are recorded in
+26 native Simulator captures are recorded in the current
+[`scenery/verification.md`](../../docs/reviews/spotiurge-ios/scenery/verification.md).
+The earlier amber interface's results remain in
 [`interface-verification.md`](../../docs/reviews/spotiurge-ios/interface-verification.md).
 
 A signed device build needs `DEVELOPMENT_TEAM=78A5P57U23` and a registered
