@@ -1,6 +1,61 @@
 import Foundation
 import Security
 
+/// C callbacks copy data on runtime threads, then deliver it on the main actor.
+/// A ticket binds that delivery to one connection, including across Forget
+/// followed immediately by a new sign-in. All shared state is under this lock.
+final class CredentialCallbackGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var generation: UInt64 = 0
+    private var enabled = false
+
+    func begin() {
+        lock.lock(); defer { lock.unlock() }
+        generation &+= 1
+        enabled = true
+    }
+
+    func revoke() {
+        lock.lock(); defer { lock.unlock() }
+        generation &+= 1
+        enabled = false
+    }
+
+    func ticket() -> UInt64? {
+        lock.lock(); defer { lock.unlock() }
+        return enabled ? generation : nil
+    }
+
+    func accepts(_ ticket: UInt64) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        return enabled && generation == ticket
+    }
+}
+
+enum SecureVerifier {
+    enum Failure: LocalizedError {
+        case randomnessUnavailable
+        var errorDescription: String? { "Secure sign-in randomness is unavailable. Try again." }
+    }
+
+    static func make(fill: (inout [UInt8]) -> OSStatus = { bytes in
+        SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+    }) throws -> String {
+        var bytes = [UInt8](repeating: 0, count: 48)
+        guard fill(&bytes) == errSecSuccess else { throw Failure.randomnessUnavailable }
+        return Data(bytes).base64URL
+    }
+}
+
+extension Data {
+    var base64URL: String {
+        base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+}
+
 /// An ended notification cannot start music that was idle or already paused.
 struct InterruptionPlayback {
     private var wasPlaying = false
@@ -80,7 +135,8 @@ enum CredentialStore {
         return add(query.merging(changes) { _, new in new } as CFDictionary, nil)
     }
 
-    static func delete() {
-        SecItemDelete(query as CFDictionary)
+    static func delete(query: [String: Any] = query,
+                       remove: (CFDictionary) -> OSStatus = SecItemDelete) -> OSStatus {
+        remove(query as CFDictionary)
     }
 }

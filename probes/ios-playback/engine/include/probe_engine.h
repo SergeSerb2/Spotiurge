@@ -3,6 +3,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// Callbacks run on runtime threads. Copy/enqueue their data before returning;
+// never reenter the engine from a callback. Disconnect/replacement serializes
+// session callbacks, and the host must reject already-queued old deliveries.
 typedef void (*probe_event_cb)(const char *json, void *ctx);
 typedef void (*probe_credentials_cb)(const uint8_t *data, size_t len, void *ctx);
 

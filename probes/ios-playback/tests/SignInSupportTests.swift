@@ -5,6 +5,28 @@ import Security
 struct SignInSupportTests {
     @MainActor
     static func main() throws {
+        do {
+            _ = try SecureVerifier.make(fill: { bytes in
+                bytes = [UInt8](repeating: 7, count: bytes.count)
+                return errSecNotAvailable
+            })
+            preconditionFailure("Failed randomness produced a verifier")
+        } catch SecureVerifier.Failure.randomnessUnavailable {}
+        let verifier = try SecureVerifier.make(fill: { bytes in
+            bytes = [UInt8](repeating: 255, count: bytes.count)
+            return errSecSuccess
+        })
+        precondition(verifier.count == 64 && verifier.allSatisfy { $0 == "_" })
+        let nativeVerifier = try SecureVerifier.make()
+        precondition(nativeVerifier.count == 64)
+        let gate = CredentialCallbackGate()
+        precondition(gate.ticket() == nil)
+        gate.begin()
+        let pending = gate.ticket()!
+        gate.revoke()
+        precondition(gate.ticket() == nil && !gate.accepts(pending))
+        gate.begin()
+        precondition(!gate.accepts(pending) && gate.accepts(gate.ticket()!))
         let original = ProbeAudioGraph(render: { _, _, _, _ in 0 })
         let replacement = ProbeAudioGraph(render: { _, _, _, _ in 0 })
         precondition(original.engine !== replacement.engine)
@@ -76,6 +98,17 @@ struct SignInSupportTests {
         var value: CFTypeRef?
         precondition(SecItemCopyMatching(read as CFDictionary, &value) == errSecSuccess)
         precondition(value as? Data == new)
-        print("PASS: fresh stopped audio graph, interruption resume intent, fragmented callback, request bounds, failure preservation, and disposable native Keychain round trip")
+        let current = gate.ticket()!
+        gate.revoke()
+        precondition(CredentialStore.delete(query: query) == errSecSuccess)
+        if gate.accepts(current) {
+            _ = CredentialStore.save(new, query: query)
+        }
+        precondition(SecItemCopyMatching(read as CFDictionary, &value) == errSecItemNotFound)
+        gate.begin()
+        if gate.accepts(current) { _ = CredentialStore.save(new, query: query) }
+        precondition(SecItemCopyMatching(read as CFDictionary, &value) == errSecItemNotFound)
+        precondition(CredentialStore.delete(query: query, remove: { _ in errSecInteractionNotAllowed }) == errSecInteractionNotAllowed)
+        print("PASS: secure verifier failure, stale callback revocation, fresh stopped audio graph, interruption intent, fragmented callback, bounds, failure preservation, and disposable native Keychain round trip")
     }
 }

@@ -250,6 +250,21 @@ impl ConnectionAttempts {
             == generation
     }
 
+    /// The host callback must only copy/enqueue, never call back into this
+    /// engine. Holding the generation lock makes delivery atomic with cancel.
+    fn deliver_if_current(&self, generation: u64, deliver: impl FnOnce()) -> bool {
+        let state = self.state.lock().unwrap_or_else(|p| p.into_inner());
+        if state.generation != generation {
+            return false;
+        }
+        deliver();
+        true
+    }
+
+    fn emit_current(&self, generation: u64, host: &Host, value: serde_json::Value) {
+        self.deliver_if_current(generation, || host.emit(value));
+    }
+
     fn current(&self) -> Option<Arc<Spirc>> {
         self.state
             .lock()
@@ -405,10 +420,12 @@ pub unsafe extern "C" fn probe_connect(kind: u32, data: *const u8, len: usize) -
     probe.connections.start(
         probe.runtime.handle(),
         move |generation, active| async move {
-            if let Err(error) = connect(probe, generation, active, credentials).await
-                && probe.connections.is_current(generation)
-            {
-                host.emit(json!({ "t": "error", "stage": "connect", "msg": error }));
+            if let Err(error) = connect(probe, generation, active, credentials).await {
+                probe.connections.emit_current(
+                    generation,
+                    &host,
+                    json!({ "t": "error", "stage": "connect", "msg": error }),
+                );
             }
         },
     );
@@ -445,20 +462,28 @@ async fn connect(
                 // Silent when a newer session already took over.
                 if probe.connections.is_current(generation) && probe.connections.current().is_none()
                 {
-                    probe.host.emit(json!({ "t": "session_ended" }));
+                    probe.connections.emit_current(
+                        generation,
+                        &probe.host,
+                        json!({ "t": "session_ended" }),
+                    );
                 }
                 return Ok(());
             }
             Ok((Some(snapshot), stored)) => {
-                probe
-                    .host
-                    .emit(json!({ "t": "reconnecting", "reason": "session_lost_during_playback" }));
+                probe.connections.emit_current(
+                    generation,
+                    &probe.host,
+                    json!({ "t": "reconnecting", "reason": "session_lost_during_playback" }),
+                );
                 pending = Some(snapshot);
                 credentials = stored;
                 failures = 0;
             }
             Err(error) if pending.is_some() && failures < RETRY_DELAYS_S.len() => {
-                probe.host.emit(
+                probe.connections.emit_current(
+                    generation,
+                    &probe.host,
                     json!({ "t": "reconnect_failed", "attempt": failures + 1, "msg": error }),
                 );
                 tokio::time::sleep(Duration::from_secs(RETRY_DELAYS_S[failures])).await;
@@ -525,11 +550,12 @@ async fn run_session(
     // The access point issues the reusable credential before Connect starts,
     // so keep it even when a later step fails: the next launch reconnects
     // without another browser sign-in.
-    if probe.connections.is_current(generation)
-        && let Some(stored) = session.cache().and_then(|cache| cache.credentials())
+    if let Some(stored) = session.cache().and_then(|cache| cache.credentials())
         && let Ok(blob) = serde_json::to_vec(&stored)
     {
-        (probe.host.on_credentials)(blob.as_ptr(), blob.len(), probe.host.ctx as *mut c_void);
+        probe.connections.deliver_if_current(generation, || {
+            (probe.host.on_credentials)(blob.as_ptr(), blob.len(), probe.host.ctx as *mut c_void);
+        });
     }
     let (spirc, task) = connected.map_err(|e| e.to_string())?;
     let spirc = Arc::new(spirc);
@@ -541,9 +567,11 @@ async fn run_session(
         Some(snapshot) => spirc.restore_playback(snapshot).is_ok(),
         None => false,
     };
-    probe
-        .host
-        .emit(json!({ "t": "connected", "restored": restored }));
+    probe.connections.emit_current(
+        generation,
+        &probe.host,
+        json!({ "t": "connected", "restored": restored }),
+    );
     task.await;
     let stored = session
         .cache()
@@ -562,6 +590,10 @@ async fn forward_events(
         if !connections.is_current(generation) {
             return;
         }
+        let clear_pcm = matches!(
+            &event,
+            PlayerEvent::Paused { .. } | PlayerEvent::Stopped { .. } | PlayerEvent::Seeked { .. }
+        );
         let value = match event {
             PlayerEvent::TrackChanged { audio_item } => {
                 let artists = match &audio_item.unique_fields {
@@ -591,15 +623,12 @@ async fn forward_events(
             PlayerEvent::Paused { position_ms, .. } => {
                 // The decoder is paused but Core Audio keeps requesting frames.
                 // Discard its bounded tail before reporting the pause to Swift.
-                PCM.clear();
                 json!({ "t": "paused", "position_ms": position_ms })
             }
             PlayerEvent::Stopped { .. } => {
-                PCM.clear();
                 json!({ "t": "stopped" })
             }
             PlayerEvent::Seeked { position_ms, .. } => {
-                PCM.clear();
                 json!({ "t": "seeked", "position_ms": position_ms })
             }
             PlayerEvent::PositionChanged { position_ms, .. } => {
@@ -621,7 +650,14 @@ async fn forward_events(
             PlayerEvent::SessionDisconnected { .. } => json!({ "t": "session_disconnected" }),
             _ => continue,
         };
-        host.emit(value);
+        if !connections.deliver_if_current(generation, || {
+            if clear_pcm {
+                PCM.clear();
+            }
+            host.emit(value);
+        }) {
+            return;
+        }
     }
 }
 
@@ -733,6 +769,44 @@ pub extern "C" fn probe_flush() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn cancellation_serializes_host_delivery_and_rejects_a_late_old_callback() {
+        let connections = Arc::new(ConnectionAttempts::default());
+        let generation = connections.state.lock().unwrap().generation;
+        let (started, ready) = std::sync::mpsc::channel();
+        let (release, released) = std::sync::mpsc::channel();
+        let delivery = std::thread::spawn({
+            let connections = Arc::clone(&connections);
+            move || {
+                connections.deliver_if_current(generation, || {
+                    started.send(()).unwrap();
+                    released.recv_timeout(Duration::from_secs(2)).unwrap();
+                })
+            }
+        });
+        ready.recv_timeout(Duration::from_secs(2)).unwrap();
+        // cancel cannot invalidate the generation halfway through a callback.
+        assert!(matches!(
+            connections.state.try_lock(),
+            Err(std::sync::TryLockError::WouldBlock)
+        ));
+        let cancellation = std::thread::spawn({
+            let connections = Arc::clone(&connections);
+            move || {
+                drop(connections.cancel());
+            }
+        });
+        release.send(()).unwrap();
+        assert!(delivery.join().unwrap());
+        cancellation.join().unwrap();
+        assert!(
+            !connections
+                .deliver_if_current(generation, || panic!("old credential callback delivered"))
+        );
+        let next = connections.state.lock().unwrap().generation;
+        assert!(connections.deliver_if_current(next, || {}));
+    }
 
     struct TestSession {
         active: Arc<AtomicU64>,

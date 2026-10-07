@@ -25,6 +25,7 @@ final class ProbeViewController: UIViewController {
     private let status = UILabel()
     private let context = UITextField()
     private var signIn: SignIn?
+    private var signInAttempt: UInt64 = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -47,7 +48,7 @@ final class ProbeViewController: UIViewController {
             row(button("Play") { Probe.shared.command(0) }, button("Pause") { Probe.shared.command(1) }),
             row(button("Previous") { Probe.shared.command(3) }, button("Next") { Probe.shared.command(2) }),
             button("Take over from active Connect device") { Probe.shared.command(4) },
-            button("Forget stored credential") { CredentialStore.delete() },
+            button("Forget stored credential") { [weak self] in self?.forget() },
         ])
         stack.axis = .vertical
         stack.spacing = 12
@@ -86,19 +87,31 @@ final class ProbeViewController: UIViewController {
 
     private func startSignIn() {
         guard let window = view.window else { return }
+        signInAttempt &+= 1
+        let attempt = signInAttempt
+        signIn?.cancel()
         Probe.shared.record(["t": "sign_in_started"])
         let signIn = SignIn(anchor: window)
         self.signIn = signIn
         signIn.start { [weak self] result in
+            guard let self, self.signInAttempt == attempt else { return }
             switch result {
             case .success(let token):
                 Probe.shared.connect(token: token)
             case .failure(let error):
                 Probe.shared.failed("sign_in", error.localizedDescription)
             }
-            self?.signIn = nil
-            self?.refresh()
+            self.signIn = nil
+            self.refresh()
         }
+    }
+
+    private func forget() {
+        signInAttempt &+= 1
+        signIn?.cancel()
+        signIn = nil
+        Probe.shared.forget()
+        refresh()
     }
 
     private func button(_ title: String, action: @escaping () -> Void) -> UIButton {

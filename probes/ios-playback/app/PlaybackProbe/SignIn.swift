@@ -17,6 +17,7 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
     private var listener: NWListener?
     private var session: ASWebAuthenticationSession?
     private var finish: ((Result<String, Error>) -> Void)?
+    private var exchangeTask: Task<Void, Never>?
     /// Set once the redirect arrived, so closing the sheet is not a failure.
     private var redirected = false
     private let anchor: ASPresentationAnchor
@@ -31,10 +32,13 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
 
     /// Calls `completion` with an access token. The token is never logged.
     func start(completion: @escaping (Result<String, Error>) -> Void) {
-        let verifier = Self.randomVerifier()
+        cancel()
+        finish = completion
+        let verifier: String
+        do { verifier = try SecureVerifier.make() }
+        catch { done(.failure(error)); return }
         let challenge = Data(SHA256.hash(data: Data(verifier.utf8))).base64URL
         let state = UUID().uuidString
-        finish = completion
         redirected = false
 
         do {
@@ -74,7 +78,7 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
         }
         session.presentationContextProvider = self
         self.session = session
-        session.start()
+        if !session.start() { done(.failure(ProbeError("could not open Spotify sign-in"))) }
     }
 
     private func accept(_ connection: NWConnection, state: String, verifier: String) {
@@ -127,9 +131,10 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
             .init(name: "code_verifier", value: verifier),
         ]
         request.httpBody = Data((form.percentEncodedQuery ?? "").utf8)
-        Task {
+        exchangeTask = Task {
             do {
                 let (data, response) = try await URLSession.shared.data(for: request)
+                try Task.checkCancellation()
                 let status = (response as? HTTPURLResponse)?.statusCode ?? 0
                 guard status == 200,
                       let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -137,37 +142,31 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
                 else { throw ProbeError("token exchange failed with HTTP \(status)") }
                 done(.success(token))
             } catch {
-                done(.failure(error))
+                if !Task.isCancelled { done(.failure(error)) }
             }
         }
     }
 
     private func done(_ result: Result<String, Error>) {
-        listener?.cancel()
-        listener = nil
-        session = nil
-        let finish = finish
-        self.finish = nil
-        finish?(result)
+        guard let finish else { return }
+        cancel()
+        finish(result)
     }
 
-    private static func randomVerifier() -> String {
-        var bytes = [UInt8](repeating: 0, count: 48)
-        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
-        return Data(bytes).base64URL
+    /// Forget/replacement discards the completion before canceling work, so
+    /// queued browser or token-exchange results cannot reconnect afterwards.
+    func cancel() {
+        finish = nil
+        listener?.cancel()
+        listener = nil
+        session?.cancel()
+        session = nil
+        exchangeTask?.cancel()
+        exchangeTask = nil
     }
 }
 
 struct ProbeError: LocalizedError {
     let errorDescription: String?
     init(_ message: String) { errorDescription = message }
-}
-
-extension Data {
-    var base64URL: String {
-        base64EncodedString()
-            .replacingOccurrences(of: "+", with: "-")
-            .replacingOccurrences(of: "/", with: "_")
-            .replacingOccurrences(of: "=", with: "")
-    }
 }

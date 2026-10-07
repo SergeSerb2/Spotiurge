@@ -106,7 +106,9 @@ jobs:
       - name: Native credential store (dummy grants)
         if: runner.os == 'Windows' || runner.os == 'macOS'
         timeout-minutes: 2
-        run: mbx test --locked --lib credentials::tests::native_store_round_trip -- --ignored --exact
+        run: |
+          mbx test --locked --lib credentials::tests::native_store_round_trip -- --ignored --exact
+          mbx test --locked --lib discovery_cloud::tests::native_bootstrap_round_trip -- --ignored --exact
       - name: Documentation tests
         run: mbx test --locked --all-features --doc
       - name: Cloud token bootstrap isolation

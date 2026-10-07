@@ -11,6 +11,7 @@ import UIKit
 @MainActor
 final class Probe {
     static let shared = Probe()
+    private nonisolated static let credentialCallbacks = CredentialCallbackGate()
 
     private var audio = ProbeAudioGraph(render: Probe.render)
     private var engine: AVAudioEngine { audio.engine }
@@ -42,13 +43,17 @@ final class Probe {
             .appendingPathComponent("librespot").path
         try? FileManager.default.createDirectory(atPath: cache, withIntermediateDirectories: true)
         let result = probe_start(cache, "Spotiurge Probe (iPhone)", { json, _ in
-            guard let json else { return }
+            guard let json, let ticket = Probe.credentialCallbacks.ticket() else { return }
             let line = String(cString: json)
-            DispatchQueue.main.async { Probe.shared.engineEvent(line) }
+            DispatchQueue.main.async {
+                guard Probe.credentialCallbacks.accepts(ticket) else { return }
+                Probe.shared.engineEvent(line)
+            }
         }, { data, length, _ in
-            guard let data else { return }
+            guard let data, let ticket = Probe.credentialCallbacks.ticket() else { return }
             let blob = Data(bytes: data, count: length)
             DispatchQueue.main.async {
+                guard Probe.credentialCallbacks.accepts(ticket) else { return }
                 let status = CredentialStore.save(blob)
                 if status == errSecSuccess {
                     Probe.shared.record(["t": "credential_stored", "bytes": blob.count])
@@ -82,7 +87,8 @@ final class Probe {
     private func refreshSessionIfIdle() {
         // The scene's first foreground at launch is not a return from
         // suspension; reconnecting then would start a second session.
-        guard wasBackgrounded, !playing, let stored = CredentialStore.load() else { return }
+        guard wasBackgrounded, !playing, Self.credentialCallbacks.ticket() != nil,
+              let stored = CredentialStore.load() else { return }
         probe_disconnect()
         connected = false
         connect(kind: 1, stored)
@@ -93,8 +99,36 @@ final class Probe {
     }
 
     private func connect(kind: UInt32, _ data: Data) {
+        Self.credentialCallbacks.revoke()
+        probe_disconnect()
+        Self.credentialCallbacks.begin()
         let result = data.withUnsafeBytes { probe_connect(kind, $0.bindMemory(to: UInt8.self).baseAddress, data.count) }
         record(["t": "connect_requested", "kind": kind == 0 ? "fresh_sign_in" : "stored_credential", "result": Int(result)])
+    }
+
+    func forget() {
+        Self.credentialCallbacks.revoke()
+        probe_disconnect()
+        connected = false
+        playing = false
+        wantsEngine = false
+        awaitingPlaybackRequest = true
+        interruptionPlayback = InterruptionPlayback()
+        engine.stop()
+        probe_flush()
+        track = ""
+        positionMs = 0
+        durationMs = 0
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        let status = CredentialStore.delete()
+        record(["t": "credential_forgotten", "status": Int(status)])
+        if status != errSecSuccess && status != errSecItemNotFound {
+            failed("credential_delete", "playback is stopped, but Keychain deletion failed; try Forget again")
+        } else {
+            lastError = ""
+            onChange?()
+        }
     }
 
     // MARK: - Audio session and graph

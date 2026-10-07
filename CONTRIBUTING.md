@@ -156,6 +156,10 @@ desktop keyring unlocked, run
 `cargo test --locked --lib credentials::tests::native_store_round_trip -- --ignored --exact`.
 It uses temporary dummy grants and deletes them afterward. CI runs this check
 on macOS and Windows; Linux requires an available Secret Service provider.
+Cloud-pairing changes also run
+`cargo test --locked --lib discovery_cloud::tests::native_bootstrap_round_trip -- --ignored --exact`.
+This verifies bootstrap consumption and later reads with a disposable dummy
+pairing entry; CI runs it on macOS and Windows.
 The ordinary test suite uses an isolated fake store and never reads a real
 Spotify grant. Demo mode also skips credential restoration.
 
