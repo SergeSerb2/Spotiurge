@@ -10,6 +10,8 @@ use crate::i18n::gettext;
 use crate::model::{Action, Page};
 use crate::theme::{self, Icon, Palette};
 
+use super::{material, motion};
+
 /// The gap the bar keeps between everything it lays out.
 const ITEM_SPACING: f32 = 8.0;
 /// The account avatar, and the icon in each of the three buttons beside it.
@@ -25,11 +27,11 @@ const DEVICE_BADGE_PADDING: f32 = 28.0;
 /// The text starts 24 px in; leave 8 px after it to match the space before
 /// the icon.
 const UPDATE_BADGE_PADDING: f32 = 32.0;
-/// The width the search field aims for, the most it ever takes, and the
-/// least it shrinks to before the badges give up their labels instead.
+/// The width the search field aims for, which is also the least it keeps
+/// before the badges give up their labels instead, and the most it ever
+/// takes.
 const SEARCH_IDEAL: f32 = 200.0;
 const SEARCH_MAX: f32 = 440.0;
-const SEARCH_FLOOR: f32 = 130.0;
 // After the badges collapse, a right panel can leave less than 130 points.
 // Keep the original 80-point minimum inside the page's own toolbar.
 const SEARCH_MIN: f32 = 80.0;
@@ -64,6 +66,7 @@ pub fn least_width(ctx: &egui::Context) -> f32 {
 
 fn least_width_after(lead: f32) -> f32 {
     lead + SEARCH_MIN
+        + ITEM_SPACING
         + RIGHT_CONTROLS_WIDTH
         + SPINNER_SIZE
         + ITEM_SPACING
@@ -86,9 +89,13 @@ struct TopbarFit {
 /// `labelled` and `icons` are what the badges ask for with and without their
 /// text, each already including the spacing that precedes it.
 fn topbar_fit(room: f32, controls: f32, labelled: f32, icons: f32) -> TopbarFit {
-    // SEARCH_IDEAL is above SEARCH_FLOOR, so the clamp below is well ordered.
+    // SEARCH_IDEAL is above SEARCH_MIN, so the clamps below are well ordered.
     let ideal = (room * 0.5).clamp(SEARCH_IDEAL, SEARCH_MAX);
-    let labels = room - controls - labelled >= SEARCH_FLOOR;
+    // The right end is laid out from the edge inwards and does not see the
+    // field, so keep the gap between them here.
+    let room = room - ITEM_SPACING;
+    // A label is worth less than a field wide enough to read a query in.
+    let labels = room - controls - labelled >= SEARCH_IDEAL;
     let badges = if labels { labelled } else { icons };
     TopbarFit {
         search: (room - controls - badges).clamp(SEARCH_MIN, ideal),
@@ -130,10 +137,24 @@ fn badge(
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), galley.text())
     });
-    ui.painter().rect_filled(
+    // A soft amber tint: the badges report live state. It warms a little
+    // under the pointer. It rests on opaque popover glass, so its label
+    // reads the same over a cover's light as over a plain pane.
+    let lift = motion::toggle(
+        ui.ctx(),
+        response.id.with("lift"),
+        response.hovered() || response.has_focus(),
+        motion::FEEDBACK,
+    );
+    let radius = CornerRadius::same((rect.height() / 2.0).round() as u8);
+    for fill in badge_fills(palette, lift) {
+        ui.painter().rect_filled(rect, radius, fill);
+    }
+    ui.painter().rect_stroke(
         rect,
-        CornerRadius::same(14),
-        palette.accent.gamma_multiply(0.16),
+        radius,
+        egui::Stroke::new(1.0, palette.accent.gamma_multiply(0.22 + 0.14 * lift)),
+        egui::StrokeKind::Inside,
     );
     let icon_center = if labels {
         pos2(rect.left() + 14.0, rect.center().y)
@@ -148,10 +169,19 @@ fn badge(
         ui.painter().galley(
             pos2(rect.left() + 24.0, rect.center().y - galley.size().y / 2.0),
             galley,
-            palette.accent,
+            palette.accent_text(),
         );
     }
+    theme::focus_ring(ui, &response);
     response
+}
+
+/// A badge's fills, bottom first: opaque glass, then the amber tint.
+fn badge_fills(palette: &Palette, lift: f32) -> [egui::Color32; 2] {
+    [
+        material::glass(palette, material::Kind::Popover).fill,
+        palette.accent.gamma_multiply(0.14 + 0.08 * lift),
+    ]
 }
 
 fn nav_button(
@@ -170,21 +200,30 @@ fn nav_button(
         },
     );
     if ui.is_rect_visible(rect) {
-        let fill = if palette.dark {
-            egui::Color32::from_black_alpha(90)
+        // A clear glass key: its fill brightens and its icon lifts under
+        // the pointer, inside a hairline rim.
+        let lift = motion::toggle(
+            ui.ctx(),
+            response.id.with("lift"),
+            enabled && (response.hovered() || response.has_focus()),
+            motion::FEEDBACK,
+        );
+        let radius = rect.width() / 2.0;
+        ui.painter()
+            .circle_filled(rect.center(), radius, material::key_fill(palette, lift));
+        ui.painter().circle_stroke(
+            rect.center(),
+            radius - 0.5,
+            egui::Stroke::new(1.0, material::rim_colour(palette)),
+        );
+        let color = if enabled {
+            palette.secondary.lerp_to_gamma(palette.text, lift)
         } else {
-            egui::Color32::from_black_alpha(20)
-        };
-        ui.painter().circle_filled(rect.center(), 16.0, fill);
-        let color = if !enabled {
             palette.dim
-        } else if response.hovered() {
-            palette.text
-        } else {
-            palette.secondary
         };
         theme::paint_icon(ui, icon, rect, 20.0, color);
     }
+    theme::focus_ring(ui, &response);
     if enabled {
         response.on_hover_text(tooltip)
     } else {
@@ -279,7 +318,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     None => gettext(locale, "Playing on another device").into_owned(),
                 };
                 ui.painter()
-                    .layout_no_wrap(label, theme::medium(12.5), palette.accent)
+                    .layout_no_wrap(label, theme::medium(12.5), palette.accent_text())
             });
             let update = app.update.clone();
             let update_galley = update.as_ref().map(|update| {
@@ -296,7 +335,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     }
                 };
                 ui.painter()
-                    .layout_no_wrap(label, theme::medium(12.5), palette.accent)
+                    .layout_no_wrap(label, theme::medium(12.5), palette.accent_text())
             });
             // Ask once, so the bar reserves room for exactly the spinner it
             // then draws.
@@ -375,12 +414,17 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 let (rect, response) =
                     ui.allocate_exact_size(Vec2::splat(AVATAR_SIZE), Sense::click());
                 if ui.is_rect_visible(rect) {
-                    let fill = if response.hovered() {
-                        palette.surface_hover
-                    } else {
-                        palette.surface
-                    };
-                    ui.painter().circle_filled(rect.center(), 18.0, fill);
+                    let lift = motion::toggle(
+                        ui.ctx(),
+                        response.id.with("lift"),
+                        response.hovered(),
+                        motion::FEEDBACK,
+                    );
+                    ui.painter().circle_filled(
+                        rect.center(),
+                        18.0,
+                        material::key_fill(&palette, lift),
+                    );
                     let inner = egui::Rect::from_center_size(rect.center(), Vec2::splat(28.0));
                     match avatar.as_deref() {
                         Some(url) => super::widgets::paint_cover(
@@ -399,14 +443,18 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                                 .unwrap_or('?')
                                 .to_uppercase()
                                 .to_string();
-                            ui.painter()
-                                .circle_filled(inner.center(), 14.0, palette.accent);
+                            // Neutral: the amber lamp is kept for live state.
+                            ui.painter().circle_filled(
+                                inner.center(),
+                                14.0,
+                                palette.surface_active,
+                            );
                             ui.painter().text(
                                 inner.center(),
                                 egui::Align2::CENTER_CENTER,
                                 initial,
                                 theme::bold(13.0),
-                                palette.on_accent,
+                                palette.text,
                             );
                         }
                     }
@@ -581,6 +629,8 @@ mod topbar_fit_tests {
     const UPDATE: f32 = ITEM_SPACING + 152.0;
     // Collapsed, a badge is a square chip as tall as its text.
     const CHIP: f32 = ITEM_SPACING + 15.0 + BADGE_PADDING_Y;
+    /// The narrowest field that still reads a short query.
+    const SEARCH_FLOOR: f32 = 130.0;
 
     /// The narrowest bar the app can produce: a 760 px window, its sidebar,
     /// and the navigation buttons all taken out.
@@ -614,8 +664,9 @@ mod topbar_fit_tests {
             ] {
                 let over = right_end(room, labelled, icons);
                 assert!(
-                    over <= 0.0,
-                    "badges overlap the field by {over} px on a {room} px bar"
+                    over <= -ITEM_SPACING,
+                    "badges come within {} px of the field on a {room} px bar",
+                    -over
                 );
             }
             room += 1.0;
@@ -624,11 +675,11 @@ mod topbar_fit_tests {
 
     #[test]
     fn a_right_panel_can_narrow_search_after_the_badges_collapse() {
-        let room = RIGHT_CONTROLS_WIDTH + CHIP * 2.0 + 100.0;
+        let room = RIGHT_CONTROLS_WIDTH + CHIP * 2.0 + ITEM_SPACING + 100.0;
         let fit = topbar_fit(room, RIGHT_CONTROLS_WIDTH, DEVICE + UPDATE, CHIP * 2.0);
         assert!(!fit.labels);
         assert_eq!(fit.search, 100.0);
-        assert_eq!(right_end(room, DEVICE + UPDATE, CHIP * 2.0), 0.0);
+        assert_eq!(right_end(room, DEVICE + UPDATE, CHIP * 2.0), -ITEM_SPACING);
     }
 
     #[test]
@@ -637,6 +688,34 @@ mod topbar_fit_tests {
         // The 1080 px window of the report that started this.
         assert!(topbar_fit(952.0, RIGHT_CONTROLS_WIDTH, DEVICE + UPDATE, CHIP * 2.0).labels);
         assert!(!topbar_fit(NARROWEST_BAR, RIGHT_CONTROLS_WIDTH, DEVICE, CHIP).labels);
+    }
+
+    /// The finish review's 900 px window playing on another device: its page
+    /// leaves the bar 521 points. Connect folds to its icon instead of
+    /// squeezing the field to 140 points against the pill.
+    #[test]
+    fn a_900_px_window_folds_connect_before_the_field_shrinks() {
+        let connect = ITEM_SPACING + 190.0;
+        let fit = topbar_fit(521.0, RIGHT_CONTROLS_WIDTH, connect, CHIP);
+        assert!(!fit.labels);
+        assert!(fit.search >= SEARCH_IDEAL, "field is {} px", fit.search);
+        assert!(right_end(521.0, connect, CHIP) <= -ITEM_SPACING);
+    }
+
+    /// The Connect pill sits on opaque glass, so a cover's light behind the
+    /// bar cannot thin its label; that label reads at 4.5:1 on the pill in
+    /// both themes, at rest and under the pointer.
+    #[test]
+    fn the_connect_label_reads_on_its_pill() {
+        for palette in [Palette::dark(), Palette::light()] {
+            for lift in [0.0, 1.0] {
+                let [ground, tint] = badge_fills(&palette, lift);
+                assert_eq!(ground.a(), 255);
+                let pill = ground.blend(tint);
+                let ratio = theme::contrast(palette.accent_text(), pill);
+                assert!(ratio >= 4.5, "{ratio:.2}:1 dark={}", palette.dark);
+            }
+        }
     }
 
     /// At the least width the panels leave it, the bar still holds the
@@ -649,7 +728,7 @@ mod topbar_fit_tests {
         let fit = topbar_fit(room, controls, DEVICE + UPDATE, CHIP * 2.0);
         assert!(!fit.labels);
         assert_eq!(fit.search, SEARCH_MIN);
-        assert!(controls + CHIP * 2.0 + fit.search <= room);
+        assert!(controls + CHIP * 2.0 + fit.search + ITEM_SPACING <= room);
     }
 
     #[test]

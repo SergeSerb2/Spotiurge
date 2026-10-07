@@ -47,21 +47,35 @@ pub(crate) fn end_tint_session(ctx: &egui::Context) {
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     let fill = eased_fill(ui.ctx(), palette.panel, app.now_playing_tint());
+    let gap = super::material::GAP;
     egui::Panel::bottom("player-bar")
-        .exact_size(theme::PLAYER_BAR_HEIGHT)
+        .exact_size(theme::PLAYER_BAR_HEIGHT + 2.0 * gap)
         .resizable(false)
         .show_separator_line(false)
-        .frame(
-            Frame::new()
-                .fill(fill)
-                .inner_margin(Margin::symmetric(16, 0)),
-        )
+        .frame(Frame::new().inner_margin(Margin {
+            left: 16 + gap as i8,
+            right: 16 + gap as i8,
+            top: gap as i8,
+            bottom: gap as i8,
+        }))
         .show(ui, |ui| {
             let rect = ui.max_rect();
             let now = app.now_playing();
-            // The whole bar, margins included, behind everything else.
+            // The console: a pane of glass floating along the bottom, a
+            // little denser than the others, carrying the cover's tint.
             let behind = rect.expand2(vec2(16.0, 0.0));
-            if visualizer(app, ui, behind, now.as_ref()) {
+            let mut glass = super::material::glass(&palette, super::material::Kind::Console);
+            glass.fill = fill.gamma_multiply(f32::from(glass.fill.a()) / 255.0);
+            super::material::paint_glass(
+                ui.painter(),
+                behind,
+                super::material::CONSOLE_RADIUS,
+                &glass,
+                &palette,
+            );
+            // The visualizer stays clear of the rounded corners.
+            let stage = behind.shrink2(vec2(super::material::CONSOLE_RADIUS, 1.0));
+            if visualizer(app, ui, stage, now.as_ref()) {
                 ui.ctx().request_repaint_after(VIS_FRAME);
             }
             // Its empty space is the visualizer's control, as Winamp's
@@ -84,11 +98,6 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             if empty.clicked() {
                 app.actions.push(Action::CyclePlayerBarVis);
             }
-            ui.painter().hline(
-                rect.x_range(),
-                rect.top() + 0.5,
-                egui::Stroke::new(1.0, palette.outline),
-            );
             let width = rect.width();
             let side = (width * 0.3).clamp(200.0, 420.0);
             let cy = rect.center().y;
@@ -354,6 +363,9 @@ fn waveform(
 /// the colour returns to the panel colour.
 fn eased_fill(ctx: &egui::Context, panel: Color32, tint: Option<Color32>) -> Color32 {
     let target = tint.map_or(panel, |tint| super::blend(panel, tint, TINT_STRENGTH));
+    if super::motion::reduced(ctx) {
+        return target;
+    }
     // Color32 stores premultiplied RGB, so interpolate unmultiplied channels.
     let [r, g, b, _] = target.to_srgba_unmultiplied();
     // A new pass after sign-out gets new ids without clearing other animations.
@@ -533,7 +545,7 @@ fn now_playing_block(app: &mut App, ui: &mut egui::Ui, region: Rect, now: Option
         let (icon, color, tooltip) = if saved {
             (
                 Icon::HeartFilled,
-                palette.accent,
+                palette.text,
                 gettext(app.locale, "Remove from Liked Songs"),
             )
         } else {
@@ -651,30 +663,43 @@ fn transport(app: &mut App, ui: &mut egui::Ui, now: Option<&NowPlaying>, region:
     }
 
     let disc = slot(widths[2]);
+    // The play disc is the console's lamp: lit amber, glowing softly while
+    // music plays, the glow easing up and down with play and pause.
+    let lit = super::motion::toggle(
+        ui.ctx(),
+        egui::Id::new("player-lamp"),
+        playing || loading,
+        super::motion::STATE,
+    );
+    if lit > 0.0 {
+        super::material::light(
+            ui.painter(),
+            disc.center(),
+            34.0,
+            palette
+                .accent
+                .gamma_multiply(if palette.dark { 0.32 } else { 0.22 } * lit),
+        );
+    }
     if loading || app.any_play_pending() {
         ui.painter()
-            .circle_filled(disc.center(), 18.0, palette.text);
+            .circle_filled(disc.center(), 18.0, palette.accent);
         let mut cell = centered(ui, disc);
-        theme::spinner(&mut cell, 22.0, palette.window);
+        theme::spinner(&mut cell, 22.0, palette.on_accent);
     } else {
         let icon = if playing {
             Icon::PauseFilled
         } else {
             Icon::PlayFilled
         };
-        let hover = if palette.dark {
-            egui::Color32::WHITE
-        } else {
-            palette.text
-        };
         let mut cell = centered(ui, disc);
         if theme::circle_button(
             &mut cell,
             icon,
             36.0,
-            palette.text,
-            hover,
-            palette.window,
+            palette.accent,
+            palette.accent_hover,
+            palette.on_accent,
             &if playing {
                 gettext(app.locale, "Pause")
             } else {
@@ -864,10 +889,13 @@ fn extras(app: &mut App, ui: &mut egui::Ui, now: Option<&NowPlaying>) {
             egui::Id::new("volume-fixed"),
             egui::Sense::hover(),
         )
-        .on_hover_text(gettext(
-            app.locale,
-            "This device's volume can't be changed from Spotifast",
-        ));
+        .on_hover_text(
+            gettext(
+                app.locale,
+                "This device's volume can't be changed from Spotifast",
+            )
+            .replace("Spotifast", "Spotiurge"),
+        );
     }
     ui.add_space(4.0);
     let remote = now.is_some_and(|now| !now.local);

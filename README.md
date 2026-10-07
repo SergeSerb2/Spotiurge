@@ -2,15 +2,26 @@
 
 Serge's standalone personal fork of [Spotifast](https://github.com/crmne/spotifast),
 written in Rust with native egui rendering, librespot playback and Spotify
-Connect. Desktop supports macOS, Windows and Linux. iOS and TestFlight remain
-gated on independent background playback on a real iPhone.
+Connect. Desktop supports macOS, Windows and Linux. A real-iPhone probe proved
+17 minutes 22 seconds of independent locked playback. Production iOS and
+TestFlight remain gated on the remaining audio checks and a distributable
+dependency, with [the exact evidence recorded](docs/reviews/spotiurge-ios/playback-gate.md).
 
 **Playback needs Spotify Premium.** Free accounts can browse and search, but
 cannot play music through Spotiurge.
 
 https://github.com/user-attachments/assets/a5f669ce-b3b7-4f8e-9933-976a78876c7e
 
-![Spotifast Home with the playlist library, recommendations, queue, and player visible](docs/screenshot.png)
+![Spotiurge's native For you desk, glass sidebar and player console](docs/reviews/spotiurge-glass/after-home-dark-normal.png)
+
+The desktop interface uses smoked or milky glass panes, cover-derived ambient
+light, an amber playback signal and Spotiurge's own surge mark. These are native
+rendered materials, without a browser or a continuous backdrop-blur pass.
+Selection, navigation and control feedback use short, finite transitions.
+**Settings → Appearance → Reduce motion**, or macOS Reduce Motion, shows changes
+immediately. Optional Winamp skins retain their artwork.
+See the [native before/after comparison](docs/reviews/spotiurge-glass/index.html)
+for light/dark themes, narrow windows and error states.
 
 The inherited [Spotifast guide](https://spotifast.rocks/) explains the existing
 desktop controls. It describes upstream releases, not Spotiurge downloads:
@@ -67,7 +78,8 @@ after 45 seconds, at most once per ten minutes. AI failures retry after 10, 20,
 music and playback stay available. Exploration and automatic-pick controls are
 saved per device; taste and feedback synchronize through the private store.
 **Save this mix** keeps an ordered Spotiurge mix without creating a Spotify
-playlist. **Sync my devices** exchanges taste preferences, feedback, mixes and AI
+playlist. Home shows the eight newest saved mixes; **See more** reveals 24 more
+at a time, and **Show less** returns to eight. **Sync my devices** exchanges taste preferences, feedback, mixes and AI
 history. Previous discoveries remain cached when AI is unavailable.
 
 Pair each desktop once by launching with `SPOTIURGE_CLOUD_TOKEN` in its process

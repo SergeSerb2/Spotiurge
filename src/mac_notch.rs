@@ -287,8 +287,9 @@ impl NotchIcons {
     }
 }
 
-fn green_accent() -> Retained<NSColor> {
-    NSColor::colorWithRed_green_blue_alpha(30.0 / 255.0, 215.0 / 255.0, 96.0 / 255.0, 1.0)
+/// Spotiurge's VU-amber lamp, the dark palette's accent (#ffb547).
+fn lamp_accent() -> Retained<NSColor> {
+    NSColor::colorWithRed_green_blue_alpha(1.0, 181.0 / 255.0, 71.0 / 255.0, 1.0)
 }
 
 fn inactive_button_tint() -> Retained<NSColor> {
@@ -333,9 +334,10 @@ fn update_play_button_ui(button: &NSButton, icons: &NotchIcons, playing: bool) {
         (&icons.play_filled, "Play")
     };
     setup_svg_button(button, img, label);
+    // The dark palette's on_accent ink (#1f1303).
     set_button_tint(
         button,
-        &NSColor::colorWithRed_green_blue_alpha(0.06, 0.07, 0.08, 1.0),
+        &NSColor::colorWithRed_green_blue_alpha(0.12, 0.075, 0.012, 1.0),
     );
 }
 
@@ -343,7 +345,7 @@ fn update_like_button_ui(button: &NSButton, icons: &NotchIcons, saved: bool) {
     let (img, tint, label) = if saved {
         (
             &icons.heart_filled,
-            green_accent(),
+            NSColor::whiteColor(),
             "Remove from Liked Songs",
         )
     } else {
@@ -355,7 +357,7 @@ fn update_like_button_ui(button: &NSButton, icons: &NotchIcons, saved: bool) {
 
 fn update_device_button_ui(button: &NSButton, icons: &NotchIcons, is_remote: bool) {
     let tint = if is_remote {
-        green_accent()
+        lamp_accent()
     } else {
         inactive_button_tint()
     };
@@ -365,7 +367,7 @@ fn update_device_button_ui(button: &NSButton, icons: &NotchIcons, is_remote: boo
 
 fn update_shuffle_button_ui(button: &NSButton, icons: &NotchIcons, shuffle: bool) {
     let tint = if shuffle {
-        green_accent()
+        lamp_accent()
     } else {
         inactive_button_tint()
     };
@@ -380,8 +382,8 @@ fn update_repeat_button_ui(
 ) {
     let (img, tint, label) = match repeat {
         crate::player::RepeatMode::Off => (&icons.repeat, inactive_button_tint(), "Repeat"),
-        crate::player::RepeatMode::Context => (&icons.repeat, green_accent(), "Repeat one"),
-        crate::player::RepeatMode::Track => (&icons.repeat_1, green_accent(), "Repeat off"),
+        crate::player::RepeatMode::Context => (&icons.repeat, lamp_accent(), "Repeat one"),
+        crate::player::RepeatMode::Track => (&icons.repeat_1, lamp_accent(), "Repeat off"),
     };
     setup_svg_button(button, img, label);
     set_button_tint(button, &tint);
@@ -575,6 +577,7 @@ struct NotchController {
     collapsed_card_frame: NSRect,
     expanded_card_frame: NSRect,
     expanded: bool,
+    reduce_motion: bool,
     enabled: bool,
     is_minimized_or_background: bool,
     track: Option<NotchTrackInfo>,
@@ -1007,7 +1010,7 @@ pub fn init() {
         &play_button,
         &action_handler,
         sel!(onPlayPause:),
-        &NSColor::colorWithRed_green_blue_alpha(0.06, 0.07, 0.08, 1.0),
+        &NSColor::colorWithRed_green_blue_alpha(0.12, 0.075, 0.012, 1.0),
     );
     card_view.addSubview(&play_button);
 
@@ -1079,6 +1082,7 @@ pub fn init() {
         collapsed_card_frame: frames.collapsed_card,
         expanded_card_frame: frames.expanded_card,
         expanded: false,
+        reduce_motion: false,
         enabled: true,
         is_minimized_or_background: false,
         track: None,
@@ -1132,6 +1136,14 @@ fn perform_expand_locked(ctrl: &mut NotchController) {
         // Expand window frame immediately without animation
         ctrl.window.setFrame_display(ctrl.expanded_frame, false);
 
+        if ctrl.reduce_motion {
+            ctrl.card_view.setFrame(ctrl.expanded_card_frame);
+            ctrl.card_view.setAlphaValue(1.0);
+            ctrl.canvas_view.setNeedsDisplay(true);
+            ctrl.window.invalidateShadow();
+            return;
+        }
+
         // Snappy, smooth Apple iOS Dynamic Island style vertical drop animation (260ms duration)
         NSAnimationContext::beginGrouping();
         let ctx = NSAnimationContext::currentContext();
@@ -1152,6 +1164,10 @@ fn perform_collapse_locked(ctrl: &mut NotchController) {
     ctrl.pending_collapse_at = None;
     if crate::notch::should_perform_collapse(ctrl.expanded) {
         ctrl.expanded = false;
+        if ctrl.reduce_motion {
+            complete_collapse_locked(ctrl);
+            return;
+        }
         ctrl.collapsing_until = Some(Instant::now() + std::time::Duration::from_millis(200));
 
         NSAnimationContext::beginGrouping();
@@ -1319,19 +1335,19 @@ fn handle_draw_canvas(_view: &SpotifastCanvasView, _dirty: NSRect) {
     let card_rect = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(card_w, card_h));
 
     // 1. Panel background: Subtle dark glass fill on top of HUDWindow blur.
-    //    Matches Spotifast's dark panel palette.panel (0x15, 0x18, 0x1c).
+    //    Smoked glass close to the dark palette's panel (0x14, 0x17, 0x1f).
     let base_path = NSBezierPath::bezierPathWithRoundedRect_xRadius_yRadius(card_rect, 18.0, 18.0);
-    NSColor::colorWithRed_green_blue_alpha(0.08, 0.09, 0.11, 0.78).set();
+    NSColor::colorWithRed_green_blue_alpha(0.078, 0.09, 0.12, 0.74).set();
     base_path.fill();
 
-    // 2. 1px crisp outline: Matches Spotifast's palette.outline (0x2a, 0x30, 0x38).
+    // 2. 1px crisp rim: the dark palette's outline (0x2a, 0x2f, 0x3c).
     let border_rect = NSRect::new(
         NSPoint::new(0.5, 0.5),
         NSSize::new(card_w - 1.0, card_h - 1.0),
     );
     let border_path =
         NSBezierPath::bezierPathWithRoundedRect_xRadius_yRadius(border_rect, 18.0, 18.0);
-    NSColor::colorWithRed_green_blue_alpha(0.16, 0.19, 0.22, 0.75).set();
+    NSColor::colorWithRed_green_blue_alpha(0.165, 0.184, 0.235, 0.8).set();
     unsafe {
         let () = objc2::msg_send![&border_path, setLineWidth: 1.0f64];
     }
@@ -1413,11 +1429,12 @@ fn handle_draw_canvas(_view: &SpotifastCanvasView, _dirty: NSRect) {
     NSColor::whiteColor().set();
     thumb_path.fill();
 
-    // 5. Play button circular disc (Row 3, Center) - Matches Spotifast theme::circle_button (diameter 36.0)
+    // 5. Play button disc (Row 3, Center): the amber lamp, as the player
+    //    bar's theme::circle_button (diameter 36.0).
     let center_x = card_w / 2.0;
     let disc_rect = NSRect::new(NSPoint::new(center_x - 18.0, 97.0), NSSize::new(36.0, 36.0));
     let disc_path = NSBezierPath::bezierPathWithOvalInRect(disc_rect);
-    NSColor::colorWithRed_green_blue_alpha(0.95, 0.96, 0.97, 1.0).set(); // palette.text (#f2f4f6)
+    lamp_accent().set();
     disc_path.fill();
 }
 
@@ -1435,7 +1452,12 @@ pub fn is_active() -> bool {
     false
 }
 
-pub fn sync_state(enabled: bool, is_background: bool, track: Option<&NotchTrackInfo>) {
+pub fn sync_state(
+    enabled: bool,
+    is_background: bool,
+    reduce_motion: bool,
+    track: Option<&NotchTrackInfo>,
+) {
     if enabled && track.is_some() {
         let is_empty = CONTROLLER.lock().map(|l| l.is_none()).unwrap_or(false);
         if is_empty {
@@ -1451,6 +1473,13 @@ pub fn sync_state(enabled: bool, is_background: bool, track: Option<&NotchTrackI
 
     ctrl.enabled = enabled;
     ctrl.is_minimized_or_background = is_background;
+    ctrl.reduce_motion = reduce_motion;
+    if reduce_motion {
+        reset_track_fade(ctrl);
+        if ctrl.collapsing_until.is_some() {
+            complete_collapse_locked(ctrl);
+        }
+    }
 
     // Check pending expand delay (60ms hover dwell + 260ms snappy Apple animation)
     if let Some(due) = ctrl.pending_expand_at {
@@ -1549,6 +1578,7 @@ pub fn sync_state(enabled: bool, is_background: bool, track: Option<&NotchTrackI
         // Phase 3: fade+slide new content in (220 ms spring)
         let should_animate = crate::notch::should_animate_track_transition(
             ctrl.expanded,
+            reduce_motion,
             ctrl.track.as_ref(),
             track,
         );
@@ -1574,7 +1604,7 @@ pub fn sync_state(enabled: bool, is_background: bool, track: Option<&NotchTrackI
 
         if let Some(t) = track {
             let title = if t.title.trim().is_empty() {
-                "Spotifast"
+                "Spotiurge"
             } else {
                 &t.title
             };
@@ -1603,7 +1633,7 @@ pub fn sync_state(enabled: bool, is_background: bool, track: Option<&NotchTrackI
             update_artwork_path(ctrl, t.art_path.clone());
         } else {
             ctrl.title_field
-                .setStringValue(&NSString::from_str("Spotifast"));
+                .setStringValue(&NSString::from_str("Spotiurge"));
             ctrl.artist_field
                 .setStringValue(&NSString::from_str("Nothing playing"));
             update_time_labels(

@@ -1,0 +1,528 @@
+{
+  "phase": "before",
+  "source_commit": "176364f229583678b3ab7a19ffe89fb031de1bab",
+  "binary_sha256": "00ff96bdd1e19ae340cca86816b495a84719cdcefc64dbf7b3bebb6157e8418a",
+  "platform": "macOS arm64",
+  "captures": [
+    {
+      "surface": "home",
+      "page": "home",
+      "flags": "discovery-matched",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-dark-normal.png",
+      "sha256": "703fe324c5f8c8a86233f5d1422f602cc53d42d6beb7616714552474a0ed2da5"
+    },
+    {
+      "surface": "home",
+      "page": "home",
+      "flags": "discovery-matched",
+      "theme": "dark",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-home-dark-narrow.png",
+      "sha256": "615e82ef4aa8e87efe14ea0a45e44a9d0d005d39cd4dfaf03acd6941f8414097"
+    },
+    {
+      "surface": "search",
+      "page": "search",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-search-dark-normal.png",
+      "sha256": "eb78d68793254966205a60e437745674c6334575043c01ffbfbd19b42c11d792"
+    },
+    {
+      "surface": "search",
+      "page": "search",
+      "flags": "",
+      "theme": "dark",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-search-dark-narrow.png",
+      "sha256": "d274fc67e74db6110984d22b40ae505e2ac7fe32d917d909232498c1005697f4"
+    },
+    {
+      "surface": "liked",
+      "page": "liked",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-liked-dark-normal.png",
+      "sha256": "ad19bcb51f1c7b694425ab955d883eacd1a60c2d3c7bfa1e798b009baa80a5f2"
+    },
+    {
+      "surface": "top-songs",
+      "page": "top-songs",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-top-songs-dark-normal.png",
+      "sha256": "61d18ec612d06288baa3c940e67e4c3cf839c76dadc6160e014776e5ce620b69"
+    },
+    {
+      "surface": "albums",
+      "page": "albums",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-albums-dark-normal.png",
+      "sha256": "73bb940378bd24377c3639258cf183ff4291feb49c881b1f7d53e4a6a407d7ac"
+    },
+    {
+      "surface": "albums",
+      "page": "albums",
+      "flags": "",
+      "theme": "dark",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-albums-dark-narrow.png",
+      "sha256": "533bfc08bd2e44de2336c5a7ea538c7b6e0ab0b8b39c682bcb4858660ff62eec"
+    },
+    {
+      "surface": "artists",
+      "page": "artists",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-artists-dark-normal.png",
+      "sha256": "ecf0f701f7505223f919822cbd85b8aac9cf92c533c7de084eb0c0d163a612d3"
+    },
+    {
+      "surface": "podcasts",
+      "page": "podcasts",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-podcasts-dark-normal.png",
+      "sha256": "7bcbe268510388796182ac4744f1ccae87c8473b1add8cd668f29c8a497e1ffb"
+    },
+    {
+      "surface": "episodes",
+      "page": "episodes",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-episodes-dark-normal.png",
+      "sha256": "236eb6d2ef06f3c5a6ef5ee1160287ce5c608089de03ed6d6fbb7091269d37a0"
+    },
+    {
+      "surface": "playlist",
+      "page": "playlist:pl1",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-playlist-dark-normal.png",
+      "sha256": "89897101dec5e6e0e4c60af2b516efac6514631af50d51a30682a3b0ccc6601f"
+    },
+    {
+      "surface": "artist",
+      "page": "artist:art0",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-artist-dark-normal.png",
+      "sha256": "160ee21f665b6a622dcb89dfa34a630ec38fcd3cc55d40e565fe0524dbd3ce8f"
+    },
+    {
+      "surface": "show",
+      "page": "show:sh0",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-show-dark-normal.png",
+      "sha256": "571477aa9b51ec08124ad9dec405603d6cbc07b14d7b6c73cbcf03868628f207"
+    },
+    {
+      "surface": "queue",
+      "page": "queue",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-queue-dark-normal.png",
+      "sha256": "0358f25c2aa9eba95a9ce6d0bccbf17c66bb4ad348e5acdf792d8c61b1f72724"
+    },
+    {
+      "surface": "settings",
+      "page": "settings",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-settings-dark-normal.png",
+      "sha256": "687f4203340925bd9d485933002449267d1407819a7ad5ee2f0e644487ad23dd"
+    },
+    {
+      "surface": "settings",
+      "page": "settings",
+      "flags": "",
+      "theme": "dark",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-settings-dark-narrow.png",
+      "sha256": "6f0caee1c68546f2eb5c02e9bfeb8e3bdbce0eceafc2261f85334bcc83b1b052"
+    },
+    {
+      "surface": "devices",
+      "page": "home",
+      "flags": "devices",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-devices-dark-normal.png",
+      "sha256": "e27c5a27e62046fc66d2126a849692b646050348faa39f6ff5ce2ae20c1f81d2"
+    },
+    {
+      "surface": "login",
+      "page": "home",
+      "flags": "signed-out",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-login-dark-normal.png",
+      "sha256": "3e8ff358d1181920fcb18d716006f4e52068635e7ecb369e02738d5f9c9d537c"
+    },
+    {
+      "surface": "loading",
+      "page": "playlist:pl1",
+      "flags": "collection-loading",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-loading-dark-normal.png",
+      "sha256": "581a8c33db218b4308aa659abdb9ca29c988c3f8db8650a4857cf918744224a3"
+    },
+    {
+      "surface": "home",
+      "page": "home",
+      "flags": "discovery-matched",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-light-normal.png",
+      "sha256": "45decd8762fee4d7cd0cd2c5d05bb970751aa9c852fa692b843f0067ece0d2c9"
+    },
+    {
+      "surface": "home",
+      "page": "home",
+      "flags": "discovery-matched",
+      "theme": "light",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-home-light-narrow.png",
+      "sha256": "df637c766ad21d430282207f4c657a135e036a17bb7d432fabbd4e0559847070"
+    },
+    {
+      "surface": "search",
+      "page": "search",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-search-light-normal.png",
+      "sha256": "807d1d4ba5bef212871676f95ff17d0dec9c6d8998c08176f92ae7bd6f822c1a"
+    },
+    {
+      "surface": "search",
+      "page": "search",
+      "flags": "",
+      "theme": "light",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-search-light-narrow.png",
+      "sha256": "6d95ad3cb1786f2f39c96e3489703c9703c98f77809dddb36897a15799f247d6"
+    },
+    {
+      "surface": "liked",
+      "page": "liked",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-liked-light-normal.png",
+      "sha256": "ab54a5eb8ab217a8154709a0a2c572e489a556827649b6f7796eef34448c619b"
+    },
+    {
+      "surface": "top-songs",
+      "page": "top-songs",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-top-songs-light-normal.png",
+      "sha256": "5f198b18638d6cad506952079853c5c33c95103c68bb0be59c5d090c858c631e"
+    },
+    {
+      "surface": "albums",
+      "page": "albums",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-albums-light-normal.png",
+      "sha256": "5effee73e294fa3c091e5a46955d9728d7b8283d2e1a8e0b6783196945de36d6"
+    },
+    {
+      "surface": "albums",
+      "page": "albums",
+      "flags": "",
+      "theme": "light",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-albums-light-narrow.png",
+      "sha256": "3cf3c0cefe3f11f873bafaac52ded7c26a97745291eac35750b4714bad2e6f83"
+    },
+    {
+      "surface": "artists",
+      "page": "artists",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-artists-light-normal.png",
+      "sha256": "4997c91e4d603b7d998d80eb5944d0e5542266d92ef9896471bef96af581d77c"
+    },
+    {
+      "surface": "podcasts",
+      "page": "podcasts",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-podcasts-light-normal.png",
+      "sha256": "4eb1cdab994403ee300114b359dc843ea686fefc191dab5d7618cf129ea81417"
+    },
+    {
+      "surface": "episodes",
+      "page": "episodes",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-episodes-light-normal.png",
+      "sha256": "f0c88533e4af66197d5869b16554b93dbcb6fc28f2869453201a8ef2c154db5f"
+    },
+    {
+      "surface": "playlist",
+      "page": "playlist:pl1",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-playlist-light-normal.png",
+      "sha256": "9cfc6ebf3512b8761398acd7d96965e8ef80c5dbce9f2a7359c5def79dbd8bc1"
+    },
+    {
+      "surface": "artist",
+      "page": "artist:art0",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-artist-light-normal.png",
+      "sha256": "ce6aef1d30ebacf35b1e027944dce9fe9bfff901b8284592776a772f659389b4"
+    },
+    {
+      "surface": "show",
+      "page": "show:sh0",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-show-light-normal.png",
+      "sha256": "50bba4d2362931278771612ed3f420247ce79b5c48a4ea6dd9fdafb8bf4d8e63"
+    },
+    {
+      "surface": "queue",
+      "page": "queue",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-queue-light-normal.png",
+      "sha256": "35426bbddd4226c99c46e9098f7c3b6c799e6834a298e7f781cd5f439b85706b"
+    },
+    {
+      "surface": "settings",
+      "page": "settings",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-settings-light-normal.png",
+      "sha256": "0fbeed2f056ded4a5d924acd29f82515ed6917396a294a61fb3ab868411b03f2"
+    },
+    {
+      "surface": "settings",
+      "page": "settings",
+      "flags": "",
+      "theme": "light",
+      "size": "narrow",
+      "dimensions": "900x760",
+      "filename": "before-settings-light-narrow.png",
+      "sha256": "581fba249f0b1038952542d5b80f420791219b26d801321f7c363c637fb75067"
+    },
+    {
+      "surface": "devices",
+      "page": "home",
+      "flags": "devices",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-devices-light-normal.png",
+      "sha256": "a1d7b72a4d83e34ce816b9e4cd765435d389bf4d5c240da6630e9b35ca0e89a0"
+    },
+    {
+      "surface": "login",
+      "page": "home",
+      "flags": "signed-out",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-login-light-normal.png",
+      "sha256": "aaf99ff77383513e817e5f9849bfcf28bda5b1bb2ce412d7b1cb53c416d04d84"
+    },
+    {
+      "surface": "loading",
+      "page": "playlist:pl1",
+      "flags": "collection-loading",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-loading-light-normal.png",
+      "sha256": "bb3b201d2f5aae47b2b56066b798d187168b12bf021d79227aad04f70bd17a55"
+    },
+    {
+      "surface": "album",
+      "page": "album:alb0",
+      "flags": "",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-album-dark-normal.png",
+      "sha256": "052c0d711fab4734c76aa05106ecb66f39ebb4a033f29c84bed154709ce6a97a"
+    },
+    {
+      "surface": "album",
+      "page": "album:alb0",
+      "flags": "",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-album-light-normal.png",
+      "sha256": "3ad0d7cae75e63d18300cad2e0e2b6af9060009cec787767df92221ae6b9e8f4"
+    },
+    {
+      "surface": "home-onboarding",
+      "page": "home",
+      "flags": "discovery-onboarding",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-onboarding-dark-normal.png",
+      "sha256": "6094fb8fc13dedbc1f9be1e178ec2c581a6dcfe97c0949ee88f1192a04deb17c"
+    },
+    {
+      "surface": "home-onboarding",
+      "page": "home",
+      "flags": "discovery-onboarding",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-onboarding-light-normal.png",
+      "sha256": "009bbf878c4cc56a64b59a20ff8ffaf5e128d39aecc331bcfe7ccbaaec8acf79"
+    },
+    {
+      "surface": "home-error",
+      "page": "home",
+      "flags": "discovery-error",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-error-dark-normal.png",
+      "sha256": "192f2bf4f077dd3686454843a3da9d1568539e7427abe34023c07db62db14baa"
+    },
+    {
+      "surface": "home-error",
+      "page": "home",
+      "flags": "discovery-error",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-error-light-normal.png",
+      "sha256": "1e0487eaa3dfb34ba13903b81d9118fe120f7760733ab55c3fe641c98a21a8a5"
+    },
+    {
+      "surface": "home-unmatched",
+      "page": "home",
+      "flags": "discovery-unmatched",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-unmatched-dark-normal.png",
+      "sha256": "f722676b29708e54cfa6b5c63a594775a99ff330bc9fefec33d43a9d02afca58"
+    },
+    {
+      "surface": "home-unmatched",
+      "page": "home",
+      "flags": "discovery-unmatched",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-unmatched-light-normal.png",
+      "sha256": "53639e9dc625e84eb22abf057e50ccf1c15b0f03eb379d6a8e20d0557b9816ad"
+    },
+    {
+      "surface": "home-menu",
+      "page": "home",
+      "flags": "discovery-menu",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-menu-dark-normal.png",
+      "sha256": "affff0ed12ff4ce2b81c23f90a3efde94d7a249415ecb5a1c9c33bb925cd972e"
+    },
+    {
+      "surface": "home-menu",
+      "page": "home",
+      "flags": "discovery-menu",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-home-menu-light-normal.png",
+      "sha256": "e438a01f769aea46e8970e10daf0c8a5c32fd08bd34fdd00f175c24c9a903996"
+    },
+    {
+      "surface": "shortcuts",
+      "page": "home",
+      "flags": "shortcuts",
+      "theme": "dark",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-shortcuts-dark-normal.png",
+      "sha256": "7b5d0cb183e1a5ce59a00fbe02362b06a5e4329b280824083f70932d51bb8f12"
+    },
+    {
+      "surface": "shortcuts",
+      "page": "home",
+      "flags": "shortcuts",
+      "theme": "light",
+      "size": "normal",
+      "dimensions": "1440x900",
+      "filename": "before-shortcuts-light-normal.png",
+      "sha256": "0f319c5a79bf56c28bfe67acc2b6b9c57349f55cf6271a992e6c28d429b6333a"
+    }
+  ]
+}

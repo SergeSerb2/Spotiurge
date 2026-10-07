@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Spotiurge mark: a smoked glass tile with a VU-amber surge S. The same
+       geometry is rasterised at runtime by util::app_icon_rgba. -->
+  <defs>
+    <linearGradient id="glass" x1="0" y1="4" x2="0" y2="124" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#262c4a"/><stop offset="1" stop-color="#0a0c16"/></linearGradient>
+    <radialGradient id="room" cx="64" cy="70" r="58" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff9228" stop-opacity="0.22"/><stop offset="0.5" stop-color="#ff9228" stop-opacity="0.055"/><stop offset="1" stop-color="#ff9228" stop-opacity="0"/></radialGradient>
+    <linearGradient id="sheen" x1="0" y1="4" x2="0" y2="54" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffffff" stop-opacity="0.07"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="rim" x1="0" y1="4" x2="0" y2="124" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ebf0ff" stop-opacity="0.55"/><stop offset="0.5" stop-color="#ebf0ff" stop-opacity="0"/><stop offset="0.5" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity="0.5"/></linearGradient>
+    <linearGradient id="amber" x1="0" y1="22" x2="0" y2="106" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffd680"/><stop offset="1" stop-color="#ff9228"/></linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+    <clipPath id="tile"><rect x="4" y="4" width="120" height="120" rx="27"/></clipPath>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="27" fill="url(#glass)"/>
+  <rect x="4" y="4" width="120" height="120" rx="27" fill="url(#room)"/>
+  <rect x="4" y="4" width="120" height="120" rx="27" fill="url(#sheen)"/>
+  <g transform="translate(0 64) skewX(-6.84) translate(0 -64)">
+    <g clip-path="url(#tile)"><path d="M78.72 38.5 A17 17 0 1 0 64 64 A17 17 0 1 1 49.28 89.5" fill="none" stroke="#ff9228" stroke-opacity="0.35" stroke-width="15" stroke-linecap="round" filter="url(#glow)"/></g>
+    <path d="M78.72 38.5 A17 17 0 1 0 64 64 A17 17 0 1 1 49.28 89.5" fill="none" stroke="url(#amber)" stroke-width="15" stroke-linecap="round"/>
+    <path transform="translate(-1.6 -2.1)" d="M78.72 38.5 A17 17 0 1 0 64 64 A17 17 0 1 1 49.28 89.5" fill="none" stroke="#fff4d6" stroke-opacity="0.3" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <rect x="4.6" y="4.6" width="118.8" height="118.8" rx="26.4" fill="none" stroke="url(#rim)" stroke-width="1.2"/>
+</svg>

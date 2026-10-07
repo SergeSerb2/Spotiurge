@@ -1945,19 +1945,16 @@ impl App {
                             self.settings_dirty = true;
                             self.discovery.replica.cached_picks = picks.clone();
                             let suggestions = picks.iter().map(|p| p.suggestion.clone()).collect();
-                            let history = crate::discovery::Value::History {
-                                prompt,
-                                suggestions,
-                            };
-                            let key = format!("history:{:032x}", rand::random::<u128>());
-                            if let Err(error) = self.discovery.replica.edit(key, Some(history)) {
-                                self.discovery.status = error;
-                            } else {
-                                self.discovery.dirty = true;
-                                self.backend
-                                    .send(Command::SaveDiscovery(self.discovery.replica.clone()));
-                                self.discovery.status.clear();
+                            match self.discovery.replica.record_history(prompt, suggestions) {
+                                Ok(()) => {
+                                    self.discovery.dirty = true;
+                                    self.discovery.status.clear();
+                                }
+                                Err(error) => self.discovery.status = error,
                             }
+                            // A full document can reject history; the picks still persist.
+                            self.backend
+                                .send(Command::SaveDiscovery(self.discovery.replica.clone()));
                             self.discovery.picks = picks;
                         }
                         Err(error) => {
@@ -2142,6 +2139,7 @@ impl App {
                                 self.toast(
                                     // Translators: {version} is a version number such as 1.4.0.
                                     gettext(self.locale, "Spotifast {version} is available")
+                                        .replace("Spotifast", "Spotiurge")
                                         .replace("{version}", &notice.version.to_string()),
                                 );
                             }
@@ -2158,7 +2156,10 @@ impl App {
                         Ok(None) => {
                             self.update = None;
                             if manual {
-                                self.toast(gettext(self.locale, "Spotifast is up to date"));
+                                self.toast(
+                                    gettext(self.locale, "Spotifast is up to date")
+                                        .replace("Spotifast", "Spotiurge"),
+                                );
                             } else {
                                 log::debug!("this is the newest release");
                             }
@@ -6494,10 +6495,13 @@ impl App {
             }
             _ => {
                 self.pending_link = None;
-                self.toast_error(gettext(
-                    self.locale,
-                    "Spotifast cannot open this kind of Spotify link",
-                ));
+                self.toast_error(
+                    gettext(
+                        self.locale,
+                        "Spotifast cannot open this kind of Spotify link",
+                    )
+                    .replace("Spotifast", "Spotiurge"),
+                );
             }
         }
     }
@@ -10215,7 +10219,12 @@ impl App {
                 repeat: now.repeat,
             }
         });
-        crate::notch::sync_state(enabled, is_background, track_info.as_ref());
+        crate::notch::sync_state(
+            enabled,
+            is_background,
+            self.settings.reduce_motion || crate::ui::motion::system_prefers_reduced(_ctx),
+            track_info.as_ref(),
+        );
         // Only schedule a fast repaint while the card is actively expanded or
         // animating. Hover and state-change callbacks already call notch::wake()
         // which triggers a repaint via the waker, so idle frames are not needed.
@@ -10279,6 +10288,10 @@ impl App {
         if self.settings.winamp_window && needs_sign_in && !self.switch_intent {
             self.actions.push(Action::ToggleWinampWindow);
         }
+        crate::ui::motion::set_reduced(
+            ctx,
+            self.settings.reduce_motion || crate::ui::motion::system_prefers_reduced(ctx),
+        );
         if self.settings.winamp_window {
             crate::ui::winamp::show(self, ui);
         } else {
@@ -15934,6 +15947,57 @@ mod tests {
     }
 
     #[test]
+    fn full_discovery_storage_still_saves_the_latest_picks() {
+        let mut app = test_app("discovery-full-history");
+        app.discovery.ready = true;
+        app.discovery
+            .replica
+            .edit(
+                "taste".into(),
+                Some(crate::discovery::Value::Taste {
+                    text: "saved taste".into(),
+                }),
+            )
+            .unwrap();
+        crate::discovery::tests::fill_with_mixes(&mut app.discovery.replica.document, 0);
+        let document = app.discovery.replica.document.clone();
+        app.discovery.request = 3;
+        app.discovery.busy = true;
+        app.discovery.in_flight_request = Some(3);
+        let pick = crate::discovery::Pick {
+            suggestion: crate::discovery::Suggestion {
+                title: "Latest pick".into(),
+                artist: "Fixture artist".into(),
+                reason: "fits".into(),
+            },
+            track: None,
+            checked: false,
+        };
+        app.handle_backend_events(vec![Event::DiscoveryRecommended {
+            request: 3,
+            prompt: "saved taste".into(),
+            result: Ok(crate::discovery::ResolvedDiscovery {
+                picks: vec![pick.clone()],
+                outcome: crate::discovery::CatalogueOutcome::Complete,
+            }),
+        }]);
+        assert_eq!(
+            app.discovery.status,
+            "Discovery storage is full. Export and remove old mixes or history."
+        );
+        assert_eq!(app.discovery.picks, vec![pick.clone()]);
+        assert_eq!(app.discovery.replica.document, document);
+        assert!(app.settings.discovery.refreshed_at.is_some());
+        assert!(app.settings_dirty);
+        app.backend.shutdown();
+        let saved =
+            crate::discovery::Replica::load(&app.dirs.state.join("spotiurge-discovery.json"))
+                .unwrap();
+        assert_eq!(saved.cached_picks, vec![pick]);
+        assert_eq!(saved.document, document);
+    }
+
+    #[test]
     fn discovery_retry_respects_cooldown_and_never_writes_ai_history() {
         let mut app = test_app("discovery-retry");
         app.backend.set_offline(true);
@@ -19038,7 +19102,7 @@ mod tests {
         assert_eq!(app.update, None);
         assert_eq!(
             app.toasts.last().map(|toast| toast.message.as_str()),
-            Some("Spotifast is up to date")
+            Some("Spotiurge is up to date")
         );
 
         app.toasts.clear();
@@ -19087,7 +19151,7 @@ mod tests {
         );
         assert_eq!(
             app.toasts.last().map(|toast| toast.message.as_str()),
-            Some("Spotifast 1.2.3 is available")
+            Some("Spotiurge 1.2.3 is available")
         );
     }
 

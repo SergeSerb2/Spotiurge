@@ -37,9 +37,11 @@ so whitespace or Unicode escaping cannot make a valid client document fail.
 Client snapshots
 also carry up to 12 local catalogue matches and are limited to 2 MiB. Unknown
 document schemas and malformed clocks fail closed. Record deletions are retained
-as tombstones. There is no automatic history purge or tombstone compaction yet;
+as tombstones. Clients keep at most ten live AI history entries by reusing the
+oldest `history:` key after ten exist, and tombstone older live entries in the
+same write; the server schema is unchanged. There is no tombstone compaction;
 storage limits produce an error and keep prior state. Before routine use, add
-export/deletion controls and a retention policy that handles offline devices.
+export/deletion controls and a retention policy for mixes and feedback.
 
 For an export, use an authenticated GET through a tool that reads its token from
 protected storage, save the response to an owner-only file, and back up the volume

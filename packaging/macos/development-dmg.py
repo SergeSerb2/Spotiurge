@@ -26,13 +26,20 @@ with tempfile.TemporaryDirectory(prefix="spotiurge-dmg-", dir=args.output.parent
     ], check=True)
     (stage / "Applications").symlink_to("/Applications")
     shutil.copy2(root / "LICENSE", stage / "LICENSE.txt")
+    signing_note = (
+        "This preview is signed with a Developer ID Application certificate.\n"
+        "It is NOT notarized and may be blocked by macOS Gatekeeper.\n"
+        "Apple notarization is still needed for normal download distribution.\n"
+        if args.identity.startswith("Developer ID Application:") else
+        "This preview is signed with an Apple Development certificate.\n"
+        "It is NOT notarized and may be blocked by macOS Gatekeeper.\n"
+        "A Developer ID certificate and notarization are still needed for distribution.\n"
+    )
     (stage / "Read me.txt").write_text(
         "Spotiurge development preview\n\n"
         "Copy Spotiurge.app to Applications, then sign in to Spotify.\n"
         "Spotify Premium is required for independent playback.\n\n"
-        "This preview is signed with an Apple Development certificate.\n"
-        "It is NOT notarized and may be blocked by macOS Gatekeeper.\n"
-        "A Developer ID certificate and notarization are still needed for distribution.\n"
+        + signing_note +
         "No Spotify grants, private cloud pairing token, or AI credentials are included.\n"
         "Pair private sync separately using the documented protected credential store.\n"
         "MilkDrop is omitted; ordinary playback and native visualizers remain available.\n\n"

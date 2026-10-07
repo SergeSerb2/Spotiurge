@@ -266,6 +266,9 @@ pub struct Settings {
     pub accent_from_art: bool,
     /// A spectrum or waveform of the playing song behind the player bar.
     pub player_bar_vis: PlayerBarVis,
+    /// Show interface changes at once instead of animating them. macOS's
+    /// own Reduce motion setting has the same effect while it is on.
+    pub reduce_motion: bool,
     /// Last local volume, 0..=65535.
     pub volume: u16,
     /// Whether the library sidebar is visible.
@@ -435,6 +438,7 @@ impl Default for Settings {
             home: HomeSettings::default(),
             accent_from_art: true,
             player_bar_vis: PlayerBarVis::Off,
+            reduce_motion: false,
             volume: (u16::MAX as u32 * 70 / 100) as u16,
             sidebar_visible: true,
             art_expanded: false,
@@ -1168,6 +1172,19 @@ mod tests {
         let json = serde_json::to_string(&settings).unwrap();
         let restored: Settings = serde_json::from_str(&json).unwrap();
         assert!(restored.sidebar_grid);
+    }
+
+    #[test]
+    fn motion_is_on_for_older_settings_and_reducing_it_round_trips() {
+        let old: Settings = serde_json::from_str("{}").unwrap();
+        assert!(!old.reduce_motion);
+        let settings = Settings {
+            reduce_motion: true,
+            ..Settings::default()
+        };
+        let json = serde_json::to_string(&settings).unwrap();
+        let restored: Settings = serde_json::from_str(&json).unwrap();
+        assert!(restored.reduce_motion);
     }
 
     #[test]

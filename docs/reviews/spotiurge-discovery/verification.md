@@ -2,6 +2,9 @@
 
 Recorded October 6, 2026. Initial live proofs below used preview `5ba0ea9`;
 the redesign and Luna-only broker verification are recorded separately.
+This is a historical record. The current whole-app glass package and later
+iPhone probe results are in the [glass verification](../spotiurge-glass/verification.md)
+and [playback gate](../spotiurge-ios/playback-gate.md).
 Read this separately from the synthetic [visual comparison](index.html).
 The active scope is desktop discovery; Serge deferred iOS while remote.
 

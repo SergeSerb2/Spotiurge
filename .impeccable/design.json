@@ -1,667 +1,1181 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-06T21:53:17.462109Z",
-  "title": "Design System: Spotiurge native desktop",
+  "generatedAt": "2026-10-07T06:19:40Z",
+  "title": "Design System: Spotiurge",
   "extensions": {
     "colorMeta": {
       "dark-window": {
         "role": "neutral",
-        "displayName": "Dark Window",
+        "displayName": "Control Room Night",
+        "canonical": "oklch(15.9% 0.0111 268.0)",
         "tonalRamp": [
-          "oklch(15% 0.00699 258.37)",
-          "oklch(25% 0.00699 258.37)",
-          "oklch(35% 0.00699 258.37)",
-          "oklch(45% 0.00699 258.37)",
-          "oklch(55% 0.00699 258.37)",
-          "oklch(65% 0.00699 258.37)",
-          "oklch(80% 0.00699 258.37)",
-          "oklch(95% 0.00699 258.37)"
+          "oklch(15% 0.0111 268.0)",
+          "oklch(25% 0.0111 268.0)",
+          "oklch(35% 0.0111 268.0)",
+          "oklch(45% 0.0111 268.0)",
+          "oklch(55% 0.0111 268.0)",
+          "oklch(65% 0.0111 268.0)",
+          "oklch(80% 0.0111 268.0)",
+          "oklch(95% 0.0111 268.0)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "dark-panel": {
         "role": "neutral",
-        "displayName": "Dark Panel",
+        "displayName": "Smoked Pane",
+        "canonical": "oklch(20.5% 0.0167 268.8)",
         "tonalRamp": [
-          "oklch(15% 0.00920 255.62)",
-          "oklch(25% 0.00920 255.62)",
-          "oklch(35% 0.00920 255.62)",
-          "oklch(45% 0.00920 255.62)",
-          "oklch(55% 0.00920 255.62)",
-          "oklch(65% 0.00920 255.62)",
-          "oklch(80% 0.00920 255.62)",
-          "oklch(95% 0.00920 255.62)"
+          "oklch(15% 0.0167 268.8)",
+          "oklch(25% 0.0167 268.8)",
+          "oklch(35% 0.0167 268.8)",
+          "oklch(45% 0.0167 268.8)",
+          "oklch(55% 0.0167 268.8)",
+          "oklch(65% 0.0167 268.8)",
+          "oklch(80% 0.0167 268.8)",
+          "oklch(95% 0.0167 268.8)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "dark-surface": {
         "role": "neutral",
-        "displayName": "Dark Surface",
+        "displayName": "Smoked Surface",
+        "canonical": "oklch(24.4% 0.0200 267.8)",
         "tonalRamp": [
-          "oklch(15% 0.01288 258.37)",
-          "oklch(25% 0.01288 258.37)",
-          "oklch(35% 0.01288 258.37)",
-          "oklch(45% 0.01288 258.37)",
-          "oklch(55% 0.01288 258.37)",
-          "oklch(65% 0.01288 258.37)",
-          "oklch(80% 0.01288 258.37)",
-          "oklch(95% 0.01288 258.37)"
+          "oklch(15% 0.0200 267.8)",
+          "oklch(25% 0.0200 267.8)",
+          "oklch(35% 0.0200 267.8)",
+          "oklch(45% 0.0200 267.8)",
+          "oklch(55% 0.0200 267.8)",
+          "oklch(65% 0.0200 267.8)",
+          "oklch(80% 0.0200 267.8)",
+          "oklch(95% 0.0200 267.8)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "dark-surface-hover": {
         "role": "neutral",
-        "displayName": "Dark Surface Hover",
+        "displayName": "Smoked Surface Hover",
+        "canonical": "oklch(28.6% 0.0250 268.4)",
         "tonalRamp": [
-          "oklch(15% 0.01631 259.79)",
-          "oklch(25% 0.01631 259.79)",
-          "oklch(35% 0.01631 259.79)",
-          "oklch(45% 0.01631 259.79)",
-          "oklch(55% 0.01631 259.79)",
-          "oklch(65% 0.01631 259.79)",
-          "oklch(80% 0.01631 259.79)",
-          "oklch(95% 0.01631 259.79)"
+          "oklch(15% 0.0250 268.4)",
+          "oklch(25% 0.0250 268.4)",
+          "oklch(35% 0.0250 268.4)",
+          "oklch(45% 0.0250 268.4)",
+          "oklch(55% 0.0250 268.4)",
+          "oklch(65% 0.0250 268.4)",
+          "oklch(80% 0.0250 268.4)",
+          "oklch(95% 0.0250 268.4)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "dark-surface-active": {
         "role": "neutral",
-        "displayName": "Dark Surface Active",
+        "displayName": "Smoked Surface Pressed",
+        "canonical": "oklch(32.6% 0.0297 268.7)",
         "tonalRamp": [
-          "oklch(15% 0.01960 260.65)",
-          "oklch(25% 0.01960 260.65)",
-          "oklch(35% 0.01960 260.65)",
-          "oklch(45% 0.01960 260.65)",
-          "oklch(55% 0.01960 260.65)",
-          "oklch(65% 0.01960 260.65)",
-          "oklch(80% 0.01960 260.65)",
-          "oklch(95% 0.01960 260.65)"
+          "oklch(15% 0.0297 268.7)",
+          "oklch(25% 0.0297 268.7)",
+          "oklch(35% 0.0297 268.7)",
+          "oklch(45% 0.0297 268.7)",
+          "oklch(55% 0.0297 268.7)",
+          "oklch(65% 0.0297 268.7)",
+          "oklch(80% 0.0297 268.7)",
+          "oklch(95% 0.0297 268.7)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "dark-outline": {
         "role": "neutral",
-        "displayName": "Dark Outline",
+        "displayName": "Night Outline",
+        "canonical": "oklch(30.6% 0.0245 268.5)",
         "tonalRamp": [
-          "oklch(15% 0.01670 255.65)",
-          "oklch(25% 0.01670 255.65)",
-          "oklch(35% 0.01670 255.65)",
-          "oklch(45% 0.01670 255.65)",
-          "oklch(55% 0.01670 255.65)",
-          "oklch(65% 0.01670 255.65)",
-          "oklch(80% 0.01670 255.65)",
-          "oklch(95% 0.01670 255.65)"
+          "oklch(15% 0.0245 268.5)",
+          "oklch(25% 0.0245 268.5)",
+          "oklch(35% 0.0245 268.5)",
+          "oklch(45% 0.0245 268.5)",
+          "oklch(55% 0.0245 268.5)",
+          "oklch(65% 0.0245 268.5)",
+          "oklch(80% 0.0245 268.5)",
+          "oklch(95% 0.0245 268.5)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "dark-rim": {
+        "role": "neutral",
+        "displayName": "Night Rim",
+        "canonical": "oklch(35.3% 0.0216 270.7)",
+        "tonalRamp": [
+          "oklch(15% 0.0216 270.7)",
+          "oklch(25% 0.0216 270.7)",
+          "oklch(35% 0.0216 270.7)",
+          "oklch(45% 0.0216 270.7)",
+          "oklch(55% 0.0216 270.7)",
+          "oklch(65% 0.0216 270.7)",
+          "oklch(80% 0.0216 270.7)",
+          "oklch(95% 0.0216 270.7)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "dark-text": {
         "role": "neutral",
-        "displayName": "Dark Text",
+        "displayName": "Warm Paper Text",
+        "canonical": "oklch(96.1% 0.0041 91.4)",
         "tonalRamp": [
-          "oklch(15% 0.00343 247.86)",
-          "oklch(25% 0.00343 247.86)",
-          "oklch(35% 0.00343 247.86)",
-          "oklch(45% 0.00343 247.86)",
-          "oklch(55% 0.00343 247.86)",
-          "oklch(65% 0.00343 247.86)",
-          "oklch(80% 0.00343 247.86)",
-          "oklch(95% 0.00343 247.86)"
+          "oklch(15% 0.0041 91.4)",
+          "oklch(25% 0.0041 91.4)",
+          "oklch(35% 0.0041 91.4)",
+          "oklch(45% 0.0041 91.4)",
+          "oklch(55% 0.0041 91.4)",
+          "oklch(65% 0.0041 91.4)",
+          "oklch(80% 0.0041 91.4)",
+          "oklch(95% 0.0041 91.4)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "dark-secondary": {
         "role": "neutral",
-        "displayName": "Dark Secondary",
+        "displayName": "Slate Secondary",
+        "canonical": "oklch(74.7% 0.0212 267.2)",
         "tonalRamp": [
-          "oklch(15% 0.01814 256.30)",
-          "oklch(25% 0.01814 256.30)",
-          "oklch(35% 0.01814 256.30)",
-          "oklch(45% 0.01814 256.30)",
-          "oklch(55% 0.01814 256.30)",
-          "oklch(65% 0.01814 256.30)",
-          "oklch(80% 0.01814 256.30)",
-          "oklch(95% 0.01814 256.30)"
+          "oklch(15% 0.0212 267.2)",
+          "oklch(25% 0.0212 267.2)",
+          "oklch(35% 0.0212 267.2)",
+          "oklch(45% 0.0212 267.2)",
+          "oklch(55% 0.0212 267.2)",
+          "oklch(65% 0.0212 267.2)",
+          "oklch(80% 0.0212 267.2)",
+          "oklch(95% 0.0212 267.2)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "dark-dim": {
         "role": "neutral",
-        "displayName": "Dark Dim",
+        "displayName": "Slate Dim",
+        "canonical": "oklch(56.9% 0.0261 266.7)",
         "tonalRamp": [
-          "oklch(15% 0.02283 257.50)",
-          "oklch(25% 0.02283 257.50)",
-          "oklch(35% 0.02283 257.50)",
-          "oklch(45% 0.02283 257.50)",
-          "oklch(55% 0.02283 257.50)",
-          "oklch(65% 0.02283 257.50)",
-          "oklch(80% 0.02283 257.50)",
-          "oklch(95% 0.02283 257.50)"
+          "oklch(15% 0.0261 266.7)",
+          "oklch(25% 0.0261 266.7)",
+          "oklch(35% 0.0261 266.7)",
+          "oklch(45% 0.0261 266.7)",
+          "oklch(55% 0.0261 266.7)",
+          "oklch(65% 0.0261 266.7)",
+          "oklch(80% 0.0261 266.7)",
+          "oklch(95% 0.0261 266.7)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
-      "dark-accent": {
+      "dark-lamp": {
         "role": "primary",
-        "displayName": "Dark Accent",
+        "displayName": "VU Amber Lamp",
+        "canonical": "oklch(82.4% 0.1486 73.3)",
         "tonalRamp": [
-          "oklch(15% 0.21236 148.67)",
-          "oklch(25% 0.21236 148.67)",
-          "oklch(35% 0.21236 148.67)",
-          "oklch(45% 0.21236 148.67)",
-          "oklch(55% 0.21236 148.67)",
-          "oklch(65% 0.21236 148.67)",
-          "oklch(80% 0.21236 148.67)",
-          "oklch(95% 0.21236 148.67)"
+          "oklch(15% 0.1486 73.3)",
+          "oklch(25% 0.1486 73.3)",
+          "oklch(35% 0.1486 73.3)",
+          "oklch(45% 0.1486 73.3)",
+          "oklch(55% 0.1486 73.3)",
+          "oklch(65% 0.1486 73.3)",
+          "oklch(80% 0.1486 73.3)",
+          "oklch(95% 0.1486 73.3)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
-      "dark-accent-hover": {
+      "dark-lamp-hover": {
         "role": "primary",
-        "displayName": "Dark Accent Hover",
+        "displayName": "VU Amber Lamp, Lifted",
+        "canonical": "oklch(86.2% 0.1226 77.0)",
         "tonalRamp": [
-          "oklch(15% 0.20438 150.48)",
-          "oklch(25% 0.20438 150.48)",
-          "oklch(35% 0.20438 150.48)",
-          "oklch(45% 0.20438 150.48)",
-          "oklch(55% 0.20438 150.48)",
-          "oklch(65% 0.20438 150.48)",
-          "oklch(80% 0.20438 150.48)",
-          "oklch(95% 0.20438 150.48)"
+          "oklch(15% 0.1226 77.0)",
+          "oklch(25% 0.1226 77.0)",
+          "oklch(35% 0.1226 77.0)",
+          "oklch(45% 0.1226 77.0)",
+          "oklch(55% 0.1226 77.0)",
+          "oklch(65% 0.1226 77.0)",
+          "oklch(80% 0.1226 77.0)",
+          "oklch(95% 0.1226 77.0)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
-      "dark-on-accent": {
+      "dark-lamp-text": {
+        "role": "primary",
+        "displayName": "VU Amber Lamp Text",
+        "canonical": "oklch(82.4% 0.1486 73.3)",
+        "tonalRamp": [
+          "oklch(15% 0.1486 73.3)",
+          "oklch(25% 0.1486 73.3)",
+          "oklch(35% 0.1486 73.3)",
+          "oklch(45% 0.1486 73.3)",
+          "oklch(55% 0.1486 73.3)",
+          "oklch(65% 0.1486 73.3)",
+          "oklch(80% 0.1486 73.3)",
+          "oklch(95% 0.1486 73.3)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale.",
+        "derivation": "Palette::accent_text() on dark: ground = surface_active toward white 0.1 (#434857); the accent already reads 5.19:1, so lamp text equals dark-lamp. src/theme.rs:92-108."
+      },
+      "dark-on-lamp": {
         "role": "neutral",
-        "displayName": "Dark On Accent",
+        "displayName": "Ink on Amber",
+        "canonical": "oklch(19.8% 0.0353 74.5)",
         "tonalRamp": [
-          "oklch(15% 0.01934 157.43)",
-          "oklch(25% 0.01934 157.43)",
-          "oklch(35% 0.01934 157.43)",
-          "oklch(45% 0.01934 157.43)",
-          "oklch(55% 0.01934 157.43)",
-          "oklch(65% 0.01934 157.43)",
-          "oklch(80% 0.01934 157.43)",
-          "oklch(95% 0.01934 157.43)"
+          "oklch(15% 0.0353 74.5)",
+          "oklch(25% 0.0353 74.5)",
+          "oklch(35% 0.0353 74.5)",
+          "oklch(45% 0.0353 74.5)",
+          "oklch(55% 0.0353 74.5)",
+          "oklch(65% 0.0353 74.5)",
+          "oklch(80% 0.0353 74.5)",
+          "oklch(95% 0.0353 74.5)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "dark-danger": {
+        "role": "error",
+        "displayName": "Night Danger",
+        "canonical": "oklch(71.8% 0.1760 20.9)",
+        "tonalRamp": [
+          "oklch(15% 0.1760 20.9)",
+          "oklch(25% 0.1760 20.9)",
+          "oklch(35% 0.1760 20.9)",
+          "oklch(45% 0.1760 20.9)",
+          "oklch(55% 0.1760 20.9)",
+          "oklch(65% 0.1760 20.9)",
+          "oklch(80% 0.1760 20.9)",
+          "oklch(95% 0.1760 20.9)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "dark-warning": {
         "role": "neutral",
-        "displayName": "Dark Warning",
+        "displayName": "Night Warning",
+        "canonical": "oklch(87.6% 0.1343 91.8)",
         "tonalRamp": [
-          "oklch(15% 0.12782 76.81)",
-          "oklch(25% 0.12782 76.81)",
-          "oklch(35% 0.12782 76.81)",
-          "oklch(45% 0.12782 76.81)",
-          "oklch(55% 0.12782 76.81)",
-          "oklch(65% 0.12782 76.81)",
-          "oklch(80% 0.12782 76.81)",
-          "oklch(95% 0.12782 76.81)"
+          "oklch(15% 0.1343 91.8)",
+          "oklch(25% 0.1343 91.8)",
+          "oklch(35% 0.1343 91.8)",
+          "oklch(45% 0.1343 91.8)",
+          "oklch(55% 0.1343 91.8)",
+          "oklch(65% 0.1343 91.8)",
+          "oklch(80% 0.1343 91.8)",
+          "oklch(95% 0.1343 91.8)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "dark-overlay": {
         "role": "neutral",
-        "displayName": "Dark Overlay",
+        "displayName": "Opaque Night Overlay",
+        "canonical": "oklch(24.5% 0.0219 269.2)",
         "tonalRamp": [
-          "oklch(15% 0.01490 256.80)",
-          "oklch(25% 0.01490 256.80)",
-          "oklch(35% 0.01490 256.80)",
-          "oklch(45% 0.01490 256.80)",
-          "oklch(55% 0.01490 256.80)",
-          "oklch(65% 0.01490 256.80)",
-          "oklch(80% 0.01490 256.80)",
-          "oklch(95% 0.01490 256.80)"
+          "oklch(15% 0.0219 269.2)",
+          "oklch(25% 0.0219 269.2)",
+          "oklch(35% 0.0219 269.2)",
+          "oklch(45% 0.0219 269.2)",
+          "oklch(55% 0.0219 269.2)",
+          "oklch(65% 0.0219 269.2)",
+          "oklch(80% 0.0219 269.2)",
+          "oklch(95% 0.0219 269.2)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "dark-shadow": {
+        "role": "neutral",
+        "displayName": "Night Shadow",
+        "canonical": "oklch(0.0% 0.0000 0.0) / 0.59",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.0)",
+          "oklch(25% 0.0000 0.0)",
+          "oklch(35% 0.0000 0.0)",
+          "oklch(45% 0.0000 0.0)",
+          "oklch(55% 0.0000 0.0)",
+          "oklch(65% 0.0000 0.0)",
+          "oklch(80% 0.0000 0.0)",
+          "oklch(95% 0.0000 0.0)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "dark-pane-glass": {
+        "role": "neutral",
+        "displayName": "Smoked Pane Glass",
+        "canonical": "oklch(20.5% 0.0167 268.8) / 0.72",
+        "tonalRamp": [
+          "oklch(15% 0.0167 268.8)",
+          "oklch(25% 0.0167 268.8)",
+          "oklch(35% 0.0167 268.8)",
+          "oklch(45% 0.0167 268.8)",
+          "oklch(55% 0.0167 268.8)",
+          "oklch(65% 0.0167 268.8)",
+          "oklch(80% 0.0167 268.8)",
+          "oklch(95% 0.0167 268.8)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "dark-console-glass": {
+        "role": "neutral",
+        "displayName": "Smoked Console Glass",
+        "canonical": "oklch(20.5% 0.0167 268.8) / 0.8",
+        "tonalRamp": [
+          "oklch(15% 0.0167 268.8)",
+          "oklch(25% 0.0167 268.8)",
+          "oklch(35% 0.0167 268.8)",
+          "oklch(45% 0.0167 268.8)",
+          "oklch(55% 0.0167 268.8)",
+          "oklch(65% 0.0167 268.8)",
+          "oklch(80% 0.0167 268.8)",
+          "oklch(95% 0.0167 268.8)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "dark-well-glass": {
+        "role": "neutral",
+        "displayName": "Smoked Well Glass",
+        "canonical": "oklch(24.4% 0.0200 267.8) / 0.55",
+        "tonalRamp": [
+          "oklch(15% 0.0200 267.8)",
+          "oklch(25% 0.0200 267.8)",
+          "oklch(35% 0.0200 267.8)",
+          "oklch(45% 0.0200 267.8)",
+          "oklch(55% 0.0200 267.8)",
+          "oklch(65% 0.0200 267.8)",
+          "oklch(80% 0.0200 267.8)",
+          "oklch(95% 0.0200 267.8)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "dark-hover-fill": {
+        "role": "neutral",
+        "displayName": "Light Through Dark Glass",
+        "canonical": "oklch(100.0% 0.0000 89.9) / 0.06",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.9)",
+          "oklch(25% 0.0000 89.9)",
+          "oklch(35% 0.0000 89.9)",
+          "oklch(45% 0.0000 89.9)",
+          "oklch(55% 0.0000 89.9)",
+          "oklch(65% 0.0000 89.9)",
+          "oklch(80% 0.0000 89.9)",
+          "oklch(95% 0.0000 89.9)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "dark-selected-fill": {
+        "role": "neutral",
+        "displayName": "Selected Light Through Dark Glass",
+        "canonical": "oklch(100.0% 0.0000 89.9) / 0.095",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.9)",
+          "oklch(25% 0.0000 89.9)",
+          "oklch(35% 0.0000 89.9)",
+          "oklch(45% 0.0000 89.9)",
+          "oklch(55% 0.0000 89.9)",
+          "oklch(65% 0.0000 89.9)",
+          "oklch(80% 0.0000 89.9)",
+          "oklch(95% 0.0000 89.9)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "light-window": {
         "role": "neutral",
-        "displayName": "Light Window",
+        "displayName": "Pale Cool Room",
+        "canonical": "oklch(94.0% 0.0083 271.3)",
         "tonalRamp": [
-          "oklch(15% 0.00286 264.54)",
-          "oklch(25% 0.00286 264.54)",
-          "oklch(35% 0.00286 264.54)",
-          "oklch(45% 0.00286 264.54)",
-          "oklch(55% 0.00286 264.54)",
-          "oklch(65% 0.00286 264.54)",
-          "oklch(80% 0.00286 264.54)",
-          "oklch(95% 0.00286 264.54)"
+          "oklch(15% 0.0083 271.3)",
+          "oklch(25% 0.0083 271.3)",
+          "oklch(35% 0.0083 271.3)",
+          "oklch(45% 0.0083 271.3)",
+          "oklch(55% 0.0083 271.3)",
+          "oklch(65% 0.0083 271.3)",
+          "oklch(80% 0.0083 271.3)",
+          "oklch(95% 0.0083 271.3)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "light-panel": {
         "role": "neutral",
-        "displayName": "Light Panel",
+        "displayName": "Milky Pane",
+        "canonical": "oklch(99.2% 0.0026 286.4)",
         "tonalRamp": [
-          "oklch(15% 0.00000 0.00)",
-          "oklch(25% 0.00000 0.00)",
-          "oklch(35% 0.00000 0.00)",
-          "oklch(45% 0.00000 0.00)",
-          "oklch(55% 0.00000 0.00)",
-          "oklch(65% 0.00000 0.00)",
-          "oklch(80% 0.00000 0.00)",
-          "oklch(95% 0.00000 0.00)"
+          "oklch(15% 0.0026 286.4)",
+          "oklch(25% 0.0026 286.4)",
+          "oklch(35% 0.0026 286.4)",
+          "oklch(45% 0.0026 286.4)",
+          "oklch(55% 0.0026 286.4)",
+          "oklch(65% 0.0026 286.4)",
+          "oklch(80% 0.0026 286.4)",
+          "oklch(95% 0.0026 286.4)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "light-surface": {
         "role": "neutral",
-        "displayName": "Light Surface",
+        "displayName": "Milky Surface",
+        "canonical": "oklch(95.5% 0.0070 268.5)",
         "tonalRamp": [
-          "oklch(15% 0.00456 258.32)",
-          "oklch(25% 0.00456 258.32)",
-          "oklch(35% 0.00456 258.32)",
-          "oklch(45% 0.00456 258.32)",
-          "oklch(55% 0.00456 258.32)",
-          "oklch(65% 0.00456 258.32)",
-          "oklch(80% 0.00456 258.32)",
-          "oklch(95% 0.00456 258.32)"
+          "oklch(15% 0.0070 268.5)",
+          "oklch(25% 0.0070 268.5)",
+          "oklch(35% 0.0070 268.5)",
+          "oklch(45% 0.0070 268.5)",
+          "oklch(55% 0.0070 268.5)",
+          "oklch(65% 0.0070 268.5)",
+          "oklch(80% 0.0070 268.5)",
+          "oklch(95% 0.0070 268.5)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "light-surface-hover": {
         "role": "neutral",
-        "displayName": "Light Surface Hover",
+        "displayName": "Milky Surface Hover",
+        "canonical": "oklch(92.5% 0.0113 269.5)",
         "tonalRamp": [
-          "oklch(15% 0.00750 260.73)",
-          "oklch(25% 0.00750 260.73)",
-          "oklch(35% 0.00750 260.73)",
-          "oklch(45% 0.00750 260.73)",
-          "oklch(55% 0.00750 260.73)",
-          "oklch(65% 0.00750 260.73)",
-          "oklch(80% 0.00750 260.73)",
-          "oklch(95% 0.00750 260.73)"
+          "oklch(15% 0.0113 269.5)",
+          "oklch(25% 0.0113 269.5)",
+          "oklch(35% 0.0113 269.5)",
+          "oklch(45% 0.0113 269.5)",
+          "oklch(55% 0.0113 269.5)",
+          "oklch(65% 0.0113 269.5)",
+          "oklch(80% 0.0113 269.5)",
+          "oklch(95% 0.0113 269.5)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "light-surface-active": {
         "role": "neutral",
-        "displayName": "Light Surface Active",
+        "displayName": "Milky Surface Pressed",
+        "canonical": "oklch(88.8% 0.0144 268.5)",
         "tonalRamp": [
-          "oklch(15% 0.00929 258.34)",
-          "oklch(25% 0.00929 258.34)",
-          "oklch(35% 0.00929 258.34)",
-          "oklch(45% 0.00929 258.34)",
-          "oklch(55% 0.00929 258.34)",
-          "oklch(65% 0.00929 258.34)",
-          "oklch(80% 0.00929 258.34)",
-          "oklch(95% 0.00929 258.34)"
+          "oklch(15% 0.0144 268.5)",
+          "oklch(25% 0.0144 268.5)",
+          "oklch(35% 0.0144 268.5)",
+          "oklch(45% 0.0144 268.5)",
+          "oklch(55% 0.0144 268.5)",
+          "oklch(65% 0.0144 268.5)",
+          "oklch(80% 0.0144 268.5)",
+          "oklch(95% 0.0144 268.5)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "light-outline": {
         "role": "neutral",
-        "displayName": "Light Outline",
+        "displayName": "Daylight Outline and Rim",
+        "canonical": "oklch(88.5% 0.0144 268.5)",
         "tonalRamp": [
-          "oklch(15% 0.00807 253.86)",
-          "oklch(25% 0.00807 253.86)",
-          "oklch(35% 0.00807 253.86)",
-          "oklch(45% 0.00807 253.86)",
-          "oklch(55% 0.00807 253.86)",
-          "oklch(65% 0.00807 253.86)",
-          "oklch(80% 0.00807 253.86)",
-          "oklch(95% 0.00807 253.86)"
+          "oklch(15% 0.0144 268.5)",
+          "oklch(25% 0.0144 268.5)",
+          "oklch(35% 0.0144 268.5)",
+          "oklch(45% 0.0144 268.5)",
+          "oklch(55% 0.0144 268.5)",
+          "oklch(65% 0.0144 268.5)",
+          "oklch(80% 0.0144 268.5)",
+          "oklch(95% 0.0144 268.5)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "light-text": {
         "role": "neutral",
-        "displayName": "Light Text",
+        "displayName": "Ink Text",
+        "canonical": "oklch(20.5% 0.0104 268.2)",
         "tonalRamp": [
-          "oklch(15% 0.00759 248.20)",
-          "oklch(25% 0.00759 248.20)",
-          "oklch(35% 0.00759 248.20)",
-          "oklch(45% 0.00759 248.20)",
-          "oklch(55% 0.00759 248.20)",
-          "oklch(65% 0.00759 248.20)",
-          "oklch(80% 0.00759 248.20)",
-          "oklch(95% 0.00759 248.20)"
+          "oklch(15% 0.0104 268.2)",
+          "oklch(25% 0.0104 268.2)",
+          "oklch(35% 0.0104 268.2)",
+          "oklch(45% 0.0104 268.2)",
+          "oklch(55% 0.0104 268.2)",
+          "oklch(65% 0.0104 268.2)",
+          "oklch(80% 0.0104 268.2)",
+          "oklch(95% 0.0104 268.2)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "light-secondary": {
         "role": "neutral",
-        "displayName": "Light Secondary",
+        "displayName": "Graphite Secondary",
+        "canonical": "oklch(44.5% 0.0262 265.5)",
         "tonalRamp": [
-          "oklch(15% 0.02050 256.35)",
-          "oklch(25% 0.02050 256.35)",
-          "oklch(35% 0.02050 256.35)",
-          "oklch(45% 0.02050 256.35)",
-          "oklch(55% 0.02050 256.35)",
-          "oklch(65% 0.02050 256.35)",
-          "oklch(80% 0.02050 256.35)",
-          "oklch(95% 0.02050 256.35)"
+          "oklch(15% 0.0262 265.5)",
+          "oklch(25% 0.0262 265.5)",
+          "oklch(35% 0.0262 265.5)",
+          "oklch(45% 0.0262 265.5)",
+          "oklch(55% 0.0262 265.5)",
+          "oklch(65% 0.0262 265.5)",
+          "oklch(80% 0.0262 265.5)",
+          "oklch(95% 0.0262 265.5)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "light-dim": {
         "role": "neutral",
-        "displayName": "Light Dim",
+        "displayName": "Graphite Dim",
+        "canonical": "oklch(64.3% 0.0238 265.7)",
         "tonalRamp": [
-          "oklch(15% 0.01878 256.31)",
-          "oklch(25% 0.01878 256.31)",
-          "oklch(35% 0.01878 256.31)",
-          "oklch(45% 0.01878 256.31)",
-          "oklch(55% 0.01878 256.31)",
-          "oklch(65% 0.01878 256.31)",
-          "oklch(80% 0.01878 256.31)",
-          "oklch(95% 0.01878 256.31)"
+          "oklch(15% 0.0238 265.7)",
+          "oklch(25% 0.0238 265.7)",
+          "oklch(35% 0.0238 265.7)",
+          "oklch(45% 0.0238 265.7)",
+          "oklch(55% 0.0238 265.7)",
+          "oklch(65% 0.0238 265.7)",
+          "oklch(80% 0.0238 265.7)",
+          "oklch(95% 0.0238 265.7)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
-      "light-accent": {
+      "light-lamp": {
         "role": "primary",
-        "displayName": "Light Accent",
+        "displayName": "Daylight Amber Lamp",
+        "canonical": "oklch(55.4% 0.1299 58.5)",
         "tonalRamp": [
-          "oklch(15% 0.17377 148.97)",
-          "oklch(25% 0.17377 148.97)",
-          "oklch(35% 0.17377 148.97)",
-          "oklch(45% 0.17377 148.97)",
-          "oklch(55% 0.17377 148.97)",
-          "oklch(65% 0.17377 148.97)",
-          "oklch(80% 0.17377 148.97)",
-          "oklch(95% 0.17377 148.97)"
+          "oklch(15% 0.1299 58.5)",
+          "oklch(25% 0.1299 58.5)",
+          "oklch(35% 0.1299 58.5)",
+          "oklch(45% 0.1299 58.5)",
+          "oklch(55% 0.1299 58.5)",
+          "oklch(65% 0.1299 58.5)",
+          "oklch(80% 0.1299 58.5)",
+          "oklch(95% 0.1299 58.5)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
-      "light-accent-hover": {
+      "light-lamp-hover": {
         "role": "primary",
-        "displayName": "Light Accent Hover",
+        "displayName": "Daylight Amber Lamp, Pressed Deeper",
+        "canonical": "oklch(49.5% 0.1159 58.3)",
         "tonalRamp": [
-          "oklch(15% 0.15441 149.20)",
-          "oklch(25% 0.15441 149.20)",
-          "oklch(35% 0.15441 149.20)",
-          "oklch(45% 0.15441 149.20)",
-          "oklch(55% 0.15441 149.20)",
-          "oklch(65% 0.15441 149.20)",
-          "oklch(80% 0.15441 149.20)",
-          "oklch(95% 0.15441 149.20)"
+          "oklch(15% 0.1159 58.3)",
+          "oklch(25% 0.1159 58.3)",
+          "oklch(35% 0.1159 58.3)",
+          "oklch(45% 0.1159 58.3)",
+          "oklch(55% 0.1159 58.3)",
+          "oklch(65% 0.1159 58.3)",
+          "oklch(80% 0.1159 58.3)",
+          "oklch(95% 0.1159 58.3)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
-      "light-on-accent": {
+      "light-lamp-text": {
+        "role": "primary",
+        "displayName": "Deep Lamp Brown (derived lamp text)",
+        "canonical": "oklch(38.7% 0.0867 59.9)",
+        "tonalRamp": [
+          "oklch(15% 0.0867 59.9)",
+          "oklch(25% 0.0867 59.9)",
+          "oklch(35% 0.0867 59.9)",
+          "oklch(45% 0.0867 59.9)",
+          "oklch(55% 0.0867 59.9)",
+          "oklch(65% 0.0867 59.9)",
+          "oklch(80% 0.0867 59.9)",
+          "oklch(95% 0.0867 59.9)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale.",
+        "derivation": "Palette::accent_text(): ground = surface_active lerp_to_gamma toward black 0.2 (#abaeb6); step light-lamp #a95c06 lerp_to_gamma toward black 0.05 until WCAG contrast >= 4.5; ten steps give #653706 (4.50:1 on that ground). src/theme.rs:92-108."
+      },
+      "light-on-lamp": {
         "role": "neutral",
-        "displayName": "Light On Accent",
+        "displayName": "White on Amber",
+        "canonical": "oklch(100.0% 0.0000 89.9)",
         "tonalRamp": [
-          "oklch(15% 0.00000 0.00)",
-          "oklch(25% 0.00000 0.00)",
-          "oklch(35% 0.00000 0.00)",
-          "oklch(45% 0.00000 0.00)",
-          "oklch(55% 0.00000 0.00)",
-          "oklch(65% 0.00000 0.00)",
-          "oklch(80% 0.00000 0.00)",
-          "oklch(95% 0.00000 0.00)"
+          "oklch(15% 0.0000 89.9)",
+          "oklch(25% 0.0000 89.9)",
+          "oklch(35% 0.0000 89.9)",
+          "oklch(45% 0.0000 89.9)",
+          "oklch(55% 0.0000 89.9)",
+          "oklch(65% 0.0000 89.9)",
+          "oklch(80% 0.0000 89.9)",
+          "oklch(95% 0.0000 89.9)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "light-danger": {
+        "role": "error",
+        "displayName": "Daylight Danger",
+        "canonical": "oklch(55.5% 0.1846 19.7)",
+        "tonalRamp": [
+          "oklch(15% 0.1846 19.7)",
+          "oklch(25% 0.1846 19.7)",
+          "oklch(35% 0.1846 19.7)",
+          "oklch(45% 0.1846 19.7)",
+          "oklch(55% 0.1846 19.7)",
+          "oklch(65% 0.1846 19.7)",
+          "oklch(80% 0.1846 19.7)",
+          "oklch(95% 0.1846 19.7)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "light-warning": {
         "role": "neutral",
-        "displayName": "Light Warning",
+        "displayName": "Daylight Warning",
+        "canonical": "oklch(52.2% 0.1070 85.9)",
         "tonalRamp": [
-          "oklch(15% 0.12919 72.19)",
-          "oklch(25% 0.12919 72.19)",
-          "oklch(35% 0.12919 72.19)",
-          "oklch(45% 0.12919 72.19)",
-          "oklch(55% 0.12919 72.19)",
-          "oklch(65% 0.12919 72.19)",
-          "oklch(80% 0.12919 72.19)",
-          "oklch(95% 0.12919 72.19)"
+          "oklch(15% 0.1070 85.9)",
+          "oklch(25% 0.1070 85.9)",
+          "oklch(35% 0.1070 85.9)",
+          "oklch(45% 0.1070 85.9)",
+          "oklch(55% 0.1070 85.9)",
+          "oklch(65% 0.1070 85.9)",
+          "oklch(80% 0.1070 85.9)",
+          "oklch(95% 0.1070 85.9)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       },
       "light-overlay": {
         "role": "neutral",
-        "displayName": "Light Overlay",
+        "displayName": "Opaque Daylight Overlay",
+        "canonical": "oklch(100.0% 0.0000 89.9)",
         "tonalRamp": [
-          "oklch(15% 0.00000 0.00)",
-          "oklch(25% 0.00000 0.00)",
-          "oklch(35% 0.00000 0.00)",
-          "oklch(45% 0.00000 0.00)",
-          "oklch(55% 0.00000 0.00)",
-          "oklch(65% 0.00000 0.00)",
-          "oklch(80% 0.00000 0.00)",
-          "oklch(95% 0.00000 0.00)"
+          "oklch(15% 0.0000 89.9)",
+          "oklch(25% 0.0000 89.9)",
+          "oklch(35% 0.0000 89.9)",
+          "oklch(45% 0.0000 89.9)",
+          "oklch(55% 0.0000 89.9)",
+          "oklch(65% 0.0000 89.9)",
+          "oklch(80% 0.0000 89.9)",
+          "oklch(95% 0.0000 89.9)"
         ],
-        "rampPurpose": "Synthesized panel preview only; not an application color scale."
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "light-shadow": {
+        "role": "neutral",
+        "displayName": "Daylight Shadow",
+        "canonical": "oklch(0.0% 0.0000 0.0) / 0.19",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.0)",
+          "oklch(25% 0.0000 0.0)",
+          "oklch(35% 0.0000 0.0)",
+          "oklch(45% 0.0000 0.0)",
+          "oklch(55% 0.0000 0.0)",
+          "oklch(65% 0.0000 0.0)",
+          "oklch(80% 0.0000 0.0)",
+          "oklch(95% 0.0000 0.0)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "light-pane-glass": {
+        "role": "neutral",
+        "displayName": "Milky Pane Glass",
+        "canonical": "oklch(99.2% 0.0026 286.4) / 0.58",
+        "tonalRamp": [
+          "oklch(15% 0.0026 286.4)",
+          "oklch(25% 0.0026 286.4)",
+          "oklch(35% 0.0026 286.4)",
+          "oklch(45% 0.0026 286.4)",
+          "oklch(55% 0.0026 286.4)",
+          "oklch(65% 0.0026 286.4)",
+          "oklch(80% 0.0026 286.4)",
+          "oklch(95% 0.0026 286.4)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "light-console-glass": {
+        "role": "neutral",
+        "displayName": "Milky Console Glass",
+        "canonical": "oklch(99.2% 0.0026 286.4) / 0.72",
+        "tonalRamp": [
+          "oklch(15% 0.0026 286.4)",
+          "oklch(25% 0.0026 286.4)",
+          "oklch(35% 0.0026 286.4)",
+          "oklch(45% 0.0026 286.4)",
+          "oklch(55% 0.0026 286.4)",
+          "oklch(65% 0.0026 286.4)",
+          "oklch(80% 0.0026 286.4)",
+          "oklch(95% 0.0026 286.4)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "light-well-glass": {
+        "role": "neutral",
+        "displayName": "Milky Well Glass",
+        "canonical": "oklch(95.5% 0.0070 268.5) / 0.75",
+        "tonalRamp": [
+          "oklch(15% 0.0070 268.5)",
+          "oklch(25% 0.0070 268.5)",
+          "oklch(35% 0.0070 268.5)",
+          "oklch(45% 0.0070 268.5)",
+          "oklch(55% 0.0070 268.5)",
+          "oklch(65% 0.0070 268.5)",
+          "oklch(80% 0.0070 268.5)",
+          "oklch(95% 0.0070 268.5)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "light-hover-fill": {
+        "role": "neutral",
+        "displayName": "Shade on Light Glass",
+        "canonical": "oklch(0.0% 0.0000 0.0) / 0.045",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.0)",
+          "oklch(25% 0.0000 0.0)",
+          "oklch(35% 0.0000 0.0)",
+          "oklch(45% 0.0000 0.0)",
+          "oklch(55% 0.0000 0.0)",
+          "oklch(65% 0.0000 0.0)",
+          "oklch(80% 0.0000 0.0)",
+          "oklch(95% 0.0000 0.0)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "light-selected-fill": {
+        "role": "neutral",
+        "displayName": "Selected Shade on Light Glass",
+        "canonical": "oklch(0.0% 0.0000 0.0) / 0.07",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.0)",
+          "oklch(25% 0.0000 0.0)",
+          "oklch(35% 0.0000 0.0)",
+          "oklch(45% 0.0000 0.0)",
+          "oklch(55% 0.0000 0.0)",
+          "oklch(65% 0.0000 0.0)",
+          "oklch(80% 0.0000 0.0)",
+          "oklch(95% 0.0000 0.0)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
+      },
+      "liked-tint": {
+        "role": "secondary",
+        "displayName": "Liked Songs Violet",
+        "canonical": "oklch(46.5% 0.2097 282.1)",
+        "tonalRamp": [
+          "oklch(15% 0.2097 282.1)",
+          "oklch(25% 0.2097 282.1)",
+          "oklch(35% 0.2097 282.1)",
+          "oklch(45% 0.2097 282.1)",
+          "oklch(55% 0.2097 282.1)",
+          "oklch(65% 0.2097 282.1)",
+          "oklch(80% 0.2097 282.1)",
+          "oklch(95% 0.2097 282.1)"
+        ],
+        "rampPurpose": "Synthesized panel preview only; not an application colour scale."
       }
     },
     "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Collection hero titles at wide widths; steps down toward 28px to fit."
+      },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Home workspace title; no separate display family."
+        "purpose": "Page titles: Library, Settings, Queue."
+      },
+      "desk-title": {
+        "displayName": "Desk Title",
+        "purpose": "The For you desk title and the search top result."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Taste, mix and history headings."
+        "purpose": "Dialog titles and the Home greeting."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Settings and queue section heads."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The Spotiurge wordmark beside the 24px sidebar mark."
+      },
+      "prompt": {
+        "displayName": "Prompt",
+        "purpose": "The taste prompt."
       },
       "track-title": {
         "displayName": "Track Title",
-        "purpose": "Inherited native track titles."
+        "purpose": "Row titles."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Taste input."
+        "purpose": "egui body and button text, the search field."
       },
       "secondary": {
         "displayName": "Secondary",
-        "purpose": "Summaries and notices."
-      },
-      "detail": {
-        "displayName": "Detail",
-        "purpose": "Artists, reasons and history detail."
+        "purpose": "Subtitles, discovery reasons, settings fields."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Pill actions."
+        "purpose": "Chips and soft buttons."
       },
-      "choice": {
-        "displayName": "Choice",
-        "purpose": "Exploration soft buttons."
+      "label-strong": {
+        "displayName": "Label Strong",
+        "purpose": "Pill buttons."
       },
-      "menu": {
-        "displayName": "Menu",
-        "purpose": "Shared popup commands."
+      "detail": {
+        "displayName": "Detail",
+        "purpose": "Row subtitles."
+      },
+      "badge": {
+        "displayName": "Badge",
+        "purpose": "The Connect pill label."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "Small print."
       }
     },
     "shadows": [
       {
-        "name": "window-dark",
-        "value": "0 6px 24px rgba(0,0,0,0.5490196)",
-        "purpose": "Inherited theme window shadow; native blur maps illustratively to CSS."
+        "name": "pane",
+        "value": "0 8px 28px rgba(0,0,0,0.32) dark / rgba(0,0,0,0.09) light",
+        "purpose": "Floating shell panes: shadow colour at 55% (dark) or 50% (light). src/ui/material.rs:73-78."
       },
       {
-        "name": "window-light",
-        "value": "0 6px 24px rgba(0,0,0,0.1960784)",
-        "purpose": "Inherited theme window shadow; native blur maps illustratively to CSS."
+        "name": "console",
+        "value": "0 10px 32px rgba(0,0,0,0.47) dark / rgba(0,0,0,0.13) light",
+        "purpose": "The player console: shadow colour at 80% (dark) or 70% (light). src/ui/material.rs:79-84."
       },
       {
-        "name": "popup-dark",
-        "value": "0 4px 16px rgba(0,0,0,0.5490196)",
-        "purpose": "Inherited generic popup shadow; native blur maps illustratively to CSS."
+        "name": "popover",
+        "value": "0 12px 32px rgba(0,0,0,0.59) dark / rgba(0,0,0,0.19) light",
+        "purpose": "Menus, popovers, dialogs, toasts, login card. src/ui/material.rs:85-90."
       },
       {
-        "name": "popup-light",
-        "value": "0 4px 16px rgba(0,0,0,0.1960784)",
-        "purpose": "Inherited generic popup shadow; native blur maps illustratively to CSS."
+        "name": "popup",
+        "value": "0 8px 24px rgba(0,0,0,0.59) dark / rgba(0,0,0,0.19) light",
+        "purpose": "egui popups. src/theme.rs:335-340."
       },
       {
-        "name": "discovery-menu-dark",
-        "value": "0 6px 20px rgba(0,0,0,0.5490196)",
-        "purpose": "Shared widgets::menu_frame shadow; native blur maps illustratively to CSS."
+        "name": "header",
+        "value": "linear-gradient(to bottom, rgba(0,0,0,0.43) dark / rgba(0,0,0,0.14) light, transparent) 14px tall",
+        "purpose": "The top bar shadow over a scrolled page, deepening over the first 24pt of scroll. src/ui/mod.rs:402-415."
       },
       {
-        "name": "discovery-menu-light",
-        "value": "0 6px 20px rgba(0,0,0,0.1960784)",
-        "purpose": "Shared widgets::menu_frame shadow; native blur maps illustratively to CSS."
+        "name": "switch-knob",
+        "value": "0 1px 4px rgba(0,0,0,0.24)",
+        "purpose": "The white 16px switch knob. src/ui/widgets.rs:2957-2968."
       }
     ],
     "motion": [
       {
-        "name": "circle-hover",
-        "value": "painted radius × 1.05; immediate state change",
-        "purpose": "Inherited circle controls; layout rect does not grow."
+        "name": "ease-out-expo",
+        "value": "(1 - 2^(-10t)) / (1 - 2^(-10))",
+        "purpose": "The only easing; exact 0 at start and 1 at end, retargets from the current value. src/ui/motion.rs:94-101."
       },
       {
-        "name": "icon-pressed",
-        "value": "icon size × 0.92; immediate state change",
-        "purpose": "Inherited frameless icon press."
+        "name": "feedback",
+        "value": "120ms",
+        "purpose": "Hover and press fills, field focus rims, egui animation_time. src/ui/motion.rs:12."
       },
       {
-        "name": "busy-spinner",
-        "value": "1.2 turns/s; 33 ms repaint request while drawn",
-        "purpose": "Existing busy indicator; smoothness and reduced-motion behavior were not assessed."
+        "name": "state",
+        "value": "220ms",
+        "purpose": "Lamp glide between sidebar channels, neutral pill glide between chips, switch track, feedback fills. src/ui/motion.rs:14."
+      },
+      {
+        "name": "page",
+        "value": "220ms, rise 6pt, opacity from 0.35",
+        "purpose": "Page entrance after navigation. src/ui/motion.rs:16,20; src/ui/mod.rs:339-355."
+      },
+      {
+        "name": "ambient",
+        "value": "600ms",
+        "purpose": "Room light and page wash crossing to a new cover. src/ui/motion.rs:18."
+      },
+      {
+        "name": "reduce-motion",
+        "value": "immediate",
+        "purpose": "App setting Reduce motion OR macOS accessibilityDisplayShouldReduceMotion (polled at most every 2 s): every helper returns its target, animation_time 0, scroll animation none. src/ui/motion.rs:25-91."
       }
     ],
     "breakpoints": [
       {
-        "name": "discovery-reason-column",
-        "value": "available content width > 920 logical points",
-        "purpose": "Reason is 30% width, clamped to 200–360 points; at or below threshold use a row tooltip."
+        "name": "window-min",
+        "value": "760px x 520px"
+      },
+      {
+        "name": "search-fold",
+        "value": "200px (search field ideal; Connect folds to an icon chip below it, 8px reserve)"
+      },
+      {
+        "name": "table-album",
+        "value": "560px"
+      },
+      {
+        "name": "table-added",
+        "value": "760px"
+      },
+      {
+        "name": "wide",
+        "value": "920px (discovery reason column, extra table columns)"
+      },
+      {
+        "name": "capture-narrow",
+        "value": "900px x 760px"
+      },
+      {
+        "name": "capture-normal",
+        "value": "1440px x 900px"
       }
     ],
-    "nativeMaterial": {
-      "source": "src/ui/discovery.rs::show and glow_mesh",
-      "fillDark": "palette.surface.gamma_multiply(0.72)",
-      "fillLight": "palette.surface.gamma_multiply(0.80)",
-      "tintSource": "app.now_playing_tint().unwrap_or(palette.accent)",
-      "meshCenter": [
-        0.22,
-        0.18
+    "glass": {
+      "note": "Rendered by the app as painted layers (shadow, fill, top sheen fading within 90pt, one-physical-pixel two-tone rim). No OS backdrop blur or vibrancy. src/ui/material.rs:1-138.",
+      "kinds": [
+        {
+          "kind": "pane",
+          "opacity": {
+            "dark": 0.72,
+            "light": 0.58
+          },
+          "sheenWhite": {
+            "dark": 0.045,
+            "light": 0.55
+          },
+          "rimTopWhite": {
+            "dark": 0.11,
+            "light": 0.95
+          },
+          "rimBottomBlack": {
+            "dark": 0.42,
+            "light": 0.1
+          }
+        },
+        {
+          "kind": "console",
+          "opacity": {
+            "dark": 0.8,
+            "light": 0.72
+          },
+          "sheenWhite": {
+            "dark": 0.06,
+            "light": 0.6
+          },
+          "rimTopWhite": {
+            "dark": 0.14,
+            "light": 1.0
+          },
+          "rimBottomBlack": {
+            "dark": 0.45,
+            "light": 0.12
+          },
+          "extra": "base eased 12% toward the playing cover tint (src/ui/player_bar.rs:15,49)"
+        },
+        {
+          "kind": "popover",
+          "opacity": {
+            "dark": 1.0,
+            "light": 1.0
+          },
+          "sheenWhite": {
+            "dark": 0.05,
+            "light": 0.5
+          },
+          "rimTopWhite": {
+            "dark": 0.13,
+            "light": 1.0
+          },
+          "rimBottomBlack": {
+            "dark": 0.5,
+            "light": 0.14
+          }
+        },
+        {
+          "kind": "well",
+          "opacity": {
+            "dark": 0.55,
+            "light": 0.75
+          },
+          "sheenWhite": {
+            "dark": 0,
+            "light": 0
+          },
+          "rimTopWhite": {
+            "dark": 0,
+            "light": 0
+          },
+          "rimBottomBlack": {
+            "dark": 0,
+            "light": 0
+          }
+        }
       ],
-      "meshCenterDark": "tint.gamma_multiply(0.16)",
-      "meshCenterLight": "tint.gamma_multiply(0.12)",
-      "meshEdges": "Color32::TRANSPARENT",
-      "paneShadow": "none",
-      "backdropBlur": "none"
+      "rimBase": "outline at 60% (dark) or 80% (light); lit over the top 35%, shaded over the bottom 35%",
+      "room": "window colour plus key light (cover tint, else lamp) at 42% dark / 40% light from upper left, radius 0.62 of the diagonal; counter-light (hue +0.33) at 20% dark / 22% light from lower right, radius 0.5. src/ui/material.rs:335-378; src/ui/mod.rs:96-105.",
+      "pageWash": "cover tint at 20% (light, all pages), 30% (dark Home/Search/Settings/Queue), 55% (dark collections); stops 0pt full, 140pt 45%, 360pt clear; crosses over in 600ms. src/ui/mod.rs:294-327."
     },
-    "nativeFocus": {
-      "source": "src/theme.rs::focus_ring",
-      "stroke": "1 logical point, palette.accent",
-      "rect": "response.rect.expand(2.0), StrokeKind::Outside",
-      "cornerRadius": "4 logical points"
-    },
-    "previewScope": "Illustrative HTML/CSS native-component translations at unit zoom, not application code or pixel-matching evidence. Synthesized ramps are panel metadata only."
+    "evidence": {
+      "artifact": ".qa/spotiurge-glass-final-candidate",
+      "sha256": "fa1b2ab01f6e7ce36b429b17a69af0065dec21c2a6a53135cf1bbaecbdd52480",
+      "sourceCommit": "0b3e670",
+      "platform": "macOS arm64",
+      "captures": 52,
+      "review": "finish review r1 then verdict r2: seven fixes resolved, disposition ship, static captures only",
+      "unverified": [
+        "motion smoothness and frame pacing",
+        "controlled idle-power baseline and repaint cost",
+        "live macOS Reduce Motion preference changes",
+        "local playback and Connect transfer in the exact glass package",
+        "Windows and Linux UI runs",
+        "real listening (demo data is synthetic)"
+      ],
+      "packagedChecks": "Separate universal R2 DMG: Spotify and cloud credential restoration, private sync and twelve Luna suggestions passed; Spotify matching timed out. Native app Reduce motion control operation exercised in isolated demo. See docs/reviews/spotiurge-glass/verification.md."
+    }
   },
   "components": [
     {
-      "name": "Save taste (dark)",
-      "kind": "button",
-      "refersTo": "save-taste-dark",
-      "description": "Native taste-editor primary action. Light preserves the scoped black text fix.",
-      "html": "<button class=\"ds-save-dark\">Save taste</button>",
-      "css": ".ds-save-dark{position:relative;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:8px 18px;border:0;border-radius:calc(1lh / 2 + 8px);background:#1ed760;color:#0a140e} .ds-save-dark:hover{background:#3ce87a}.ds-save-dark:focus-visible{outline:none} .ds-save-dark:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #1ed760;border-radius:4px;pointer-events:none}"
-    },
-    {
-      "name": "Save taste (light)",
-      "kind": "button",
-      "refersTo": "save-taste-light",
-      "description": "Native taste-editor primary action. Light preserves the scoped black text fix.",
-      "html": "<button class=\"ds-save-light\">Save taste</button>",
-      "css": ".ds-save-light{position:relative;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:8px 18px;border:0;border-radius:calc(1lh / 2 + 8px);background:#15a64a;color:#000000} .ds-save-light:hover{background:#128f40}.ds-save-light:focus-visible{outline:none} .ds-save-light:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #15a64a;border-radius:4px;pointer-events:none}"
-    },
-    {
-      "name": "Outlined action",
-      "kind": "button",
-      "refersTo": "button-outline-dark",
-      "description": "Inherited secondary pill, with dim outline that changes to text color on hover.",
-      "html": "<button class=\"ds-outline\">Cancel</button>",
-      "css": ".ds-outline{position:relative;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:8px 18px;border:1px solid #6e7784;border-radius:calc(1lh / 2 + 8px);background:transparent;color:#f2f4f6} .ds-outline:hover{border-color:#f2f4f6}.ds-outline:focus-visible{outline:none} .ds-outline:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #1ed760;border-radius:4px;pointer-events:none}"
-    },
-    {
-      "name": "Exploration choice",
-      "kind": "chip",
-      "refersTo": "choice-dark",
-      "description": "Existing soft-button primitive; active choice inverts neutral colors.",
-      "html": "<button class=\"ds-choice\" aria-pressed=\"false\">Familiar</button><button class=\"ds-choice\" aria-pressed=\"true\">Balanced</button><button class=\"ds-choice\" aria-pressed=\"false\">Adventurous</button>",
-      "css": ".ds-choice{position:relative;font-family:Inter,sans-serif;font-size:13px;font-weight:500;padding:7px 12px;border:0;border-radius:calc(1lh / 2 + 7px);background:#1d2127;color:#f2f4f6} .ds-choice:hover{background:#262b33} .ds-choice[aria-pressed=\"true\"]{background:#f2f4f6;color:#0f1114}.ds-choice:focus-visible{outline:none} .ds-choice:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #1ed760;border-radius:4px;pointer-events:none}"
-    },
-    {
-      "name": "Taste input",
-      "kind": "input",
-      "refersTo": "taste-input-dark",
-      "description": "Three-row native multiline field; preview retains its source font and material.",
-      "html": "<textarea class=\"ds-taste\" rows=\"3\" aria-label=\"Your taste\" placeholder=\"Warm jazz, spacious electronics, a few surprises…\"></textarea>",
-      "css": ".ds-taste{font-family:Inter,sans-serif;font-size:15px;font-weight:400;width:100%;border:0;border-radius:6px;background:#1d2127;color:#f2f4f6;caret-color:#1ed760} .ds-taste:hover{background:#262b33} .ds-taste:focus-visible{outline:1px solid #1ed760;outline-offset:2px} .ds-taste::placeholder{color:#a9b1bc}"
-    },
-    {
-      "name": "Discovery pane",
+      "name": "Shell Pane",
       "kind": "card",
-      "refersTo": "discovery-pane",
-      "description": "Preview approximates the static mesh with a gradient using the accent fallback; it is not live backdrop blur.",
-      "html": "<section class=\"ds-pane\"><h2 class=\"ds-pane-title\">For you</h2><p class=\"ds-pane-detail\">4 ready to play</p></section>",
-      "css": ".ds-pane{padding:18px 20px;border:1px solid #2a3038;border-radius:14px;background:radial-gradient(ellipse at 22% 18%,rgba(30,215,96,0.16),transparent),rgba(29,33,39,0.72);color:#f2f4f6} .ds-pane-title{font-family:Inter,sans-serif;font-size:26px;font-weight:700} .ds-pane-detail{font-family:Inter,sans-serif;font-size:13px;font-weight:400;color:#a9b1bc}"
+      "refersTo": "pane",
+      "description": "Floating smoked glass pane for the sidebar, page and side panels (approximation: the app paints this natively, no backdrop blur).",
+      "html": "<div class=\"ds-pane\"><div class=\"ds-pane-title\">For you</div><div class=\"ds-pane-sub\">Demo picks</div></div>",
+      "css": ".ds-pane { background: rgba(20,23,31,0.72); border-radius: 14px; padding: 24px; color: #f3f2ef; font-family: Inter, system-ui, sans-serif; box-shadow: 0 8px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.11), inset 0 -1px 0 rgba(0,0,0,0.42); background-image: linear-gradient(to bottom, rgba(255,255,255,0.045), transparent 90px); } .ds-pane-title { font-weight: 700; font-size: 26px; } .ds-pane-sub { font-size: 13px; color: #a7adbb; margin-top: 4px; }"
     },
     {
-      "name": "Discovery options menu",
+      "name": "Primary Pill Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The lamp-filled primary action.",
+      "html": "<button class=\"ds-btn-primary\">Play</button>",
+      "css": ".ds-btn-primary { background: #ffb547; color: #1f1303; border: none; border-radius: 9999px; padding: 8px 18px; font: 600 13px Inter, system-ui, sans-serif; transition: background 120ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-primary:hover { background: #ffc770; } .ds-btn-primary:focus-visible { outline: 1px solid #ffb547; outline-offset: 2px; }"
+    },
+    {
+      "name": "Play Key",
+      "kind": "button",
+      "refersTo": "play-key",
+      "description": "36px lamp disc in the console (44px on the desk); grows 5% on hover, sinks to 94% when pressed.",
+      "html": "<button class=\"ds-play\" aria-label=\"Play\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"#1f1303\"><path d=\"M7 4v16l13-8z\"/></svg></button>",
+      "css": ".ds-play { width: 36px; height: 36px; border-radius: 9999px; border: none; background: #ffb547; display: inline-grid; place-items: center; transition: transform 120ms cubic-bezier(0.16,1,0.3,1), background 120ms; } .ds-play:hover { transform: scale(1.05); background: #ffc770; } .ds-play:active { transform: scale(0.94); } .ds-play:focus-visible { outline: 1px solid #ffb547; outline-offset: 2px; }"
+    },
+    {
+      "name": "Choice Chips",
+      "kind": "chip",
+      "refersTo": "choice-chip-selected",
+      "description": "Neutral inverted pill selects a choice and glides between options over 220 ms; never amber.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\">Familiar</button><button class=\"ds-chip ds-chip-on\">Balanced</button><button class=\"ds-chip\">Adventurous</button></div>",
+      "css": ".ds-chips { display: flex; gap: 6px; } .ds-chip { background: #1c202a; color: #f3f2ef; border: none; border-radius: 9999px; padding: 7px 12px; font: 500 13px Inter, system-ui, sans-serif; transition: background 120ms, color 220ms; } .ds-chip:hover { background: #252a37; } .ds-chip-on, .ds-chip-on:hover { background: #f3f2ef; color: #0b0d12; } .ds-chip:focus-visible { outline: 1px solid #ffb547; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Well",
+      "kind": "input",
+      "refersTo": "field-well",
+      "description": "Text field set into the glass: well fill, 10px radius, 1px rim that eases to a focus rim.",
+      "html": "<input class=\"ds-well\" placeholder=\"Client ID\">",
+      "css": ".ds-well { background: rgba(28,32,42,0.55); color: #f3f2ef; border: 1px solid #373b47; border-radius: 10px; padding: 8px 12px; font: 400 13px Inter, system-ui, sans-serif; caret-color: #ffb547; transition: border-color 120ms, border-width 120ms; } .ds-well:focus-visible { outline: none; border: 1.5px solid rgba(243,242,239,0.6); } .ds-well::placeholder { color: #707787; }"
+    },
+    {
+      "name": "Search Pill",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "34px pill well with a 16px leading search icon.",
+      "html": "<label class=\"ds-search\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#a7adbb\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/></svg><input placeholder=\"Search\"></label>",
+      "css": ".ds-search { display: inline-flex; align-items: center; gap: 10px; height: 34px; width: 280px; padding: 0 12px 0 10px; background: rgba(28,32,42,0.55); border: 1px solid #373b47; border-radius: 9999px; transition: border-color 120ms; } .ds-search:focus-within { border: 1.5px solid rgba(243,242,239,0.6); } .ds-search input { background: none; border: none; outline: none; color: #f3f2ef; font: 400 14px Inter, system-ui, sans-serif; width: 100%; } .ds-search input::placeholder { color: #707787; }"
+    },
+    {
+      "name": "Sidebar Channel",
       "kind": "nav",
-      "refersTo": "discovery-menu-dark",
-      "description": "Shared popup frame and commands; this is not a replacement sidebar.",
-      "html": "<nav class=\"ds-menu\" aria-label=\"More discovery options\"><button class=\"ds-menu-item\">Save this mix</button><button class=\"ds-menu-item\">Sync my devices</button><button class=\"ds-menu-item\">Tune taste</button></nav>",
-      "css": ".ds-menu{min-width:220px;padding:6px;border:1px solid #2a3038;border-radius:8px;background:#22272e;box-shadow:0 6px 20px rgba(0,0,0,0.5490196)} .ds-menu-item{position:relative;display:block;width:100%;height:28px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:#f2f4f6;font-family:Inter,sans-serif;font-size:13.5px;font-weight:400;text-align:left} .ds-menu-item:hover{background:#262b33}.ds-menu-item:focus-visible{outline:none} .ds-menu-item:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #1ed760;border-radius:4px;pointer-events:none}"
+      "refersTo": "nav-row-selected",
+      "description": "Selected navigation row: selected fill plus a 3px amber lamp bar at the leading edge that glides between channels.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-on\" href=\"#\">Home</a><a class=\"ds-nav-item\" href=\"#\">Search</a></nav>",
+      "css": ".ds-nav { display: grid; gap: 4px; width: 220px; } .ds-nav-item { position: relative; display: block; padding: 10px 14px; border-radius: 8px; color: #f3f2ef; text-decoration: none; font: 600 14px Inter, system-ui, sans-serif; transition: background 120ms; } .ds-nav-item:hover { background: rgba(255,255,255,0.06); } .ds-nav-on, .ds-nav-on:hover { background: rgba(255,255,255,0.095); } .ds-nav-on::before { content: \"\"; position: absolute; left: 0; top: 27%; height: 46%; width: 3px; border-radius: 2px; background: #ffb547; } .ds-nav-item:focus-visible { outline: 1px solid #ffb547; outline-offset: 2px; }"
     },
     {
-      "name": "Play all",
-      "kind": "button",
-      "refersTo": "play-all",
-      "description": "44-point native circle with existing play-filled SVG. Hover grows painted disc without shifting layout.",
-      "html": "<button class=\"ds-play\" aria-label=\"Play all\"><svg aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  viewBox=\"0 0 24 24\"\n  fill=\"currentColor\"\n  stroke=\"currentColor\"\n  stroke-width=\"2\"\n  stroke-linecap=\"round\"\n  stroke-linejoin=\"round\"\n>\n  <path d=\"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z\" />\n</svg>\n</button>",
-      "css": ".ds-play{position:relative;width:44px;height:44px;padding:0;border:0;background:transparent;color:#0a140e} .ds-play::before{content:\"\";position:absolute;inset:0;border-radius:50%;background:#1ed760} .ds-play:hover::before{transform:scale(1.05);background:#3ce87a} .ds-play svg{position:relative;width:46%;height:46%;transform:translateX(-0.236px)}.ds-play:focus-visible{outline:none} .ds-play:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #1ed760;border-radius:4px;pointer-events:none}"
-    },
-    {
-      "name": "More feedback",
-      "kind": "button",
-      "refersTo": "feedback",
-      "description": "28-point native toggle with the existing 15-point thumbs-up SVG; selected More uses accent/on-accent.",
-      "html": "<button class=\"ds-more\" aria-label=\"More like this\" aria-pressed=\"true\"><svg aria-hidden=\"true\"\n  xmlns=\"http://www.w3.org/2000/svg\"\n  viewBox=\"0 0 24 24\"\n  fill=\"none\"\n  stroke=\"currentColor\"\n  stroke-width=\"2\"\n  stroke-linecap=\"round\"\n  stroke-linejoin=\"round\"\n>\n  <path d=\"M7 10v12\" />\n  <path d=\"M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z\" />\n</svg>\n</button>",
-      "css": ".ds-more{position:relative;width:28px;height:28px;padding:0;border:0;border-radius:50%;background:transparent;color:#a9b1bc} .ds-more:hover,.ds-more:focus-visible{background:#262b33;color:#f2f4f6} .ds-more[aria-pressed=\"true\"]{background:#1ed760;color:#0a140e} .ds-more svg{width:15px;height:15px}.ds-more:focus-visible{outline:none} .ds-more:focus-visible::after{content:\"\";position:absolute;inset:-3px;border:1px solid #1ed760;border-radius:4px;pointer-events:none}"
-    },
-    {
-      "name": "Track row type and rhythm",
+      "name": "Opaque Menu",
       "kind": "custom",
-      "refersTo": "discovery-row",
-      "description": "Illustrative subset of the inherited row. Artwork and library controls are omitted, not replaced with invented assets.",
-      "html": "<button class=\"ds-row\"><span class=\"ds-row-copy\"><span class=\"ds-row-title\">Tides</span><span class=\"ds-row-artist\">Little Simz</span></span><span class=\"ds-row-duration\">4:51</span></button>",
-      "css": ".ds-row{display:flex;align-items:center;justify-content:space-between;width:100%;height:56px;padding:0 8px;border:0;border-radius:6px;background:transparent;color:#f2f4f6;font-family:Inter,sans-serif;text-align:left} .ds-row:hover,.ds-row:focus-visible{outline:none;background:rgba(38,43,51,0.70)} .ds-row-copy{display:flex;flex-direction:column;gap:1px} .ds-row-title{font-size:14.5px;font-weight:500} .ds-row-artist,.ds-row-duration{font-size:12.5px;font-weight:400;color:#a9b1bc}"
+      "refersTo": "popover",
+      "description": "Menus, popovers and dialogs are opaque glass with sheen, rim and shadow.",
+      "html": "<div class=\"ds-menu\"><div class=\"ds-menu-item\">Tune taste</div><div class=\"ds-menu-item\">Show AI history</div><div class=\"ds-menu-item\">Turn off automatic picks</div></div>",
+      "css": ".ds-menu { width: 260px; background: #1c202b; border: 1px solid #373b47; border-radius: 12px; padding: 6px; box-shadow: 0 12px 32px rgba(0,0,0,0.59); background-image: linear-gradient(to bottom, rgba(255,255,255,0.05), transparent 90px); font: 400 14px Inter, system-ui, sans-serif; color: #f3f2ef; } .ds-menu-item { padding: 8px 10px; border-radius: 6px; transition: background 120ms; } .ds-menu-item:hover { background: rgba(255,255,255,0.06); }"
+    },
+    {
+      "name": "Settings Switch",
+      "kind": "custom",
+      "refersTo": "switch-on",
+      "description": "The one recorded amber choice-like control: boolean switches, 40 by 22px, track eases to the lamp over 220 ms.",
+      "html": "<button class=\"ds-switch\" role=\"switch\" aria-checked=\"true\" aria-label=\"Autoplay\"><span></span></button>",
+      "css": ".ds-switch { position: relative; width: 40px; height: 22px; border: none; border-radius: 9999px; background: #2e3444; transition: background 220ms cubic-bezier(0.16,1,0.3,1); } .ds-switch span { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 9999px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.24); transition: left 220ms cubic-bezier(0.16,1,0.3,1); } .ds-switch[aria-checked=\"true\"] { background: #ffb547; } .ds-switch[aria-checked=\"true\"] span { left: 21px; } .ds-switch:focus-visible { outline: 1px solid #ffb547; outline-offset: 2px; }"
+    },
+    {
+      "name": "Connect Pill",
+      "kind": "chip",
+      "refersTo": "connect-pill",
+      "description": "Live remote-playback badge: opaque base, 14% amber tint, 1px amber stroke, lamp-text label; folds to an icon chip when the search field would drop below 200px.",
+      "html": "<button class=\"ds-connect\">Playing on Kitchen speaker</button>",
+      "css": ".ds-connect { background: linear-gradient(rgba(255,181,71,0.14), rgba(255,181,71,0.14)), #1c202b; color: #ffb547; border: 1px solid rgba(255,181,71,0.22); border-radius: 9999px; padding: 6px 12px; font: 500 12.5px Inter, system-ui, sans-serif; transition: border-color 120ms; } .ds-connect:hover { border-color: rgba(255,181,71,0.36); } .ds-connect:focus-visible { outline: 1px solid #ffb547; outline-offset: 2px; }"
     }
   ],
   "narrative": {
-    "northStar": "Personal radio desk",
-    "overview": "A calm native listening workspace uses neutral text, compact track geometry and\ncover-derived light within a restrained frosted pane. Inter and the existing\ntheme palettes connect this Home expression to the inherited music player.\nMusic and controls carry the identity; there is no ornamental display face or\ninvented imagery.\n\nThis is a scan of the implemented Home replacement, not an approval of a wider\nredesign. The sidebar, library shelves, search, player and Connect keep their\nincumbent layout. Tokens come from [src/theme.rs](src/theme.rs),\n[src/ui/discovery.rs](src/ui/discovery.rs) and shared native\n[widgets](src/ui/widgets.rs). Portable sizes represent egui logical points as\nCSS pixels at unit zoom. Native code remains the runtime source of truth; the\nsidecar's HTML/CSS is an illustrative translation, not a browser-based app.",
+    "northStar": "The Studio Control Room",
+    "overview": "Music lives in the lit room behind the glass; Spotiurge is the console in front of it. The whole native desktop app (sidebar, top chrome, Home and its For you discovery desk, library, search, collection pages, queue, lyrics, menus, Connect, settings, login and the player console) is built from smoked glass panes that float 8px apart over a dim room. The room is the window colour lit by two soft colour fields: the playing cover's light from the upper left and a counter-light, the same colour turned a third of the way round the hue wheel, from the lower right. With no cover tint the key light is the lamp amber, so the default room reads amber and teal. The dark theme is a blue-black room at night; the light theme is milky glass over a pale cool room that the amber key light warms toward peach.\n\nThe glass is rendered natively by the app as painted layers: a translucent fill, a top sheen that fades out within 90pt, a two-tone rim one physical pixel wide (lit along the top third, shaded along the bottom third), and a soft offset shadow. There is no OS backdrop blur, no macOS vibrancy and no per-frame blur pass; the room is already as smooth as blurred light, so translucency over it reads as frosted. Pane, console, popover and well are four glass kinds with their own opacity, sheen, rim and shadow (see Elevation & Depth).\n\nDensity is a desktop music console: 56px rows, a 56px top bar, an 88px console, and Inter ranked by weight rather than by colour. One VU-amber lamp marks whatever is live. Everything else, including every choice, is neutral. Motion is a single signature, the fader glide, finite and interruptible, and Reduce Motion (the app's own setting or the macOS system preference) makes every transition immediate. The mark is an amber surge S on a smoked glass tile (`assets/brand/spotiurge-mark.svg`), rasterised at runtime by `util::app_icon_rgba` so the in-app logo and the app icon are the same picture.\n\nThe category default this world refuses: a flat black Spotify clone with green accents and card grids.\n\n**Evidence and limits.** Every token here is read from the shipped source of the frozen candidate `.qa/spotiurge-glass-final-candidate` (SHA-256 `fa1b2ab01f6e7ce36b429b17a69af0065dec21c2a6a53135cf1bbaecbdd52480`, macOS arm64, source commit `0b3e670`, all design files hash-identical to `.qa/glass-candidate-source.json`). The finish review (r1, then the r2 verdict) scored all seven r1 fixes resolved with disposition \"ship\", on 52 static macOS captures (`docs/reviews/spotiurge-glass/after-captures.json`). Later packaged Mac checks restored Spotify and cloud credentials, completed private sync and received twelve Luna suggestions; Spotify catalogue verification timed out. App Reduce motion control operation was exercised in native demo. See `docs/reviews/spotiurge-glass/verification.md` for those separate checks and short CPU observations. Not verified: motion smoothness and frame pacing, a controlled idle-power baseline, live macOS Reduce Motion changes, local playback/Connect in the exact glass package, and any Windows or Linux UI run. No capture represents real listening; the demo data is synthetic and labelled as demo in the UI.",
     "keyCharacteristics": [
-      "Compact native controls and readable neutral type.",
-      "Static translucent material with bounded, cover-derived light.",
-      "Green for playback and intentional positive state; neutral selection for choices.",
-      "Existing player chrome remains familiar across light and dark themes."
+      "Smoked glass panes floating 8px apart over a cover-lit room, painted by the app, never OS blur.",
+      "One VU-amber lamp for live state; neutral inverted pills for choices.",
+      "Opaque overlays: menus, popovers and dialogs never let content ghost through.",
+      "Inter only, hierarchy by weight on a tight scale.",
+      "Finite exponential ease-out motion in three durations (120 / 220 / 600 ms), immediate under Reduce Motion."
     ],
     "rules": [
       {
-        "name": "The State Color Rule",
-        "body": "Use the existing palette roles for interaction; cover-derived tint belongs behind the content and does not replace text or state colors.",
+        "name": "The One Lamp Rule",
+        "body": "Amber marks live state only: playing, primary play, the current navigation channel, Connect and the active device. Choices, cautions and errors never take it. The build also spends amber on a selected Love rating in the discovery feedback column, a slider fill while it is held, the 1px keyboard focus ring, the text caret and the text-selection tint, and the native Settings switch; those are the recorded extent, not licence for more.",
         "section": "colors"
       },
       {
-        "name": "The Native Type Rule",
-        "body": "Use the bundled weight helpers and lay out logical text before bidi positioning; the design does not add pre-reordered strings or a decorative display family.",
+        "name": "The Derived Lamp Text Rule",
+        "body": "Never set small amber text by hand. Use the lamp-text role, which deepens until it reads at 4.5:1; light lamp text is `#653706`.",
+        "section": "colors"
+      },
+      {
+        "name": "The Capped Wash Rule",
+        "body": "A page's cover wash pools at the top of the page pane (full strength at 0pt, 45% at 140pt, gone by 360pt). In light it is capped at 20% of the tint so live text stays legible; in dark it is 30% on Home, Search, Settings and Queue and 55% on collection pages.",
+        "section": "colors"
+      },
+      {
+        "name": "The Weight Ranks Rule",
+        "body": "Rank with weight, then size; never with a second family, colour or uppercase eyebrow. Uppercase appears only in data column headers.",
         "section": "typography"
       },
       {
-        "name": "The Quiet Material Rule",
-        "body": "Keep the pane's light static and bounded; do not add an idle repaint loop for blur or shimmer.",
+        "name": "The Fixed Cell Rule",
+        "body": "Changing state never shifts geometry: durations right-align, and the discovery reason sits in a fixed-width cell so the 28px feedback column holds one x position on every row.",
+        "section": "typography"
+      },
+      {
+        "name": "The Rendered Glass Rule",
+        "body": "Glass is painted: fill, sheen, rim and shadow over cached colour fields. Never use OS backdrop blur, vibrancy or a per-frame blur pass.",
         "section": "elevation"
+      },
+      {
+        "name": "The Opaque Overlay Rule",
+        "body": "Anything that floats over content (menus, popovers, dialogs, toasts) is opaque glass. Sheen, rim and shadow keep it glass; content beneath never ghosts through its text.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Pixel Rim Rule",
+        "body": "Rims are one physical pixel, lit along the top third and shaded along the bottom third, over the outline at 60% (dark) or 80% (light).",
+        "section": "elevation"
+      },
+      {
+        "name": "The Neutral Choice Rule",
+        "body": "Chips, segmented controls and settings options select with the inverted neutral pill, never amber.",
+        "section": "components"
+      },
+      {
+        "name": "The Native Switch Exception",
+        "body": "On/off settings rows use a native-style switch (40 by 22px pill, white 16px knob): the track eases from `*-surface-active` to the lamp over 220 ms. This is the only choice-like control that turns amber, scoped to boolean switches.",
+        "section": "components"
+      },
+      {
+        "name": "The Fader Glide Rule",
+        "body": "Selection travels; it never jumps or blinks. When the layout moves the selected item, the lamp follows at once instead of gliding.",
+        "section": "components"
+      },
+      {
+        "name": "The Still Under Reduce Motion Rule",
+        "body": "With the app's Reduce motion setting on, or the macOS Reduce Motion preference (read at most every 2 s), every helper returns its target immediately, egui animation time is 0 and scroll animation is off.",
+        "section": "components"
       }
     ],
     "dos": [
-      "**Do** use the existing theme roles and real Inter weight helpers.",
-      "**Do** keep static pane light below neutral text and interactive controls.",
-      "**Do** preserve native row geometry and keep recommendation text bounded.",
-      "**Do** preserve the local black light-theme Save taste label when using that component.",
-      "**Do** keep shell changes outside this Home replacement unless separately requested."
+      "**Do** build every new surface from the four glass kinds (pane, console, popover, well) and their recorded opacities, sheen, rims and shadows.",
+      "**Do** keep panes 8px apart and from the window edge, with 24px page padding.",
+      "**Do** spend amber only on live state, and use the lamp-text role for any amber text.",
+      "**Do** select choices with the neutral inverted pill gliding over 220 ms.",
+      "**Do** make overlays opaque `*-overlay` glass.",
+      "**Do** put text inputs in a 10px-radius well with the 1px rim and the eased focus rim.",
+      "**Do** use only the three durations (120, 220, 600 ms) with exponential ease-out, and make them immediate under Reduce Motion.",
+      "**Do** keep demo, unplayable and remote-playback states honest and labelled."
     ],
     "donts": [
-      "**Don't** turn cover tint into a new foreground or selection palette.",
-      "**Don't** treat the static mesh as proof of a native live-blur compositor.",
-      "**Don't** promote this Home composition into a rule for every future surface.",
-      "**Don't** infer visual approval, motion quality or platform-wide validation from static macOS captures."
-    ]
+      "**Don't** use OS backdrop blur, vibrancy or a per-frame blur pass for glass.",
+      "**Don't** make menus, popovers or dialogs translucent.",
+      "**Don't** select chips, segmented controls or settings options with amber; boolean switches are the one recorded exception.",
+      "**Don't** colour cautions or error icons amber.",
+      "**Don't** raise the light-theme cover wash above 20%.",
+      "**Don't** introduce a second typeface, gradient text, or uppercase eyebrows.",
+      "**Don't** return to a flat black Spotify clone with green accents and card grids.",
+      "**Don't** claim smoothness, frame rate or CPU cost; none has been measured."
+    ],
+    "notCanonized": "**Not canonized** (residuals in the shipped build, recorded so nobody copies them): the active sort header that paints plain `*-lamp` text (in light below 4.5:1) instead of lamp-text or a neutral; dialog text fields on the older recipe (8px radius, flat rim, no eased focus rim) instead of the 10px field well; placeholder hints in `*-dim`, which read faintly on light wells; the faint light-theme field rim (about 1.2:1 against the pane); a focus ring proven only by test, never captured; macOS shortcuts written \"Cmd+\" rather than the platform symbols. They stay out of the system because each is a known contrast or consistency gap, not a design decision."
   }
 }

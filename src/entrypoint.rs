@@ -273,7 +273,7 @@ fn desktop_entry() -> String {
 
 #[cfg(target_os = "linux")]
 const PULSEAUDIO_PROPERTIES: [(&str, &str); 2] = [
-    ("PULSE_PROP_application.name", "Spotifast"),
+    ("PULSE_PROP_application.name", "Spotiurge"),
     ("PULSE_PROP_stream.description", "Spotify playback"),
 ];
 
@@ -556,6 +556,7 @@ pub(crate) fn run() -> eframe::Result<()> {
     spotifast::window::set_fixed_size(demo_inner.is_some());
     #[cfg(feature = "demo")]
     let demo_storage = app.dirs.cache.join("demo-window.ron");
+    let profile_storage = profile_storage(&app.dirs);
     fastframe_shell::Shell::new(app, &waker)
         .idle(fastframe_tray::idle)
         .run(|lease| {
@@ -579,7 +580,7 @@ pub(crate) fn run() -> eframe::Result<()> {
             };
             #[cfg(not(feature = "demo"))]
             let options = native_options(false, mini, None);
-            let options = profile_options(options);
+            let options = profile_options(options, profile_storage.clone());
             let persist_memory = options.persist_window;
             #[cfg(windows)]
             let thumbbar_enabled = desktop_surfaces && options.viewport.taskbar != Some(false);
@@ -755,12 +756,8 @@ fn native_options(
     // Disabling saving does not disable eframe's startup restore. Give the
     // mini player its own path, and Shell disables its egui-memory saving too,
     // so it neither reads the main window's geometry nor creates a state file.
+    // The main window's path comes from `profile_options`.
     let persistence_path = mini.as_ref().map(|mini| mini.storage_path.clone());
-    #[cfg(target_os = "linux")]
-    let persistence_path = persistence_path.or_else(|| {
-        // Keep the native profile path even when Flatpak supplies its app ID.
-        eframe::storage_dir("spotifast").map(|dir| dir.join("app.ron"))
-    });
     #[cfg(target_os = "linux")]
     let app_id = desktop_entry();
     #[cfg(not(target_os = "linux"))]
@@ -831,9 +828,19 @@ fn native_options(
     }
 }
 
-fn profile_options(mut options: eframe::NativeOptions) -> eframe::NativeOptions {
+/// The fork's own eframe state, beside its settings and session. Upstream
+/// Spotifast's `app.ron` is neither read nor imported.
+fn profile_storage(dirs: &paths::AppDirs) -> std::path::PathBuf {
+    dirs.state.join("app.ron")
+}
+
+fn profile_options(
+    mut options: eframe::NativeOptions,
+    storage: std::path::PathBuf,
+) -> eframe::NativeOptions {
+    // Explicit, so a Flatpak app ID cannot move the profile either.
     if options.persist_window {
-        options.persistence_path = eframe::storage_dir("spotifast").map(|dir| dir.join("app.ron"));
+        options.persistence_path = Some(storage);
     }
     options
 }
@@ -874,17 +881,23 @@ mod native_window_tests {
 
     #[test]
     fn window_geometry_is_kept_without_touching_demo_storage() {
-        let main = profile_options(native_options(false, None, None));
-        assert_eq!(
-            main.persistence_path,
-            eframe::storage_dir("spotifast").map(|dir| dir.join("app.ron"))
+        let dirs = paths::AppDirs::discover();
+        let profile = profile_storage(&dirs);
+        assert_eq!(profile, dirs.state.join("app.ron"));
+        let main = profile_options(native_options(false, None, None), profile.clone());
+        assert_eq!(main.persistence_path, Some(profile.clone()));
+        let upstream = eframe::storage_dir("spotifast").map(|dir| dir.join("app.ron"));
+        assert_ne!(
+            main.persistence_path, upstream,
+            "upstream state stays alone"
         );
         let demo_path = std::path::PathBuf::from("temporary/demo.ron");
-        let demo = profile_options(demo_native_options(
-            native_options(false, None, None),
-            demo_path.clone(),
-        ));
+        let demo = profile_options(
+            demo_native_options(native_options(false, None, None), demo_path.clone()),
+            profile,
+        );
         assert_eq!(demo.persistence_path, Some(demo_path));
+        assert!(!demo.persist_window);
     }
 
     #[test]
@@ -906,18 +919,11 @@ mod native_window_tests {
         {
             let id = desktop_entry();
             assert_eq!(main.viewport.app_id.as_deref(), Some(id.as_str()));
-            assert_eq!(mini.viewport.app_id, main.viewport.app_id);
-            assert_eq!(
-                main.persistence_path,
-                eframe::storage_dir("spotifast").map(|dir| dir.join("app.ron"))
-            );
         }
         #[cfg(not(target_os = "linux"))]
-        {
-            assert_eq!(main.viewport.app_id.as_deref(), Some("spotifast"));
-            assert_eq!(mini.viewport.app_id, main.viewport.app_id);
-            assert_eq!(main.persistence_path, None);
-        }
+        assert_eq!(main.viewport.app_id.as_deref(), Some("spotifast"));
+        assert_eq!(mini.viewport.app_id, main.viewport.app_id);
+        assert_eq!(main.persistence_path, None);
         assert_eq!(mini.persistence_path, Some(mini_path));
         assert!(main.persist_window);
         assert!(!mini.persist_window);

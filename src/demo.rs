@@ -572,7 +572,7 @@ pub fn populate(app: &mut App) {
     app.devices = vec![
         Device {
             id: Some("local-demo".into()),
-            name: "Spotifast".into(),
+            name: "Spotiurge".into(),
             is_active: false,
             is_restricted: false,
             volume_percent: Some(70),
@@ -1899,7 +1899,18 @@ mod tests {
             assert!(app.manual_queue.is_empty());
             assert_eq!(app.queue.get().unwrap().queue, rows[2..]);
             let tree = accessible_frame(&ctx, &mut app, vec![]);
-            let recent = accessible_node(&tree, &gettext(locale, "Recent"), Role::Button);
+            // The tab is a toggle, which tells it apart from a sidebar
+            // button some languages give the same words.
+            let recent = tree
+                .nodes
+                .iter()
+                .find(|(_, node)| {
+                    node.label() == Some(gettext(locale, "Recent").as_ref())
+                        && node.role() == Role::Button
+                        && node.toggled().is_some()
+                })
+                .map(|(id, _)| *id)
+                .expect("the Recent tab");
             accessible_frame(
                 &ctx,
                 &mut app,
@@ -2638,6 +2649,8 @@ mod tests {
         use egui::accesskit::Role;
         let (ctx, mut app) = accessible_app("library-grid-drop-highlight");
         app.settings.sidebar_grid = true;
+        // The second frame is laid out in the installed fonts.
+        accessible_frame(&ctx, &mut app, vec![]);
         let tree = accessible_frame(&ctx, &mut app, vec![]);
         let liked = tree
             .nodes
@@ -3153,8 +3166,8 @@ mod tests {
             .collect()
     }
 
-    /// The About card ends with the author's credit, and the name opens
-    /// the author's website.
+    /// The About card ends with the upstream credit, and the author's
+    /// name opens the author's website.
     #[test]
     fn the_about_card_credits_the_author() {
         let (ctx, mut app) = accessible_app("about-credit");
@@ -3163,7 +3176,11 @@ mod tests {
         assert!(
             texts
                 .iter()
-                .any(|(text, _)| text.contains("Built with love by")),
+                .any(|(text, _)| text.contains("Based on Spotifast by")),
+            "{texts:?}"
+        );
+        assert!(
+            texts.iter().any(|(text, _)| text.contains("MIT License")),
             "{texts:?}"
         );
         let name = texts
@@ -4644,18 +4661,24 @@ mod tests {
             output.textures_delta.clear();
             output
         };
+        // The visualizer paints inside its stage, clear of the console's
+        // rounded corners; the console's own glass is clipped to the bar.
+        let stage = |shape: &egui::epaint::ClippedShape| {
+            shape.clip_rect.width() < 1280.0 - 2.0 * crate::ui::material::GAP - 1.0
+        };
         // Both draw an untextured mesh; the waveform also strokes its line
         // in many short runs.
         let lines = |output: &egui::FullOutput| {
             output
                 .shapes
                 .iter()
-                .filter(|shape| matches!(&shape.shape, egui::Shape::Path(_)))
+                .filter(|shape| stage(shape) && matches!(&shape.shape, egui::Shape::Path(_)))
                 .count()
         };
         let drawn = |output: &egui::FullOutput| {
             output.shapes.iter().any(|shape| {
-                matches!(&shape.shape, egui::Shape::Mesh(mesh)
+                stage(shape)
+                    && matches!(&shape.shape, egui::Shape::Mesh(mesh)
                     if mesh.texture_id == egui::TextureId::default() && !mesh.vertices.is_empty())
             })
         };
@@ -7552,7 +7575,7 @@ mod tests {
             &mut app,
             vec![egui::Event::PointerMoved(egui::pos2(
                 start.x,
-                800.0 - crate::theme::PLAYER_BAR_HEIGHT - 14.0,
+                800.0 - crate::theme::PLAYER_BAR_HEIGHT - 2.0 * crate::ui::material::GAP - 14.0,
             ))],
         );
         for _ in 0..400 {
@@ -7994,7 +8017,7 @@ mod tests {
         // right under Liked Songs, between what were the first two
         // unpinned playlists.
         let mut dropped = false;
-        for step in 0..40 {
+        for step in 0..60 {
             let pos = egui::pos2(120.0, 100.0 + step as f32 * 10.0);
             egui::DragAndDrop::set_payload(
                 &ctx,
@@ -8278,7 +8301,13 @@ mod tests {
                     let end = egui::pos2(
                         row.left() + 130.0,
                         if position == 4 {
-                            row.bottom() - 1.0
+                            // The last row's lower edge, or as low on it as
+                            // the page shows above the player.
+                            row.bottom().min(
+                                800.0
+                                    - crate::theme::PLAYER_BAR_HEIGHT
+                                    - 2.0 * crate::ui::material::GAP,
+                            ) - 1.0
                         } else {
                             row.top() + 1.0
                         },
@@ -8716,7 +8745,7 @@ mod tests {
                 &mut app,
                 vec![egui::Event::PointerMoved(egui::pos2(
                     112.0,
-                    800.0 - crate::theme::PLAYER_BAR_HEIGHT - 14.0,
+                    800.0 - crate::theme::PLAYER_BAR_HEIGHT - 2.0 * crate::ui::material::GAP - 14.0,
                 ))],
             );
             for _ in 0..400 {

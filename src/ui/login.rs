@@ -1,6 +1,6 @@
 //! The sign-in screen.
 
-use egui::{Align, CornerRadius, Frame, Layout, Margin, Rect, Stroke, Vec2, pos2};
+use egui::{Align, Frame, Layout, Margin, Rect, Vec2, pos2};
 
 use crate::app::App;
 use crate::backend::AuthStatus;
@@ -9,12 +9,19 @@ use crate::model::Action;
 use crate::settings::ProxyMode;
 use crate::theme;
 
+use super::{material, motion};
+
+/// The sign-in card's corner radius: a little rounder than a dialog's, as
+/// the one thing on the screen.
+const CARD_RADIUS: f32 = 16.0;
+
 pub fn show(app: &mut App, ui: &mut egui::Ui, connecting: bool) {
     let palette = app.palette;
     let locale = app.locale;
     let ctx = ui.ctx().clone();
     egui::CentralPanel::default()
-        .frame(Frame::new().fill(palette.window))
+        // The room `ui::show` painted shows through around the card.
+        .frame(Frame::new())
         .show(ui, |ui| {
             let rect = ui.max_rect();
             // The native double-click action belongs to the top bar, not the empty login background.
@@ -27,8 +34,6 @@ pub fn show(app: &mut App, ui: &mut egui::Ui, connecting: bool) {
                 rect
             };
             super::titlebar_drag(ui, drag_rect);
-            let top = super::blend(palette.window, palette.accent, 0.10);
-            super::widgets::paint_vertical_gradient(ui, rect, top, palette.window);
             let card_width = 440.0;
             let proxy_id = egui::Id::new("login-proxy-open");
             let proxy_open = ui
@@ -48,17 +53,14 @@ pub fn show(app: &mut App, ui: &mut egui::Ui, connecting: bool) {
                 Vec2::new(card_width, card_height),
             );
             let mut card_ui = ui.new_child(egui::UiBuilder::new().max_rect(card).layout(Layout::top_down(Align::Center)));
-            Frame::new()
-                .fill(palette.panel)
-                .stroke(Stroke::new(1.0, palette.outline))
-                .corner_radius(CornerRadius::same(theme::RADIUS + 8))
+            // The card's glass goes down before its contents, at the size the
+            // contents took last time; a frame whose contents changed size is
+            // drawn again at the new size before it is shown.
+            let glass_id = egui::Id::new("login-card-glass");
+            let glass = ctx.data(|data| data.get_temp::<Rect>(glass_id)).unwrap_or(card);
+            material::paint(card_ui.painter(), glass, CARD_RADIUS, &palette, material::Kind::Popover);
+            let shown = Frame::new()
                 .inner_margin(Margin::same(36))
-                .shadow(egui::epaint::Shadow {
-                    offset: [0, 16],
-                    blur: 48,
-                    spread: 0,
-                    color: palette.shadow,
-                })
                 .show(&mut card_ui, |ui| {
                     egui::ScrollArea::vertical()
                         .id_salt("login-card-scroll")
@@ -181,6 +183,11 @@ pub fn show(app: &mut App, ui: &mut egui::Ui, connecting: bool) {
                     ui.data_mut(|data| data.insert_temp(proxy_id, proxy_open));
                         });
                 });
+            let measured = shown.response.rect;
+            if (measured.min - glass.min).length() > 0.5 || (measured.max - glass.max).length() > 0.5 {
+                ctx.data_mut(|data| data.insert_temp(glass_id, measured));
+                ctx.request_discard("the sign-in card changed size");
+            }
             ui.painter().text(
                 pos2(rect.center().x, rect.bottom() - 24.0),
                 egui::Align2::CENTER_BOTTOM,
@@ -189,7 +196,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui, connecting: bool) {
                     .replace("Spotifast", "Spotiurge")
                     .replace("{version}", env!("CARGO_PKG_VERSION")),
                 theme::regular(11.5),
-                palette.dim,
+                palette.secondary,
             );
         });
 }
@@ -198,36 +205,28 @@ fn proxy_fields(ui: &mut egui::Ui, app: &mut App) {
     let palette = app.palette;
     let mut changed = false;
     let mut apply = false;
+    let labels = ProxyMode::ALL.map(|choice| (choice, choice.label(app.locale)));
+    let choices = labels
+        .each_ref()
+        .map(|(choice, label)| (*choice, label.as_ref()));
     ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 6.0;
-        let row_width: f32 = ProxyMode::ALL
+        let row_width: f32 = choices
             .iter()
-            .map(|choice| {
-                let galley = ui.painter().layout_no_wrap(
-                    choice.label(app.locale).into_owned(),
-                    theme::medium(13.0),
-                    palette.text,
-                );
-                galley.size().x + 24.0
-            })
+            .map(|(_, label)| theme::soft_button_width(ui, label))
             .sum::<f32>()
-            + 6.0 * (ProxyMode::ALL.len() - 1) as f32;
+            + 6.0 * (choices.len() - 1) as f32;
         ui.add_space((ui.available_width() - row_width).max(0.0) / 2.0);
-        for choice in ProxyMode::ALL {
-            if theme::soft_button(
-                ui,
-                &palette,
-                None,
-                &choice.label(app.locale),
-                app.settings.proxy_mode == choice,
-            )
-            .clicked()
-                && app.settings.proxy_mode != choice
-            {
-                app.settings.proxy_mode = choice;
-                changed = true;
-                apply = !choice.is_manual();
-            }
+        if let Some(choice) = theme::choice_chips(
+            ui,
+            &palette,
+            egui::Id::new("login-proxy-mode"),
+            &choices,
+            app.settings.proxy_mode,
+            false,
+        ) {
+            app.settings.proxy_mode = choice;
+            changed = true;
+            apply = !choice.is_manual();
         }
     });
     if app.settings.proxy_mode.is_manual() {
@@ -273,17 +272,20 @@ fn big_button(ui: &mut egui::Ui, app: &App, label: &str) -> bool {
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label)
     });
-    let fill = if response.hovered() {
-        palette.accent_hover
-    } else {
-        palette.accent
-    };
-    ui.painter().rect_filled(rect, 23.0, fill);
+    let lift = motion::toggle(
+        ui.ctx(),
+        response.id.with("lift"),
+        response.hovered() || response.has_focus(),
+        motion::FEEDBACK,
+    );
+    let fill = palette.accent.lerp_to_gamma(palette.accent_hover, lift);
+    ui.painter().rect_filled(rect, rect.height() / 2.0, fill);
     ui.painter().galley(
         rect.center() - galley.size() / 2.0,
         galley,
         palette.on_accent,
     );
+    theme::focus_ring(ui, &response);
     response.clicked()
 }
 

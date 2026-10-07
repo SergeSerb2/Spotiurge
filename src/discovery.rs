@@ -10,6 +10,9 @@ use serde::{Deserialize, Serialize};
 
 pub const MAX_BYTES: usize = 1_048_576;
 pub const MAX_PROMPT_BYTES: usize = 4000;
+/// Live AI history entries per document, matching the newest ten the UI shows.
+/// Refreshes reuse the oldest history key once this many keys exist.
+pub const HISTORY_LIMIT: usize = 10;
 
 /// Keep editor input within the wire/storage limit without splitting UTF-8.
 pub fn limit_prompt(text: &mut String) {
@@ -433,18 +436,68 @@ impl Replica {
             .unwrap_or_default();
         let mut merged = self.clone();
         merged.document.merge(remote)?;
-        for (key, local) in changed {
-            if merged.document.records.get(&key) != Some(&local) {
-                // Incorporate the remote clock first, then express the newer
-                // local intent above it. Tombstones are edits as well.
-                merged.edit(key, local.value)?;
-            }
+        // Incorporate the remote clock first, then express the newer local
+        // intent above it in one write. Tombstones are edits as well.
+        let edits = changed
+            .into_iter()
+            .filter(|(key, local)| merged.document.records.get(key) != Some(local))
+            .map(|(key, local)| (key, local.value))
+            .collect::<Vec<_>>();
+        if !edits.is_empty() {
+            merged.edit_many(edits)?;
         }
         self.document = merged.document;
         Ok(())
     }
 
     pub fn edit(&mut self, key: String, value: Option<Value>) -> Result<(), String> {
+        self.edit_many(vec![(key, value)])
+    }
+
+    /// Store an AI result in a bounded set of history keys. Below
+    /// [`HISTORY_LIMIT`] keys it adds one; after that it overwrites the oldest
+    /// history key, live or tombstone, so keys stop accumulating. Live entries
+    /// beyond the limit, such as legacy history, become tombstones in the same
+    /// atomic write. Every other record and clock is left untouched.
+    pub fn record_history(
+        &mut self,
+        prompt: String,
+        suggestions: Vec<Suggestion>,
+    ) -> Result<(), String> {
+        let mut history = self
+            .document
+            .records
+            .iter()
+            .filter(|(key, _)| key.starts_with("history:"))
+            .map(|(key, record)| (&record.stamp, key.as_str(), record.value.is_some()))
+            .collect::<Vec<_>>();
+        // Newest first; the oldest key is last.
+        history.sort_unstable_by(|a, b| (b.0, b.1).cmp(&(a.0, a.1)));
+        let target = if history.len() < HISTORY_LIMIT {
+            format!("history:{:032x}", rand::random::<u128>())
+        } else {
+            history
+                .pop()
+                .map_or_else(String::new, |(_, key, _)| key.to_owned())
+        };
+        let mut edits = history
+            .iter()
+            .filter(|(_, _, live)| *live)
+            .skip(HISTORY_LIMIT - 1)
+            .map(|(_, key, _)| ((*key).to_owned(), None))
+            .collect::<Vec<_>>();
+        edits.push((
+            target,
+            Some(Value::History {
+                prompt,
+                suggestions,
+            }),
+        ));
+        self.edit_many(edits)
+    }
+
+    /// Apply edits atomically under one logical clock above every record.
+    fn edit_many(&mut self, edits: Vec<(String, Option<Value>)>) -> Result<(), String> {
         let counter = self
             .document
             .records
@@ -455,16 +508,18 @@ impl Replica {
             .checked_add(1)
             .ok_or("Discovery clock is exhausted.")?;
         let mut candidate = self.document.clone();
-        candidate.records.insert(
-            key,
-            Record {
-                stamp: Stamp {
-                    counter,
-                    device: self.device.clone(),
+        for (key, value) in edits {
+            candidate.records.insert(
+                key,
+                Record {
+                    stamp: Stamp {
+                        counter,
+                        device: self.device.clone(),
+                    },
+                    value,
                 },
-                value,
-            },
-        );
+            );
+        }
         candidate.validate()?;
         self.document = candidate;
         Ok(())
@@ -570,7 +625,7 @@ pub struct Discovery {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     #[test]
@@ -886,6 +941,255 @@ mod tests {
         a.document.merge(&b.document).unwrap();
         b.document.merge(&old_a).unwrap();
         assert_eq!(a.document, b.document);
+    }
+
+    /// The largest valid history entry, about 16 KiB of JSON.
+    fn large_suggestions(label: &str) -> Vec<Suggestion> {
+        (0..12)
+            .map(|n| Suggestion {
+                title: format!("{label} {n} {}", "t".repeat(280)),
+                artist: "a".repeat(300),
+                reason: "r".repeat(600),
+            })
+            .collect()
+    }
+
+    fn history_keys(document: &Document) -> (usize, usize) {
+        let history = document
+            .records
+            .iter()
+            .filter(|(key, _)| key.starts_with("history:"));
+        let live = history.clone().filter(|(_, r)| r.value.is_some()).count();
+        (history.count(), live)
+    }
+
+    fn encoded_len(document: &Document) -> usize {
+        serde_json::to_vec(document).unwrap().len()
+    }
+
+    #[test]
+    fn repeated_refreshes_reuse_a_bounded_set_of_history_keys() {
+        let mut replica = device('a');
+        replica.edit("taste".into(), taste("kept taste")).unwrap();
+        let mut capped = 0;
+        for refresh in 0..60 {
+            replica
+                .record_history(
+                    "p".repeat(MAX_PROMPT_BYTES),
+                    large_suggestions(&format!("{refresh:02}")),
+                )
+                .unwrap();
+            let (keys, live) = history_keys(&replica.document);
+            assert_eq!(keys, (refresh + 1).min(HISTORY_LIMIT));
+            assert_eq!(live, keys);
+            if refresh + 1 == HISTORY_LIMIT {
+                capped = encoded_len(&replica.document);
+            }
+        }
+        // Only the clock digits may grow once the keys are reused.
+        assert!(encoded_len(&replica.document) <= capped + 100);
+        let recent = replica.document.recent_history();
+        assert_eq!(recent.len(), HISTORY_LIMIT);
+        let Some(Value::History { suggestions, .. }) = &recent[0].1.value else {
+            panic!("newest history is live");
+        };
+        assert!(suggestions[0].title.starts_with("59 "));
+        assert_eq!(replica.document.taste(), "kept taste");
+        assert_eq!(replica.document.records["taste"].stamp.counter, 1);
+    }
+
+    /// Legacy history from before the limit, with other records interleaved.
+    fn legacy(replica: &mut Replica, entries: usize) {
+        let uri = "spotify:track:0123456789ABCDEFGHIJKL";
+        replica.edit("taste".into(), taste("legacy taste")).unwrap();
+        replica
+            .edit(
+                format!("feedback:{uri}"),
+                Some(Value::Feedback {
+                    uri: uri.into(),
+                    title: "Song".into(),
+                    artist: "Artist".into(),
+                    rating: Rating::Love,
+                }),
+            )
+            .unwrap();
+        replica.edit("mix:gone".into(), None).unwrap();
+        for n in 0..entries {
+            let value = Some(Value::History {
+                prompt: format!("legacy {n}"),
+                suggestions: large_suggestions(&format!("legacy {n}")),
+            });
+            replica.edit(format!("history:{n:032x}"), value).unwrap();
+        }
+        replica
+            .edit(
+                "mix:kept".into(),
+                Some(Value::Mix {
+                    title: "Kept".into(),
+                    uris: vec![uri.into()],
+                }),
+            )
+            .unwrap();
+    }
+
+    #[test]
+    fn near_limit_legacy_history_is_trimmed_without_touching_other_records() {
+        let mut replica = device('a');
+        const LEGACY: usize = 70;
+        legacy(&mut replica, LEGACY);
+        let before = replica.document.clone();
+        assert!(
+            encoded_len(&before) > MAX_BYTES - 20_000,
+            "fixture is near the limit"
+        );
+        // Even the largest new entry fits once the excess is tombstoned.
+        replica
+            .record_history("new".into(), large_suggestions("new"))
+            .unwrap();
+        let after = &replica.document;
+        assert_eq!(history_keys(after), (LEGACY, HISTORY_LIMIT), "no new key");
+        assert!(encoded_len(after) < encoded_len(&before) / 4);
+        let counter = before
+            .records
+            .values()
+            .map(|r| r.stamp.counter)
+            .max()
+            .unwrap()
+            + 1;
+        for (key, old) in &before.records {
+            let new = &after.records[key];
+            if !key.starts_with("history:") {
+                assert_eq!(new, old, "{key} keeps its value and clock");
+            } else if new != old {
+                assert_eq!(new.stamp.counter, counter);
+            }
+        }
+        // The oldest key holds the new entry; the newest nine stay; the rest are tombstones.
+        assert!(matches!(
+            &after.records[&format!("history:{:032x}", 0)].value,
+            Some(Value::History { prompt, .. }) if prompt == "new"
+        ));
+        for n in 1..LEGACY {
+            let record = &after.records[&format!("history:{n:032x}")];
+            assert_eq!(
+                record.value.is_some(),
+                n > LEGACY - HISTORY_LIMIT,
+                "legacy {n}"
+            );
+        }
+    }
+
+    #[test]
+    fn history_failures_leave_the_document_unchanged() {
+        let mut replica = device('a');
+        legacy(&mut replica, 20);
+        replica
+            .document
+            .records
+            .get_mut("mix:kept")
+            .unwrap()
+            .stamp
+            .counter = u64::MAX - 1;
+        let before = replica.document.clone();
+        assert!(
+            replica
+                .record_history("x".into(), large_suggestions("x"))
+                .is_err()
+        );
+        assert_eq!(replica.document, before, "clock exhaustion");
+        replica
+            .document
+            .records
+            .get_mut("mix:kept")
+            .unwrap()
+            .stamp
+            .counter = u64::MAX - 2;
+        let before = replica.document.clone();
+        assert!(replica.record_history("x".into(), vec![]).is_err());
+        assert_eq!(replica.document, before, "invalid entry");
+
+        let mut full = device('b');
+        full.edit("taste".into(), taste("full")).unwrap();
+        fill_with_mixes(&mut full.document, 2000);
+        let before = full.document.clone();
+        assert_eq!(
+            full.record_history("x".into(), large_suggestions("x")),
+            Err("Discovery storage is full. Export and remove old mixes or history.".into())
+        );
+        assert_eq!(full.document, before, "storage full");
+    }
+
+    /// Fill a valid document with mixes until less than `room` + 200 bytes remain.
+    pub(crate) fn fill_with_mixes(document: &mut Document, room: usize) {
+        let mut n = 0;
+        for size in [100, 1] {
+            let uris = (0..size)
+                .map(|n| format!("spotify:track:{n:022}"))
+                .collect::<Vec<_>>();
+            loop {
+                let key = format!("mix:fill{n}");
+                n += 1;
+                document.records.insert(
+                    key.clone(),
+                    Record {
+                        stamp: Stamp {
+                            counter: 1,
+                            device: "f".repeat(32),
+                        },
+                        value: Some(Value::Mix {
+                            title: "Fill".into(),
+                            uris: uris.clone(),
+                        }),
+                    },
+                );
+                if encoded_len(document) > MAX_BYTES - room {
+                    document.records.remove(&key);
+                    break;
+                }
+            }
+        }
+        document.validate().unwrap();
+        assert!(encoded_len(document) > MAX_BYTES - room - 200);
+    }
+
+    #[test]
+    fn offline_merges_never_resurrect_trimmed_history() {
+        let mut a = device('a');
+        legacy(&mut a, 15);
+        let base = a.document.clone();
+        let mut stale = device('b');
+        stale.document = base.clone();
+        let mut c = device('c');
+        c.document = base.clone();
+        // A refresh while a sync of `base` is in flight.
+        a.record_history("new".into(), large_suggestions("new"))
+            .unwrap();
+        stale.edit("taste".into(), taste("offline taste")).unwrap();
+        let trimmed = |document: &Document| {
+            (1..6).all(|n| {
+                document.records[&format!("history:{n:032x}")]
+                    .value
+                    .is_none()
+            })
+        };
+        assert!(trimmed(&a.document));
+
+        a.merge_synced(&stale.document, Some(&base)).unwrap();
+        assert!(trimmed(&a.document));
+        assert_eq!(a.document.taste(), "offline taste");
+        stale.document.merge(&a.document).unwrap();
+        assert_eq!(stale.document, a.document);
+        assert_eq!(history_keys(&a.document), (15, HISTORY_LIMIT));
+
+        // Concurrent refreshes reuse the same oldest key and still converge.
+        c.record_history("offline".into(), large_suggestions("c"))
+            .unwrap();
+        let a_document = a.document.clone();
+        a.document.merge(&c.document).unwrap();
+        c.document.merge(&a_document).unwrap();
+        assert_eq!(a.document, c.document);
+        assert!(trimmed(&a.document));
+        assert_eq!(history_keys(&a.document), (15, HISTORY_LIMIT));
     }
 
     #[test]

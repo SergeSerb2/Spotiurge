@@ -50,8 +50,8 @@ fn main() {
         let mut resource = winresource::WindowsResource::new();
         resource
             .set_icon("packaging/windows/spotifast.ico")
-            .set("ProductName", "Spotifast")
-            .set("FileDescription", "A native Spotify client");
+            .set("ProductName", "Spotiurge")
+            .set("FileDescription", "Personal music discovery and playback");
         if let Err(error) = resource.compile() {
             println!("cargo:warning=Windows resources not embedded: {error}");
         }

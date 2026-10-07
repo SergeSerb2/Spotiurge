@@ -13,7 +13,9 @@ defines checks and matched deterministic visual comparisons.
 The desktop foundation is Rust 1.98, egui/eframe with OpenGL, a Tokio backend,
 librespot playback/Connect and native credential stores. Network and playback
 are already separated from immediate-mode drawing. Linux, macOS and Windows
-have build/test CI; no iOS project, Rust bridge or TestFlight pipeline exists.
+have build/test CI. At the audit baseline, no iOS project, Rust bridge or
+TestFlight pipeline existed. An isolated Rust/Swift playback probe now exists;
+the production iOS application remains gated.
 Reuse these boundaries and dependencies rather than replacing the desktop.
 
 The updater repository targets `SergeSerb2/Spotiurge`, but inherited packaging
@@ -108,6 +110,23 @@ replacing cached picks, refresh time or AI history. An old completion cannot
 release a newer request's slot. Unfinished taste-editor drafts do not change the
 saved recommendation inputs.
 
+AI history is bounded to ten live entries, the newest ten the UI shows. Each
+refresh adds a `history:` key only while fewer than ten exist; after that it
+overwrites the oldest history key, live or tombstone, with a newer clock. The
+same atomic write tombstones live entries beyond the limit, so a legacy document
+with hundreds of entries shrinks on its next refresh without new keys. Taste,
+feedback, mixes and their clocks are untouched, and validation or clock
+exhaustion leaves the document unchanged. Two devices refreshing offline can
+both add keys or overwrite the same oldest key; the higher clock wins and the
+other device's entry is lost, which is acceptable for history. The latest
+catalogue picks are saved locally even when a full document rejects the history
+entry; the existing storage-full message is shown instead.
+
+The desktop window's eframe state is `app.ron` in Spotiurge's own state
+directory, beside its session and discovery files. Upstream Spotifast's
+`app.ron` is neither read nor imported; demo captures keep their separate,
+unsaved path.
+
 Single-user bearer authentication over HTTPS is sufficient initially. Store the
 device token in Keychain/Credential Manager/Secret Service, with a short native
 store deadline. Server secrets belong in Railway variables. Disable redirects
@@ -128,13 +147,32 @@ or permission to distribute it through TestFlight.
 
 CoreDevice now reports Serge's physical iPhone 17 Pro Max as connected over USB,
 paired and booted, with Developer Mode enabled. It runs iOS 27.2; the Mac has
-Xcode 27.0. The older Instruments device list still reports it offline, so an
-actual signed installation and launch must establish runtime readiness.
+Xcode 27.0. CoreDevice successfully installed and launched the signed probe;
+the older Instruments offline listing did not describe actual readiness.
 An Apple Development identity is available for team `78A5P57U23`
 (`336W29P997` is the certificate label, not the team ID). Existing development
-profiles for other apps include this phone, but cannot be reused for Spotiurge.
-No Spotiurge provisioning profile, App Store Connect record, distribution
-identity or upload authorization has yet been verified.
+profiles for other apps cannot be reused for Spotiurge. Xcode created a
+team-managed development profile covering this phone and the probe's own
+`com.sergeserbinenko.spotiurge.playbackprobe` identifier. A Spotiurge App Store
+Connect record, iOS distribution identity and upload authorization remain
+unverified.
+
+Build 8 passed the locked-background criterion: 17 minutes 22 seconds locked,
+four natural track transitions, and Spotify absent from 18 process snapshots.
+One server session closure recovered automatically, restoring the queue and
+position with 1.36 seconds of silent rendered frames. This proves independent
+audio through the Rust decoder and AVAudioSourceNode on the tested phone.
+Build 9 corrected a duplicate-session bug and connected from Keychain after
+installation. A deliberate interruption/resume, route change and Connect
+handoff both ways remain uninstrumented. Serge reported informally that it was
+all good, then requested an end to phone checks. Physical-device operations
+have stopped. See the [redacted playback evidence](../reviews/spotiurge-ios/playback-gate.md)
+for the precise timeline and partial gate verdict. UI development can proceed
+in source and Simulator against the desktop design, while production playback
+and TestFlight remain gated. The probe uses an ignored local
+librespot identity experiment, not a shipping dependency or proof of official
+Spotify iOS SDK support. A validated dependency fix must move to a
+maintainer-owned pinned fork and be contributed to librespot upstream.
 
 The gate requires a minimal independently signed probe with an iOS-capable audio
 sink, AVAudioSession playback category and `UIBackgroundModes=audio`. No

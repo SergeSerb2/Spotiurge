@@ -1,25 +1,31 @@
 //! The personal discovery workspace, using the existing native player actions.
 //!
-//! One restrained pane opens on playable picks: a compact header with play
+//! One restrained well opens on playable picks: a compact header with play
 //! and refresh, an exploration strip, one honest catalogue summary and 56-point
 //! rows. Taste editing, unmatched suggestions and AI history stay out of the way
 //! until asked for.
 
 use super::widgets::{self, TrackRow};
+use super::{material, motion};
 use crate::app::App;
 use crate::discovery::{
-    CatalogueOutcome, Exploration, MAX_PROMPT_BYTES, Rating, RecommendationErrorKind, Value,
-    limit_prompt,
+    CatalogueOutcome, Document, Exploration, MAX_PROMPT_BYTES, Rating, RecommendationErrorKind,
+    Record, Value, limit_prompt,
 };
-use crate::i18n::{gettext, ngettext};
+use crate::i18n::{Locale, gettext, ngettext};
 use crate::model::{Action, RowContext};
 use crate::theme::{self, Icon, Palette};
-use egui::{Align, Color32, CornerRadius, Frame, Layout, Margin, Sense, Stroke, Vec2, vec2};
+use egui::{Align, Color32, CornerRadius, Frame, Layout, Margin, Rect, Sense, Vec2, pos2, vec2};
 use std::sync::Arc;
 
 /// Width of the main content above which reasons get their own column.
 const WIDE: f32 = 920.0;
 const FEEDBACK: f32 = 28.0;
+/// The overflow menu's width range, in points.
+const MENU_MIN_WIDTH: f32 = 240.0;
+const MENU_MAX_WIDTH: f32 = 280.0;
+/// The widest the taste prompt grows, so a line stays a comfortable read.
+const PROMPT_MAX_WIDTH: f32 = 560.0;
 
 struct PromptBuffer<'a>(&'a mut String);
 
@@ -51,17 +57,13 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     // Cover-derived light when the theme follows the art, the accent otherwise.
     let tint = app.now_playing_tint().unwrap_or(palette.accent);
-    let fill = palette
-        .surface
-        .gamma_multiply(if palette.dark { 0.72 } else { 0.80 });
-    // A static translucent material over the native background: no blur pass
-    // or idle repaint loop. The glow is reserved inside the frame, so it sits
-    // above the fill and below the content.
+    // The desk is an inset well in the page's pane, not a second floating
+    // pane: the well's glass without a rim or shadow. The glow is reserved
+    // inside the frame, so it sits above the fill and below the content.
     let framed = Frame::new()
-        .fill(fill)
-        .stroke(Stroke::new(1.0, palette.outline))
-        .corner_radius(CornerRadius::same(14))
-        .inner_margin(Margin::symmetric(20, 18))
+        .fill(material::glass(&palette, material::Kind::Well).fill)
+        .corner_radius(CornerRadius::same(material::PANE_RADIUS as u8))
+        .inner_margin(Margin::same(20))
         .show(ui, |ui| {
             let glow = ui.painter().add(egui::Shape::Noop);
             ui.set_width(ui.available_width());
@@ -75,12 +77,13 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     ui.add_space(24.0);
 }
 
-/// A soft light rising from the upper left. Every edge vertex is transparent,
-/// so the glow never spills past the pane's rounded corners.
+/// A soft, static light rising from the upper left. Every edge vertex is
+/// transparent, so the glow never spills past the well's rounded corners
+/// (`material::light` paints at once and could not sit under the content).
 fn glow_mesh(rect: egui::Rect, tint: Color32, dark: bool) -> egui::Shape {
     let mut mesh = egui::Mesh::default();
     let center = rect.lerp_inside(vec2(0.22, 0.18));
-    mesh.colored_vertex(center, tint.gamma_multiply(if dark { 0.16 } else { 0.12 }));
+    mesh.colored_vertex(center, tint.gamma_multiply(if dark { 0.12 } else { 0.10 }));
     let ring = [
         rect.left_top(),
         rect.center_top(),
@@ -121,16 +124,16 @@ fn pane(app: &mut App, ui: &mut egui::Ui) {
     header(app, ui, can_play);
     ui.add_space(12.0);
     exploration(app, ui);
-    ui.add_space(14.0);
+    ui.add_space(16.0);
 
     let onboarding = app.discovery.ready && !app.discovery.replica.document.has_inputs();
     if app.discovery.editing_taste || onboarding {
         taste_editor(app, ui, onboarding);
-        ui.add_space(14.0);
+        ui.add_space(16.0);
     }
 
     summary(app, ui, &counts);
-    ui.add_space(10.0);
+    ui.add_space(8.0);
 
     if counts.ready > 0 {
         playable_rows(app, ui);
@@ -231,13 +234,23 @@ fn header(app: &mut App, ui: &mut egui::Ui, can_play: bool) {
                     app.actions.push(Action::DiscoveryPlayAll { shuffle: true });
                 }
                 ui.add_space(4.0);
+                // The lamp lights only while there is something to play.
+                // Unavailable, the key goes neutral at full opacity, so it
+                // reads as dimmed without its icon fading into the glass.
+                let (fill, hover, icon) = if can_play {
+                    (palette.accent, palette.accent_hover, palette.on_accent)
+                } else {
+                    ui.set_opacity(1.0);
+                    let key = material::selected_fill(&palette);
+                    (key, key, palette.secondary)
+                };
                 if theme::circle_button(
                     ui,
                     Icon::PlayFilled,
                     44.0,
-                    palette.accent,
-                    palette.accent_hover,
-                    palette.on_accent,
+                    fill,
+                    hover,
+                    icon,
                     &gettext(locale, "Play all"),
                 )
                 .on_disabled_hover_text(unavailable.as_str())
@@ -292,10 +305,13 @@ fn more_menu(app: &mut App, ui: &mut egui::Ui) {
     if app.offline && app.discovery.status == "DEMO_MENU" {
         egui::Popup::open_id(ui.ctx(), egui::Popup::default_response_id(&more));
     }
+    // Hung from the button's trailing edge, as wide as its items need.
     egui::Popup::menu(&more)
         .frame(widgets::menu_frame(&palette))
+        .align(egui::RectAlign::BOTTOM_END)
         .show(|ui| {
-            ui.set_min_width(220.0);
+            ui.set_min_width(MENU_MIN_WIDTH);
+            ui.set_max_width(MENU_MAX_WIDTH);
             let writable = app.discovery.ready && !app.offline;
             let has_ready = app.discovery.picks.iter().any(|pick| pick.track.is_some());
             if widgets::menu_item_enabled(
@@ -321,7 +337,7 @@ fn more_menu(app: &mut App, ui: &mut egui::Ui) {
             ) {
                 app.actions.push(Action::DiscoverySync);
             }
-            ui.separator();
+            widgets::menu_separator(ui, &palette);
             if widgets::menu_item_enabled(
                 ui,
                 &palette,
@@ -355,32 +371,45 @@ fn exploration(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     let locale = app.locale;
     let current = app.settings.discovery.exploration;
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 4.0;
-        for (choice, label, hint) in [
-            (
-                Exploration::Familiar,
-                gettext(locale, "Familiar"),
-                gettext(locale, "Stay close to what you already love"),
-            ),
-            (
-                Exploration::Balanced,
-                gettext(locale, "Balanced"),
-                gettext(locale, "Mix favourites with new finds"),
-            ),
-            (
-                Exploration::Adventurous,
-                gettext(locale, "Adventurous"),
-                gettext(locale, "Reach further from your usual music"),
-            ),
-        ] {
-            let response = theme::soft_button(ui, &palette, None, &label, choice == current)
-                .on_hover_text(hint.into_owned());
-            if response.clicked() && choice != current {
-                app.actions.push(Action::DiscoveryExploration(choice));
-            }
-        }
-    });
+    let choices = [
+        (
+            Exploration::Familiar,
+            gettext(locale, "Familiar"),
+            gettext(locale, "Stay close to what you already love"),
+        ),
+        (
+            Exploration::Balanced,
+            gettext(locale, "Balanced"),
+            gettext(locale, "Mix favourites with new finds"),
+        ),
+        (
+            Exploration::Adventurous,
+            gettext(locale, "Adventurous"),
+            gettext(locale, "Reach further from your usual music"),
+        ),
+    ];
+    let options: Vec<(Exploration, &str)> = choices
+        .iter()
+        .map(|(choice, label, _)| (*choice, label.as_ref()))
+        .collect();
+    let id = ui.make_persistent_id("discovery-exploration");
+    let strip = ui.scope(|ui| theme::choice_chips(ui, &palette, id, &options, current, false));
+    // ponytail: choice_chips does not return its chips, so the hints sit on
+    // hover-only overlays at its layout (soft-button widths, six points
+    // apart). Hover-only widgets never take the click from the chip below.
+    // A chips variant returning responses would replace this.
+    let strip_rect = strip.response.rect;
+    let mut x = strip_rect.left();
+    for (index, (_, label, hint)) in choices.iter().enumerate() {
+        let width = theme::soft_button_width(ui, label);
+        let rect = Rect::from_min_size(pos2(x, strip_rect.top()), vec2(width, strip_rect.height()));
+        ui.interact(rect, id.with(("hint", index)), Sense::hover())
+            .on_hover_text(hint.as_ref());
+        x += width + 6.0;
+    }
+    if let Some(choice) = strip.inner {
+        app.actions.push(Action::DiscoveryExploration(choice));
+    }
 }
 
 fn taste_editor(app: &mut App, ui: &mut egui::Ui, onboarding: bool) {
@@ -391,20 +420,29 @@ fn taste_editor(app: &mut App, ui: &mut egui::Ui, onboarding: bool) {
     } else {
         gettext(locale, "Your taste")
     };
-    theme::text(ui, heading, theme::semibold(15.0), palette.text);
-    ui.add_space(6.0);
+    theme::section_title(ui, &palette, &heading);
+    ui.add_space(8.0);
     let mut draft = app.discovery.draft.clone();
-    let input = ui.add_enabled(
-        app.discovery.ready,
-        egui::TextEdit::multiline(&mut PromptBuffer(&mut draft))
-            .desired_width(f32::INFINITY)
-            .desired_rows(3)
-            .hint_text(gettext(
-                locale,
-                "Warm jazz, spacious electronics, a few surprises…",
-            ))
-            .font(theme::regular(15.0)),
-    );
+    let ready = app.discovery.ready;
+    let input = ui
+        .scope(|ui| {
+            ui.set_max_width(ui.available_width().min(PROMPT_MAX_WIDTH));
+            widgets::field_well(ui, &palette, |ui| {
+                ui.add_enabled(
+                    ready,
+                    egui::TextEdit::multiline(&mut PromptBuffer(&mut draft))
+                        .frame(egui::Frame::NONE)
+                        .desired_width(f32::INFINITY)
+                        .desired_rows(3)
+                        .hint_text(gettext(
+                            locale,
+                            "Warm jazz, spacious electronics, a few surprises…",
+                        ))
+                        .font(theme::regular(15.0)),
+                )
+            })
+        })
+        .inner;
     #[cfg(feature = "demo")]
     if app.offline && app.discovery.status == "DEMO_FOCUS" {
         input.request_focus();
@@ -418,13 +456,8 @@ fn taste_editor(app: &mut App, ui: &mut egui::Ui, onboarding: bool) {
         let can_save = app.discovery.ready
             && !app.offline
             && (!app.discovery.draft.trim().is_empty() || !onboarding);
-        // Small text needs stronger contrast than the primary play icon.
-        let mut text_palette = palette;
-        if !palette.dark {
-            text_palette.on_accent = egui::Color32::BLACK;
-        }
         ui.add_enabled_ui(can_save, |ui| {
-            if theme::pill_button(ui, &text_palette, &gettext(locale, "Save taste"), true)
+            if theme::pill_button(ui, &palette, &gettext(locale, "Save taste"), true)
                 .on_disabled_hover_text(demo_disabled(app))
                 .clicked()
             {
@@ -474,7 +507,8 @@ fn summary(app: &mut App, ui: &mut egui::Ui, counts: &Counts) {
             .into_owned(),
         };
         let detail = app.discovery.status.clone();
-        let response = notice(ui, &palette, Icon::CircleAlert, palette.warning, &text);
+        // Neutral: the amber lamp is kept for live state.
+        let response = notice(ui, &palette, Icon::CircleAlert, palette.text, &text);
         if !detail.is_empty() && detail != text {
             response.on_hover_text(detail);
         }
@@ -602,16 +636,16 @@ fn summary(app: &mut App, ui: &mut egui::Ui, counts: &Counts) {
         && !status.is_empty()
         && !status.starts_with("DEMO_")
     {
-        ui.add_space(2.0);
+        ui.add_space(4.0);
         theme::text(
             ui,
             status.to_owned(),
-            theme::regular(12.5),
+            theme::regular(13.0),
             palette.secondary,
         );
     }
     if app.offline {
-        ui.add_space(2.0);
+        ui.add_space(4.0);
         notice(
             ui,
             &palette,
@@ -710,7 +744,11 @@ fn playable_rows(app: &mut App, ui: &mut egui::Ui) {
         };
         let item = crate::api::models::PlayableItem::Track(track.clone());
         let reason = pick.suggestion.reason.as_str();
-        ui.horizontal(|ui| {
+        // The row's hover fill sits behind the song, its reason and its
+        // feedback, so the line lifts as one. The song carries its own
+        // stronger lift and, while it plays, the lamp at its leading edge.
+        let highlight = ui.painter().add(egui::Shape::Noop);
+        let line = ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = gap;
             let row = ui
                 .allocate_ui_with_layout(
@@ -744,27 +782,12 @@ fn playable_rows(app: &mut App, ui: &mut egui::Ui) {
                     },
                 )
                 .inner;
+            let row_id = (row.id, row.has_focus());
             if !wide && !reason.is_empty() {
                 row.on_hover_text(reason);
             }
             if wide {
-                ui.allocate_ui_with_layout(
-                    vec2(reason_width, theme::ROW_HEIGHT),
-                    Layout::left_to_right(Align::Center),
-                    |ui| {
-                        let galley = crate::bidi::layout(
-                            ui.painter(),
-                            reason,
-                            theme::regular(12.5),
-                            palette.secondary,
-                            reason_width,
-                            1,
-                            Some(crate::bidi::ELLIPSIS),
-                        );
-                        ui.add(egui::Label::new(galley).selectable(false))
-                            .on_hover_text(reason);
-                    },
-                );
+                reason_cell(ui, &palette, reason, reason_width);
             }
             ui.allocate_ui_with_layout(
                 vec2(feedback, theme::ROW_HEIGHT),
@@ -794,13 +817,55 @@ fn playable_rows(app: &mut App, ui: &mut egui::Ui) {
                     });
                 },
             );
+            row_id
         });
+        let ((row_id, focused), rect) = (line.inner, line.response.rect);
+        let lift = motion::toggle(
+            ui.ctx(),
+            row_id.with("line"),
+            ui.rect_contains_pointer(rect) || focused,
+            motion::FEEDBACK,
+        );
+        if lift > 0.0 {
+            ui.painter().set(
+                highlight,
+                egui::Shape::rect_filled(
+                    rect,
+                    CornerRadius::same(8),
+                    material::hover_fill(&palette).gamma_multiply(0.7 * lift),
+                ),
+            );
+        }
         index += 1;
     }
 }
 
+/// A pick's reason in a cell of fixed width, so the feedback after it sits
+/// in one column however long each reason is.
+fn reason_cell(ui: &mut egui::Ui, palette: &Palette, reason: &str, width: f32) {
+    ui.allocate_ui_with_layout(
+        vec2(width, theme::ROW_HEIGHT),
+        Layout::left_to_right(Align::Center),
+        |ui| {
+            ui.set_min_width(width);
+            let galley = crate::bidi::layout(
+                ui.painter(),
+                reason,
+                theme::regular(13.0),
+                palette.secondary,
+                width,
+                1,
+                Some(crate::bidi::ELLIPSIS),
+            );
+            ui.add(egui::Label::new(galley).selectable(false))
+                .on_hover_text(reason);
+        },
+    );
+}
+
 /// A 28-point round toggle. Love fills with the accent and Less with the
 /// neutral text colour, so neither reads as the Spotify heart beside it.
+/// Hover and selection ease in rather than switching.
 fn feedback_button(
     ui: &mut egui::Ui,
     palette: &Palette,
@@ -815,14 +880,36 @@ fn feedback_button(
     });
     if ui.is_rect_visible(rect) {
         let hovered = response.hovered() || response.has_focus();
-        let (fill, color) = match (selected, rating) {
-            (true, Rating::Love) => (palette.accent, palette.on_accent),
-            (true, Rating::Less) => (palette.text, palette.window),
-            (false, _) if hovered => (palette.surface_hover, palette.text),
-            (false, _) => (Color32::TRANSPARENT, palette.secondary),
+        let lift = motion::toggle(
+            ui.ctx(),
+            response.id.with("lift"),
+            hovered,
+            motion::FEEDBACK,
+        );
+        let on = motion::toggle(ui.ctx(), response.id.with("on"), selected, motion::STATE);
+        let (on_fill, on_icon) = match rating {
+            Rating::Love => (
+                palette.accent.lerp_to_gamma(palette.accent_hover, lift),
+                palette.on_accent,
+            ),
+            Rating::Less => (palette.text, palette.window),
         };
-        ui.painter()
-            .circle_filled(rect.center(), FEEDBACK / 2.0, fill);
+        let painter = ui.painter();
+        let radius = FEEDBACK / 2.0;
+        if lift > 0.0 {
+            painter.circle_filled(
+                rect.center(),
+                radius,
+                material::selected_fill(palette).gamma_multiply(lift),
+            );
+        }
+        if on > 0.0 {
+            painter.circle_filled(rect.center(), radius, on_fill.gamma_multiply(on));
+        }
+        let color = palette
+            .secondary
+            .lerp_to_gamma(palette.text, lift)
+            .lerp_to_gamma(on_icon, on);
         theme::paint_icon(ui, icon, rect, 15.0, color);
     }
     theme::focus_ring(ui, &response);
@@ -845,6 +932,15 @@ fn unmatched(app: &mut App, ui: &mut egui::Ui, count: usize) {
     )
     .id_salt("discovery-unmatched")
     .default_open(demo_open)
+    // The stroke chevron every other disclosure uses.
+    .icon(move |ui, openness, response| {
+        let icon = if openness > 0.5 {
+            Icon::ChevronDown
+        } else {
+            Icon::ChevronRight
+        };
+        theme::paint_icon(ui, icon, response.rect, 14.0, palette.secondary);
+    })
     .show(ui, |ui| {
         let not_checked = gettext(locale, "Not checked on Spotify yet");
         let not_found = gettext(locale, "Not found on Spotify");
@@ -888,27 +984,56 @@ fn unmatched(app: &mut App, ui: &mut egui::Ui, count: usize) {
     });
 }
 
+/// Saved mixes shown at first, and how many more each "See more" reveals.
+const MIXES_SHOWN: usize = 8;
+const MIXES_PAGE: usize = 24;
+
 fn saved_mixes(app: &mut App, ui: &mut egui::Ui) {
-    let palette = app.palette;
-    let locale = app.locale;
     let playable = app.discovery_playback_available();
-    let mut first = true;
+    let document = &app.discovery.replica.document;
+    if let Some(key) = mix_list(ui, &app.palette, app.locale, playable, document) {
+        app.actions.push(Action::DiscoveryPlayMix(key));
+    }
+}
+
+/// The newest saved mixes, a page at a time. Thousands can sync here, so
+/// only the shown ones get widgets; "See more" reaches every one of them.
+/// Returns the key of the mix to play.
+fn mix_list(
+    ui: &mut egui::Ui,
+    palette: &Palette,
+    locale: Locale,
+    playable: bool,
+    document: &Document,
+) -> Option<String> {
+    let mut mixes: Vec<(&String, &Record, &str, &[String])> = document
+        .records
+        .iter()
+        .filter_map(|(key, record)| match &record.value {
+            Some(Value::Mix { title, uris }) => {
+                Some((key, record, title.as_str(), uris.as_slice()))
+            }
+            _ => None,
+        })
+        .collect();
+    if mixes.is_empty() {
+        return None;
+    }
+    let total = mixes.len();
+    let id = ui.make_persistent_id("discovery-saved-mixes");
+    let wanted = ui
+        .data(|data| data.get_temp::<usize>(id))
+        .unwrap_or(MIXES_SHOWN);
+    let shown = wanted.min(total);
+    // Newest first, by the same stamp order sync uses.
+    mixes.sort_unstable_by(|a, b| (&b.1.stamp, b.0).cmp(&(&a.1.stamp, a.0)));
+    mixes.truncate(shown);
+
+    ui.add_space(16.0);
+    theme::section_title(ui, palette, &gettext(locale, "Your saved mixes"));
+    ui.add_space(4.0);
     let mut play = None;
-    for (key, record) in &app.discovery.replica.document.records {
-        let Some(Value::Mix { title, uris }) = &record.value else {
-            continue;
-        };
-        if first {
-            ui.add_space(14.0);
-            theme::text(
-                ui,
-                gettext(locale, "Your saved mixes"),
-                theme::semibold(15.0),
-                palette.text,
-            );
-            ui.add_space(4.0);
-            first = false;
-        }
+    for (key, _, title, uris) in mixes {
         ui.push_id(key, |ui| {
             ui.horizontal(|ui| {
                 ui.add_enabled_ui(playable && !uris.is_empty(), |ui| {
@@ -925,31 +1050,45 @@ fn saved_mixes(app: &mut App, ui: &mut egui::Ui) {
                         play = Some(key.clone());
                     }
                 });
-                theme::text(ui, title.as_str(), theme::medium(13.5), palette.text);
+                theme::text(ui, title, theme::medium(14.0), palette.text);
                 theme::text(
                     ui,
                     locale.song_count(uris.len() as u32),
-                    theme::regular(12.5),
+                    theme::regular(13.0),
                     palette.secondary,
                 );
             });
         });
     }
-    if let Some(key) = play {
-        app.actions.push(Action::DiscoveryPlayMix(key));
+    if total > MIXES_SHOWN {
+        ui.add_space(4.0);
+        let mut next = None;
+        ui.horizontal(|ui| {
+            if shown < total
+                && theme::soft_button(ui, palette, None, &gettext(locale, "See more"), false)
+                    .clicked()
+            {
+                next = Some((shown + MIXES_PAGE).min(total));
+            }
+            if shown > MIXES_SHOWN
+                && theme::soft_button(ui, palette, None, &gettext(locale, "Show less"), false)
+                    .clicked()
+            {
+                next = Some(MIXES_SHOWN);
+            }
+        });
+        if let Some(next) = next {
+            ui.data_mut(|data| data.insert_temp(id, next));
+        }
     }
+    play
 }
 
 fn history(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     let locale = app.locale;
     ui.add_space(14.0);
-    theme::text(
-        ui,
-        gettext(locale, "Your AI history"),
-        theme::semibold(15.0),
-        palette.text,
-    );
+    theme::section_title(ui, &palette, &gettext(locale, "Your AI history"));
     ui.add_space(4.0);
     // Only an open section sorts the newest ten, by reference.
     let entries = app.discovery.replica.document.recent_history();
@@ -966,12 +1105,12 @@ fn history(app: &mut App, ui: &mut egui::Ui) {
             continue;
         };
         ui.push_id(key, |ui| {
-            theme::text(ui, prompt.as_str(), theme::medium(13.5), palette.text);
+            theme::text(ui, prompt.as_str(), theme::medium(14.0), palette.text);
             for suggestion in suggestions {
                 theme::text(
                     ui,
                     format!("{} · {}", suggestion.title, suggestion.artist),
-                    theme::regular(12.5),
+                    theme::regular(13.0),
                     palette.secondary,
                 );
             }
@@ -997,5 +1136,120 @@ mod tests {
         assert_eq!(buffer.insert_text("🎵", CharIndex(0)), 1);
         assert!(buffer.as_str().starts_with("🎵音"));
         assert_eq!(buffer.as_str().len(), MAX_PROMPT_BYTES);
+    }
+
+    /// Each reason holds a cell of the same width, so the feedback after it
+    /// lines up in one column whatever the reason's length (the finish
+    /// review saw it drift by up to 21 points).
+    #[test]
+    fn feedback_lines_up_after_reasons_of_any_length() {
+        let ctx = egui::Context::default();
+        theme::install(&ctx);
+        let palette = Palette::light();
+        let mut feedback = Vec::new();
+        for _ in 0..2 {
+            feedback.clear();
+            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+                for reason in [
+                    "",
+                    "Demo reason: one step further out, still spacious.",
+                    "Demo reason: a late-night pulse with a soft edge.",
+                    "Demo reason: warm textures close to your saved songs, and then some more.",
+                ] {
+                    ui.horizontal(|ui| {
+                        reason_cell(ui, &palette, reason, 300.0);
+                        let (rect, _) =
+                            ui.allocate_exact_size(Vec2::splat(FEEDBACK), Sense::hover());
+                        feedback.push(rect.left());
+                    });
+                }
+            });
+            output.textures_delta.clear();
+        }
+        let first = feedback[0];
+        assert!(feedback.iter().all(|x| *x == first), "{feedback:?}");
+        assert!(first >= 300.0, "the cell keeps its width: {first}");
+    }
+
+    /// Thousands of synced mixes cost a page of rows, newest first, and
+    /// "See more" reveals the next page.
+    #[test]
+    fn saved_mixes_draw_one_page_at_a_time() {
+        use crate::discovery::Stamp;
+        use egui::accesskit::{Action as AccessibleAction, ActionRequest, Role, TreeId};
+
+        let mut document = Document::default();
+        for counter in 0..2_000u64 {
+            document.records.insert(
+                format!("mix:{counter:04}"),
+                Record {
+                    stamp: Stamp {
+                        counter,
+                        device: "a".into(),
+                    },
+                    value: Some(Value::Mix {
+                        title: format!("Mix {counter}"),
+                        uris: vec!["spotify:track:x".into()],
+                    }),
+                },
+            );
+        }
+        let ctx = egui::Context::default();
+        theme::install(&ctx);
+        ctx.enable_accesskit();
+        let palette = Palette::dark();
+        let draw = |events| {
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        vec2(900.0, 700.0),
+                    )),
+                    events,
+                    ..Default::default()
+                },
+                |ui| {
+                    mix_list(ui, &palette, Locale::English, true, &document);
+                },
+            );
+            output.textures_delta.clear();
+            output.platform_output.accesskit_update.unwrap()
+        };
+        let labelled = |tree: &egui::accesskit::TreeUpdate, label: &str| {
+            tree.nodes
+                .iter()
+                .filter(|(_, node)| node.label() == Some(label) || node.value() == Some(label))
+                .map(|(id, _)| *id)
+                .collect::<Vec<_>>()
+        };
+
+        draw(Vec::new());
+        let tree = draw(Vec::new());
+        assert_eq!(labelled(&tree, "Play mix").len(), MIXES_SHOWN);
+        assert_eq!(labelled(&tree, "Mix 1999").len(), 1, "the newest leads");
+        assert!(labelled(&tree, "Mix 1991").is_empty());
+        let more = tree
+            .nodes
+            .iter()
+            .find(|(_, node)| node.role() == Role::Button && node.label() == Some("See more"))
+            .expect("a See more button")
+            .0;
+
+        draw(vec![egui::Event::AccessKitActionRequest(ActionRequest {
+            target_tree: TreeId::ROOT,
+            target_node: more,
+            action: AccessibleAction::Click,
+            data: None,
+        })]);
+        let tree = draw(Vec::new());
+        assert_eq!(labelled(&tree, "Play mix").len(), MIXES_SHOWN + MIXES_PAGE);
+        assert_eq!(labelled(&tree, "Mix 1968").len(), 1);
+        assert!(labelled(&tree, "Mix 1967").is_empty());
+        assert!(
+            tree.nodes
+                .iter()
+                .any(|(_, node)| node.label() == Some("Show less")),
+            "the list can fold back"
+        );
     }
 }

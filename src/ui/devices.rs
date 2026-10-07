@@ -1,12 +1,17 @@
 //! The Spotify Connect device picker.
 
-use egui::{Align, CornerRadius, Layout, Rect, Sense, pos2, vec2};
+use egui::{Align, Layout, Rect, Sense, pos2, vec2};
 
 use crate::api::models::Device;
 use crate::app::App;
 use crate::i18n::gettext;
 use crate::model::Action;
 use crate::theme::{self, Icon};
+
+use super::material;
+
+/// The corner radius of a device row's highlight.
+const ROW_RADIUS: f32 = 8.0;
 
 pub const BUTTON_RECT_ID: &str = "devices-button-rect";
 
@@ -56,10 +61,15 @@ fn enable_playback_row(app: &mut App, ui: &mut egui::Ui) {
             | crate::backend::LocalPlayback::Connecting
     );
     let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), 52.0), Sense::click());
-    if response.hovered() && !authorizing {
-        ui.painter()
-            .rect_filled(rect, egui::CornerRadius::same(6), palette.surface_hover);
-    }
+    material::row_highlight(
+        ui,
+        response.id,
+        rect,
+        ROW_RADIUS,
+        &palette,
+        response.hovered() && !authorizing,
+        false,
+    );
     let icon_rect =
         Rect::from_center_size(pos2(rect.left() + 24.0, rect.center().y), Vec2::splat(22.0));
     Icon::Laptop
@@ -83,7 +93,7 @@ fn enable_playback_row(app: &mut App, ui: &mut egui::Ui) {
             gettext(app.locale, "Set up playback here")
         },
         theme::regular(12.0),
-        palette.accent,
+        palette.text,
     );
     if authorizing {
         let mut spin = ui.new_child(
@@ -104,7 +114,7 @@ fn enable_playback_row(app: &mut App, ui: &mut egui::Ui) {
     ui.painter().hline(
         rect.x_range().shrink(6.0),
         rect.bottom(),
-        egui::Stroke::new(1.0, palette.outline),
+        egui::Stroke::new(1.0, material::rim_colour(&palette)),
     );
     ui.add_space(4.0);
 }
@@ -117,10 +127,15 @@ fn receiver_row(app: &mut App, ui: &mut egui::Ui, receiver: &crate::zeroconf::Re
     let palette = app.palette;
     let activating = app.activating_receiver.as_deref() == Some(receiver.name.as_str());
     let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), 52.0), Sense::click());
-    if response.hovered() && !activating {
-        ui.painter()
-            .rect_filled(rect, egui::CornerRadius::same(6), palette.surface_hover);
-    }
+    material::row_highlight(
+        ui,
+        response.id,
+        rect,
+        ROW_RADIUS,
+        &palette,
+        response.hovered() && !activating,
+        false,
+    );
     let icon_rect =
         Rect::from_center_size(pos2(rect.left() + 24.0, rect.center().y), Vec2::splat(22.0));
     Icon::Speaker
@@ -296,20 +311,24 @@ pub fn popup(app: &mut App, ctx: &egui::Context) {
                                 vec2(ui.available_width(), 52.0),
                                 Sense::click(),
                             );
-                            if response.hovered() {
-                                ui.painter().rect_filled(
-                                    rect,
-                                    CornerRadius::same(6),
-                                    palette.surface_hover,
-                                );
-                            }
-                            let color = if active { palette.accent } else { palette.text };
+                            // The device playing carries the lamp; the
+                            // others light only under the pointer.
+                            material::row_highlight(
+                                ui,
+                                response.id,
+                                rect,
+                                ROW_RADIUS,
+                                &palette,
+                                response.hovered(),
+                                active,
+                            );
+                            let icon_color = if active { palette.accent } else { palette.text };
                             let icon_rect = Rect::from_center_size(
                                 pos2(rect.left() + 24.0, rect.center().y),
                                 egui::Vec2::splat(22.0),
                             );
                             device_icon(&device.kind)
-                                .image(color, 22.0)
+                                .image(icon_color, 22.0)
                                 .paint_at(ui, icon_rect);
                             let painter = ui.painter().with_clip_rect(rect);
                             crate::bidi::paint_line(
@@ -319,7 +338,7 @@ pub fn popup(app: &mut App, ctx: &egui::Context) {
                                 rect.center().y - 9.0,
                                 &name,
                                 theme::medium(14.0),
-                                color,
+                                palette.text,
                             );
                             let status = if active {
                                 gettext(locale, "Listening on this device").into_owned()
@@ -336,15 +355,11 @@ pub fn popup(app: &mut App, ctx: &egui::Context) {
                                 status,
                                 theme::regular(12.0),
                                 if active {
-                                    palette.accent
+                                    palette.accent_text()
                                 } else {
                                     palette.secondary
                                 },
                             );
-                            if active {
-                                let dot = pos2(rect.right() - 16.0, rect.center().y);
-                                ui.painter().circle_filled(dot, 4.0, palette.accent);
-                            }
                             if response.clicked()
                                 && !active
                                 && let Some(id) = &device.id

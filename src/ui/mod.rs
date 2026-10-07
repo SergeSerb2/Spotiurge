@@ -12,6 +12,8 @@ mod keys;
 pub mod library;
 pub mod login;
 mod lyrics;
+pub mod material;
+pub mod motion;
 pub mod player_bar;
 pub mod queue;
 pub mod radio;
@@ -24,7 +26,7 @@ mod update;
 pub mod widgets;
 pub mod winamp;
 
-use egui::{Align2, Color32, Context, CornerRadius, Frame, Id, Margin, Rect, Stroke, vec2};
+use egui::{Align2, Color32, Context, Frame, Id, Margin, Rect, vec2};
 
 use crate::api::models::pick_image;
 use crate::app::App;
@@ -42,6 +44,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let signed_in = app.is_connected() && app.user.is_some();
     let connecting = matches!(app.auth, AuthStatus::Connecting | AuthStatus::Starting)
         || (app.is_connected() && app.user.is_none());
+    paint_room(app, ui, signed_in);
     if !signed_in {
         player_bar::end_tint_session(ctx);
         login::show(app, ui, connecting);
@@ -86,6 +89,19 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     toasts(app, ctx, theme::PLAYER_BAR_HEIGHT + 16.0);
     window_controls(ui, &app.palette, app.locale);
     window_resize(ui);
+}
+
+/// The room behind the glass: the window colour lit by the playing cover,
+/// crossing over to each new cover's light.
+fn paint_room(app: &App, ui: &egui::Ui, signed_in: bool) {
+    let palette = app.palette;
+    let key = if signed_in {
+        app.now_playing_tint().unwrap_or(palette.accent)
+    } else {
+        palette.accent
+    };
+    let key = motion::color(ui.ctx(), Id::new("room-light"), key, motion::AMBIENT);
+    material::paint_room(ui.painter(), ui.max_rect(), &palette, key);
 }
 
 /// The main window's narrowest width with these panels open: their least
@@ -257,23 +273,59 @@ fn page_tint(app: &mut App) -> Option<Color32> {
 fn central(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     let tint = page_tint(app);
+    let right_panel = app.show_queue_panel || app.show_lyrics_panel;
+    let gap = material::GAP as i8;
     egui::CentralPanel::default()
-        .frame(Frame::new().fill(palette.window))
+        .frame(Frame::new().inner_margin(Margin {
+            left: gap,
+            right: if right_panel { 0 } else { gap },
+            top: gap,
+            bottom: 0,
+        }))
         .show(ui, |ui| {
-            let rect = ui.max_rect();
-            if let Some(tint) = tint {
-                let strength = if matches!(
-                    app.page(),
-                    Page::Home | Page::Search | Page::Settings | Page::Queue
-                ) {
-                    0.45
-                } else {
-                    0.85
-                };
-                let top = blend(palette.window, tint, strength);
-                let header = Rect::from_min_size(rect.min, vec2(rect.width(), 340.0));
-                widgets::paint_vertical_gradient(ui, header, top, palette.window);
+            let pane = ui.max_rect();
+            material::paint(
+                ui.painter(),
+                pane,
+                material::PANE_RADIUS,
+                &palette,
+                material::Kind::Pane,
+            );
+            let wash = motion::color(
+                ui.ctx(),
+                Id::new("page-wash"),
+                tint.map_or(Color32::TRANSPARENT, |tint| {
+                    // Milky glass keeps the cover wash faint enough that
+                    // small playing titles remain legible beneath it.
+                    let strength = if !palette.dark {
+                        0.20
+                    } else if matches!(
+                        app.page(),
+                        Page::Home | Page::Search | Page::Settings | Page::Queue
+                    ) {
+                        0.30
+                    } else {
+                        0.55
+                    };
+                    tint.gamma_multiply(strength)
+                }),
+                motion::AMBIENT,
+            );
+            if wash.a() > 0 {
+                // The cover's light pooling at the top of the page, inside
+                // the glass.
+                material::vertical_wash(
+                    ui.painter(),
+                    pane.shrink(1.0),
+                    material::PANE_RADIUS - 1.0,
+                    &[
+                        (0.0, wash),
+                        (140.0, wash.gamma_multiply(0.45)),
+                        (360.0, Color32::TRANSPARENT),
+                    ],
+                );
             }
+            ui.set_clip_rect(pane.intersect(ui.clip_rect()));
             ui.spacing_mut().item_spacing = vec2(8.0, 6.0);
             // egui fades a scrolled page's edge into the panel's plain
             // colour, which shows as a pale band over a cover's tint; the
@@ -281,39 +333,63 @@ fn central(app: &mut App, ui: &mut egui::Ui) {
             ui.spacing_mut().scroll.fade.strength = 0.0;
             topbar::show(app, ui);
             let page = app.page().clone();
+            let encoded = page.encode();
+            // The page settles in after navigation: it fades up and rises a
+            // few points into place, without delaying any click.
+            let entrance = motion::entrance(
+                ui.ctx(),
+                Id::new("page-entrance"),
+                egui::util::hash(&encoded),
+                motion::PAGE,
+            );
             let scroll = crate::autoscroll::show(
                 ui,
                 egui::ScrollArea::vertical()
-                    .id_salt(("page", page.encode()))
+                    .id_salt(("page", encoded))
                     .auto_shrink([false, false]),
                 egui::Vec2b::new(false, true),
                 |ui| {
-                    Frame::new()
-                        .inner_margin(Margin {
-                            left: widgets::PAGE_PADDING as i8,
-                            right: widgets::PAGE_PADDING as i8,
-                            top: 4,
-                            bottom: 48,
-                        })
-                        .show(ui, |ui| {
-                            ui.set_min_width(ui.available_width());
-                            match page {
-                                Page::Home => home::show(app, ui),
-                                Page::TopSongs => collection::top_songs(app, ui),
-                                Page::Search => search::show(app, ui),
-                                Page::LikedSongs => collection::liked(app, ui),
-                                Page::Albums | Page::Artists | Page::Podcasts | Page::Episodes => {
-                                    library::show(app, ui, page)
+                    if entrance < 1.0 {
+                        ui.multiply_opacity(0.35 + 0.65 * entrance);
+                    }
+                    let rise = (1.0 - entrance) * motion::PAGE_RISE;
+                    let body = |ui: &mut egui::Ui| {
+                        Frame::new()
+                            .inner_margin(Margin {
+                                left: widgets::PAGE_PADDING as i8,
+                                right: widgets::PAGE_PADDING as i8,
+                                top: 4,
+                                bottom: 48,
+                            })
+                            .show(ui, |ui| {
+                                ui.set_min_width(ui.available_width());
+                                match page {
+                                    Page::Home => home::show(app, ui),
+                                    Page::TopSongs => collection::top_songs(app, ui),
+                                    Page::Search => search::show(app, ui),
+                                    Page::LikedSongs => collection::liked(app, ui),
+                                    Page::Albums
+                                    | Page::Artists
+                                    | Page::Podcasts
+                                    | Page::Episodes => library::show(app, ui, page),
+                                    Page::Playlist(id) => collection::playlist(app, ui, &id),
+                                    Page::Album(id) => collection::album(app, ui, &id),
+                                    Page::Artist(id) => artist::show(app, ui, &id),
+                                    Page::Show(id) => show::show(app, ui, &id),
+                                    Page::Radio(seed) => radio::radio(app, ui, &seed),
+                                    Page::Queue => queue::page(app, ui),
+                                    Page::Settings => settings::show(app, ui),
                                 }
-                                Page::Playlist(id) => collection::playlist(app, ui, &id),
-                                Page::Album(id) => collection::album(app, ui, &id),
-                                Page::Artist(id) => artist::show(app, ui, &id),
-                                Page::Show(id) => show::show(app, ui, &id),
-                                Page::Radio(seed) => radio::radio(app, ui, &seed),
-                                Page::Queue => queue::page(app, ui),
-                                Page::Settings => settings::show(app, ui),
-                            }
-                        });
+                            });
+                    };
+                    if rise > 0.0 {
+                        ui.with_visual_transform(
+                            egui::emath::TSTransform::from_translation(vec2(0.0, rise)),
+                            body,
+                        );
+                    } else {
+                        body(ui);
+                    }
                 },
             );
             header_shadow(ui, scroll.inner_rect, scroll.state.offset.y, palette.dark);
@@ -579,27 +655,13 @@ fn toasts(app: &mut App, ctx: &egui::Context, bottom_offset: f32) {
         .interactable(false)
         .show(ctx, |ui| {
             ui.spacing_mut().item_spacing.y = 8.0;
+            let reduced = motion::reduced(ctx);
             for toast in &app.toasts {
                 let age = toast.created.elapsed().as_secs_f32();
-                let alpha = if age < 0.15 {
-                    age / 0.15
-                } else if age > 2.8 {
-                    ((3.2 - age) / 0.4).clamp(0.0, 1.0)
-                } else {
-                    1.0
-                };
+                let alpha = toast_opacity(age, reduced);
                 ui.set_opacity(alpha);
-                Frame::new()
-                    .fill(palette.overlay)
-                    .stroke(Stroke::new(1.0, palette.outline))
-                    .corner_radius(CornerRadius::same(theme::RADIUS))
+                material::popover_frame(&palette)
                     .inner_margin(Margin::symmetric(14, 10))
-                    .shadow(egui::epaint::Shadow {
-                        offset: [0, 4],
-                        blur: 16,
-                        spread: 0,
-                        color: palette.shadow,
-                    })
                     .show(ui, |ui| {
                         ui.horizontal(|ui| {
                             let (icon, color) = match toast.kind {
@@ -622,6 +684,21 @@ fn toasts(app: &mut App, ctx: &egui::Context, bottom_offset: f32) {
                     });
             }
         });
+}
+
+/// How visible a toast is `age` seconds after it appeared: it fades in,
+/// holds, and fades out before it is removed at 3.2 seconds. Reduced motion
+/// shows it whole for its whole life.
+fn toast_opacity(age: f32, reduced: bool) -> f32 {
+    if reduced {
+        if age < 3.2 { 1.0 } else { 0.0 }
+    } else if age < 0.15 {
+        motion::ease_out(age / 0.15)
+    } else if age > 2.8 {
+        ((3.2 - age) / 0.4).clamp(0.0, 1.0)
+    } else {
+        1.0
+    }
 }
 
 #[cfg(test)]
@@ -729,6 +806,16 @@ mod window_chrome_tests {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn toasts_fade_unless_motion_is_reduced() {
+        assert_eq!(toast_opacity(0.0, false), 0.0);
+        assert_eq!(toast_opacity(1.0, false), 1.0);
+        assert!(toast_opacity(3.0, false) < 1.0);
+        assert_eq!(toast_opacity(0.0, true), 1.0, "appears whole");
+        assert_eq!(toast_opacity(3.0, true), 1.0, "and stays whole");
+        assert_eq!(toast_opacity(3.3, true), 0.0);
+    }
 
     /// The header casts a shadow only on a page scrolled under it, and it
     /// is black in both themes, never the page's own colour.

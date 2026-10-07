@@ -196,31 +196,104 @@ pub fn open_spotify_url(uri: &str) -> Option<String> {
     Some(format!("https://open.spotify.com/{kind}/{id}"))
 }
 
-/// The menu-bar shape for macOS: the circle with the play triangle punched
-/// out. macOS template images use only the alpha channel and paint the
-/// shape themselves, black in a light menu bar and white in a dark one.
+/// The menu-bar shape for macOS: the surge S alone, drawn heavier so it
+/// holds at menu-bar size. macOS template images use only the alpha
+/// channel and paint the shape themselves, black in a light menu bar and
+/// white in a dark one.
 pub fn tray_template_rgba(size: usize) -> Vec<u8> {
-    let mut rgba = mark_rgba(size, false);
-    for pixel in rgba.as_chunks_mut::<4>().0 {
-        // The triangle is the dark colour; make it a hole instead.
-        if pixel[1] < 128 {
-            pixel[3] = 0;
+    let mut rgba = vec![0u8; size * size * 4];
+    // The S fills the square, with a pixel of margin.
+    let unit = (size as f32 - 2.0) / 84.0;
+    let origin = (size as f32 - 128.0 * unit) / 2.0;
+    for y in 0..size {
+        for x in 0..size {
+            let u = (x as f32 + 0.5 - origin) / unit;
+            let v = (y as f32 + 0.5 - origin) / unit;
+            let coverage =
+                ((TEMPLATE_STROKE / 2.0 - surge_distance(u, v)) * unit + 0.5).clamp(0.0, 1.0);
+            rgba[(y * size + x) * 4 + 3] = (coverage * 255.0).round() as u8;
         }
-        pixel[0] = 0;
-        pixel[1] = 0;
-        pixel[2] = 0;
     }
     rgba
 }
 
 /// The mark rasterised to pixels: the window icon, the trays and the logo
-/// drawn in the app (`theme::logo`) all use this one picture.
+/// drawn in the app (`theme::logo`) all use this one picture, which
+/// `assets/brand/spotiurge-mark.svg` draws as a vector.
 ///
-/// It is the polished disc of `packaging/icons` at every size: a darker rim
-/// around a lit face.
+/// A tile of smoked glass, lit along its top edge, with a VU-amber surge
+/// S glowing through it: an S for Spotiurge whose two bowls are one swell
+/// of a wave.
 pub fn app_icon_rgba(size: usize) -> Vec<u8> {
-    mark_rgba(size, true)
+    let mut rgba = vec![0u8; size * size * 4];
+    // The tile keeps a pixel of margin, so its edge is never clipped.
+    let unit = (size as f32 - 2.0) / 120.0;
+    let origin = size as f32 / 2.0 - 64.0 * unit;
+    // A glow only where there are pixels enough to show one.
+    let glow = (size as f32 / 128.0).clamp(0.0, 1.0);
+    for y in 0..size {
+        for x in 0..size {
+            let u = (x as f32 + 0.5 - origin) / unit;
+            let v = (y as f32 + 0.5 - origin) / unit;
+            let tile = rounded_square_distance(u, v);
+            let coverage = (0.5 - tile * unit).clamp(0.0, 1.0);
+            if coverage <= 0.0 {
+                continue;
+            }
+            // Smoked glass: deep ink below, a cooler blue above.
+            let depth = (v - 4.0) / 120.0;
+            let mut colour = mix(TILE_TOP, TILE_BOTTOM, depth);
+            // The room's light behind the glass, warm around the S.
+            let warmth =
+                (1.0 - ((u - 64.0).powi(2) + (v - 70.0).powi(2)).sqrt() / 58.0).clamp(0.0, 1.0);
+            colour = mix(colour, AMBER_DEEP, 0.22 * warmth * warmth);
+            // The sheen across the upper part of the tile.
+            let sheen = (1.0 - (v - 4.0) / 50.0).clamp(0.0, 1.0);
+            colour = mix(colour, [255.0, 255.0, 255.0], 0.07 * sheen * sheen);
+            // The rim: a lit edge above, a shaded one below.
+            let rim = (1.0 - (tile + 1.2).abs() / 1.2).clamp(0.0, 1.0);
+            if depth < 0.5 {
+                colour = mix(
+                    colour,
+                    [235.0, 240.0, 255.0],
+                    rim * 0.55 * (1.0 - depth * 2.0),
+                );
+            } else {
+                colour = mix(colour, [0.0, 0.0, 0.0], rim * 0.5 * (depth - 0.5) * 2.0);
+            }
+            let surge = surge_distance(u, v);
+            let halo = ((surge - STROKE / 2.0) / 9.0).clamp(0.0, 1.0);
+            colour = mix(colour, AMBER_DEEP, glow * 0.35 * (1.0 - halo).powi(2));
+            let ink = ((STROKE / 2.0 - surge) * unit + 0.5).clamp(0.0, 1.0);
+            if ink > 0.0 {
+                // The S is lit from above like the tile, and rounded like a
+                // tube of amber glass: a highlight along the edges facing
+                // the upper left, a deeper tone along the lower right.
+                let mut amber = mix(AMBER_LIGHT, AMBER_DEEP, (v - 22.0) / 84.0);
+                let edge = |du: f32, dv: f32| {
+                    ((surge_distance(u + du, v + dv) - (STROKE / 2.0 - 3.0)) / 3.0).clamp(0.0, 1.0)
+                };
+                amber = mix(amber, [255.0, 244.0, 214.0], 0.7 * edge(-1.8, -2.4) * glow);
+                amber = mix(amber, [205.0, 92.0, 14.0], 0.4 * edge(1.8, 2.4) * glow);
+                colour = mix(colour, amber, ink);
+            }
+            let index = (y * size + x) * 4;
+            rgba[index] = colour[0].round() as u8;
+            rgba[index + 1] = colour[1].round() as u8;
+            rgba[index + 2] = colour[2].round() as u8;
+            rgba[index + 3] = (coverage * 255.0).round() as u8;
+        }
+    }
+    rgba
 }
+
+const TILE_TOP: [f32; 3] = [38.0, 44.0, 74.0];
+const TILE_BOTTOM: [f32; 3] = [10.0, 12.0, 22.0];
+const AMBER_LIGHT: [f32; 3] = [255.0, 214.0, 128.0];
+const AMBER_DEEP: [f32; 3] = [255.0, 146.0, 40.0];
+/// The S's stroke on the tile, and the heavier one of the menu-bar shape.
+const STROKE: f32 = 15.0;
+const TEMPLATE_STROKE: f32 = 17.0;
 
 /// Mixes two colours, `t` of the way from `a` to `b`.
 fn mix(a: [f32; 3], b: [f32; 3], t: f32) -> [f32; 3] {
@@ -232,77 +305,62 @@ fn mix(a: [f32; 3], b: [f32; 3], t: f32) -> [f32; 3] {
     ]
 }
 
-/// How far `p` is from the triangle `a`, `b`, `c`: zero inside it.
-fn triangle_distance(p: (f32, f32), a: (f32, f32), b: (f32, f32), c: (f32, f32)) -> f32 {
-    let edge = |a: (f32, f32), b: (f32, f32)| {
-        let (ex, ey) = (b.0 - a.0, b.1 - a.1);
-        let (px, py) = (p.0 - a.0, p.1 - a.1);
-        let along = ((px * ex + py * ey) / (ex * ex + ey * ey)).clamp(0.0, 1.0);
-        let (dx, dy) = (px - ex * along, py - ey * along);
-        ((dx * dx + dy * dy).sqrt(), ex * py - ey * px)
-    };
-    let (d1, s1) = edge(a, b);
-    let (d2, s2) = edge(b, c);
-    let (d3, s3) = edge(c, a);
-    let inside = (s1 >= 0.0 && s2 >= 0.0 && s3 >= 0.0) || (s1 <= 0.0 && s2 <= 0.0 && s3 <= 0.0);
-    if inside { 0.0 } else { d1.min(d2).min(d3) }
+/// Signed distance from the tile's edge, negative inside: a square of 120
+/// units centred on 64, with corners rounded by 27, the proportion of a
+/// macOS icon.
+fn rounded_square_distance(u: f32, v: f32) -> f32 {
+    const HALF: f32 = 60.0;
+    const RADIUS: f32 = 27.0;
+    let qx = (u - 64.0).abs() - (HALF - RADIUS);
+    let qy = (v - 64.0).abs() - (HALF - RADIUS);
+    let outside = (qx.max(0.0).powi(2) + qy.max(0.0).powi(2)).sqrt();
+    outside + qx.max(qy).min(0.0) - RADIUS
 }
 
-/// The mark on a 128-unit square, as `packaging/icons/spotifast.svg` draws
-/// it: a disc of radius 62 and a play triangle with corners rounded by 5,
-/// set a little left of its box so it looks centred. `polished` adds the
-/// darker rim, the lit face and the bright edge between them.
-fn mark_rgba(size: usize, polished: bool) -> Vec<u8> {
-    const GREEN: [f32; 3] = [30.0, 215.0, 96.0];
-    const INK: [f32; 3] = [11.0, 14.0, 12.0];
-    let mut rgba = vec![0u8; size * size * 4];
-    // The disc keeps two pixels of margin, so its edge is never clipped.
-    let unit = (size as f32 / 2.0 - 2.0) / 62.0;
-    let origin = size as f32 / 2.0 - 64.0 * unit;
-    for y in 0..size {
-        for x in 0..size {
-            // The pixel's centre in the mark's own units.
-            let u = (x as f32 + 0.5 - origin) / unit;
-            let v = (y as f32 + 0.5 - origin) / unit;
-            let distance = ((u - 64.0).powi(2) + (v - 64.0).powi(2)).sqrt();
-            let coverage = ((62.0 - distance) * unit + 0.5).clamp(0.0, 1.0);
-            if coverage <= 0.0 {
-                continue;
-            }
-            let mut colour = if polished {
-                let rim = mix([24.0, 192.0, 85.0], [12.0, 138.0, 58.0], (v - 2.0) / 124.0);
-                let lit = (v - 8.0) / 112.0;
-                let face = if lit < 0.55 {
-                    mix([92.0, 240.0, 149.0], GREEN, lit / 0.55)
-                } else {
-                    mix(GREEN, [21.0, 182.0, 80.0], (lit - 0.55) / 0.45)
-                };
-                let on_face = ((54.4 - distance) * unit + 0.5).clamp(0.0, 1.0);
-                let mut colour = mix(rim, face, on_face);
-                // The bright edge where the face meets the rim: light at
-                // the top, shaded at the bottom.
-                let edge = (1.0 - (distance - 55.0).abs() / 0.9).clamp(0.0, 1.0);
-                let (tone, strength) = if lit < 0.5 {
-                    ([217.0, 255.0, 232.0], 1.0 - 1.3 * lit)
-                } else {
-                    ([10.0, 110.0, 46.0], 0.35 + 1.1 * (lit - 0.5))
-                };
-                colour = mix(colour, tone, edge * strength.clamp(0.0, 1.0));
-                colour
-            } else {
-                GREEN
-            };
-            let triangle = triangle_distance((u, v), (49.2, 43.5), (49.2, 84.5), (86.1, 64.0));
-            let glyph = ((5.0 - triangle) * unit + 0.5).clamp(0.0, 1.0);
-            colour = mix(colour, INK, glyph);
-            let index = (y * size + x) * 4;
-            rgba[index] = colour[0].round() as u8;
-            rgba[index + 1] = colour[1].round() as u8;
-            rgba[index + 2] = colour[2].round() as u8;
-            rgba[index + 3] = (coverage * 255.0) as u8;
-        }
+/// Distance from the centre line of the surge S, on the mark's 128-unit
+/// square: two bowls of radius 17, one above the other, joined at the
+/// centre, the upper turning back from the top right and the lower ending
+/// at the bottom left, the whole leaning forward like a rising wave.
+fn surge_distance(u: f32, v: f32) -> f32 {
+    const RADIUS: f32 = 17.0;
+    const LEAN: f32 = 0.12;
+    // Undo the lean, so the bowls are plain circles.
+    let u = u - (64.0 - v) * LEAN;
+    let upper = arc_distance(
+        u,
+        v,
+        (64.0, 47.0),
+        RADIUS,
+        330_f32.to_radians(),
+        -240_f32.to_radians(),
+    );
+    let lower = arc_distance(
+        u,
+        v,
+        (64.0, 81.0),
+        RADIUS,
+        270_f32.to_radians(),
+        240_f32.to_radians(),
+    );
+    upper.min(lower)
+}
+
+/// Distance from an arc of a circle at `centre` with `radius`, starting at
+/// angle `start` (radians, y down) and turning through `sweep`.
+fn arc_distance(u: f32, v: f32, centre: (f32, f32), radius: f32, start: f32, sweep: f32) -> f32 {
+    use std::f32::consts::TAU;
+    let (dx, dy) = (u - centre.0, v - centre.1);
+    let angle = dy.atan2(dx).rem_euclid(TAU);
+    let along = ((angle - start) * sweep.signum()).rem_euclid(TAU);
+    if along <= sweep.abs() {
+        ((dx * dx + dy * dy).sqrt() - radius).abs()
+    } else {
+        let end = |a: f32| {
+            let (sin, cos) = a.sin_cos();
+            ((u - centre.0 - radius * cos).powi(2) + (v - centre.1 - radius * sin).powi(2)).sqrt()
+        };
+        end(start).min(end(start + sweep))
     }
-    rgba
 }
 
 pub fn greeting(locale: Locale) -> Cow<'static, str> {
@@ -388,38 +446,95 @@ mod tests {
         ]
     }
 
-    /// The icon wears the polished disc at every size, and the tray
-    /// template keeps its punched-out triangle.
+    /// The icon is the glass tile at every size: transparent corners, a
+    /// lit top edge, a dark glass body and the amber S at its heart.
     #[test]
-    fn the_icon_is_polished_at_every_size() {
-        // #given the icon at a dock size and at a tray size
-        let (large, small) = (app_icon_rgba(128), app_icon_rgba(32));
-
-        // #then both have a darker rim around a lighter face
-        let rim = pixel(&large, 128, 64, 6);
-        let face = pixel(&large, 128, 64, 20);
-        assert!(
-            face[1] > rim[1],
-            "face {face:?} should be lighter than rim {rim:?}"
-        );
-        assert!(pixel(&small, 32, 16, 6)[1] > pixel(&small, 32, 16, 2)[1]);
-        // #and a lit top fading to a deeper bottom
-        let low = pixel(&large, 128, 64, 108);
-        assert!(face[1] > low[1]);
-
-        // #and both carry the dark triangle, a little right of centre
-        for (icon, size) in [(&large, 128), (&small, 32)] {
-            let centre = pixel(icon, size, size / 2 + size / 16, size / 2);
-            assert!(centre[1] < 40, "triangle missing at {size}: {centre:?}");
+    fn the_icon_is_the_glass_tile_at_every_size() {
+        for size in [16, 32, 128, 512] {
+            let icon = app_icon_rgba(size);
+            assert_eq!(pixel(&icon, size, 0, 0)[3], 0, "clear corner at {size}");
+            let body = pixel(&icon, size, size / 2, size * 9 / 10);
+            assert_eq!(body[3], 255, "opaque body at {size}");
+            assert!(body[2] > body[0], "smoked blue glass at {size}: {body:?}");
+            // The S crosses the middle of the tile; amber is red over blue.
+            let heart = pixel(&icon, size, size / 2, size / 2);
+            assert!(
+                heart[0] > 200 && heart[0] > heart[2] + 80,
+                "amber S at the centre at {size}: {heart:?}"
+            );
         }
+        // The glass reads as glass: lighter at the top than the bottom.
+        let large = app_icon_rgba(128);
+        let top = pixel(&large, 128, 20, 12);
+        let bottom = pixel(&large, 128, 20, 116);
+        assert!(top[2] > bottom[2], "top {top:?} bottom {bottom:?}");
+    }
 
-        // #and the corners stay clear
-        assert_eq!(pixel(&large, 128, 1, 1)[3], 0);
-
-        // #and the menu-bar template is the disc with the triangle cut out
+    /// The menu-bar shape is the S alone, opaque on its stroke and clear
+    /// beside it, so macOS can paint it in the bar's own colour.
+    #[test]
+    fn the_menu_bar_template_is_the_surge_s() {
         let template = tray_template_rgba(44);
-        assert_eq!(pixel(&template, 44, 24, 22)[3], 0);
-        assert_eq!(pixel(&template, 44, 8, 22), [0, 0, 0, 255]);
+        assert!(
+            template
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .all(|p| p[..3] == [0, 0, 0])
+        );
+        assert_eq!(
+            pixel(&template, 44, 22, 22)[3],
+            255,
+            "the S crosses the centre"
+        );
+        assert_eq!(pixel(&template, 44, 2, 22)[3], 0, "clear beside it");
+        assert_eq!(pixel(&template, 44, 1, 1)[3], 0, "clear in the corner");
+    }
+
+    /// Writes the raster exports beside the vector mark. Run it after
+    /// changing the mark:
+    /// `cargo test --lib util::tests::export_brand_rasters -- --ignored`.
+    #[test]
+    #[ignore = "writes assets/brand/png"]
+    fn export_brand_rasters() {
+        let directory = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/brand/png");
+        std::fs::create_dir_all(&directory).unwrap();
+        for size in [16, 32, 64, 128, 256, 512, 1024] {
+            image::save_buffer(
+                directory.join(format!("spotiurge-{size}.png")),
+                &app_icon_rgba(size),
+                size as u32,
+                size as u32,
+                image::ColorType::Rgba8,
+            )
+            .unwrap();
+        }
+        for size in [22, 44] {
+            image::save_buffer(
+                directory.join(format!("spotiurge-glyph-template-{size}.png")),
+                &tray_template_rgba(size),
+                size as u32,
+                size as u32,
+                image::ColorType::Rgba8,
+            )
+            .unwrap();
+        }
+    }
+
+    /// The vector mark and the raster agree on the S's geometry.
+    #[test]
+    fn the_shipped_svg_draws_the_same_s() {
+        let svg = include_str!("../assets/brand/spotiurge-mark.svg");
+        for fragment in [
+            "M78.72 38.5",
+            "A17 17 0 1 0 64 64",
+            "A17 17 0 1 1 49.28 89.5",
+            "stroke-width=\"15\"",
+            "skewX(-6.84)",
+            "rx=\"27\"",
+        ] {
+            assert!(svg.contains(fragment), "{fragment}");
+        }
     }
 
     #[test]

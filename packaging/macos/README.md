@@ -15,6 +15,14 @@ lipo -create target/aarch64-apple-darwin/release/spotifast target/x86_64-apple-d
 python3 packaging/macos/development-dmg.py dist/Spotiurge-universal dist/Spotiurge-development-universal.dmg --identity 'Apple Development: YOUR NAME (CERTIFICATE ID)'
 ```
 
+The bundle includes Spotiurge's own icon. Its ICNS and Windows ICO are exports
+of the same native mark used by the app, rather than separately drawn assets.
+After changing the mark, regenerate them with
+`cargo run --locked --no-default-features --example export-app-icons -- dist/new-icons`,
+then copy `spotiurge.icns` to `packaging/macos/` and `spotiurge.ico` to
+`packaging/windows/spotifast.ico`. The Windows resource filename remains internal.
+Keep the 1024-pixel PNG and its provenance with the branding assets for review.
+
 The development bundle uses `com.sergeserbinenko.spotiurge`, enables the hardened
 runtime, preserves upstream copyright, and does not register a Spotify URL
 handler. The DMG contains only the app, an Applications shortcut, license and

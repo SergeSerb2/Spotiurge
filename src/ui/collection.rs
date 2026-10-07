@@ -66,87 +66,173 @@ pub(super) fn hero(app: &mut App, ui: &mut egui::Ui, hero: Hero<'_>) {
         .images
         .thumbnail
         .and_then(|uri| app.softened_covers.texture(ui.ctx(), &art, uri));
-    ui.add_space(12.0);
-    let cover_size = if ui.available_width() > 720.0 {
-        212.0
+    ui.add_space(16.0);
+    let wide = ui.available_width() > 720.0;
+    let cover_size = if wide { 212.0 } else { 160.0 };
+    let gap = if wide { 28.0 } else { 20.0 };
+    let (row, _) = ui.allocate_exact_size(vec2(ui.available_width(), cover_size), Sense::hover());
+    let rect = Rect::from_min_size(row.min, Vec2::splat(cover_size));
+    let radius = if hero.round { cover_size / 2.0 } else { 10.0 };
+    cover_lift(ui, &palette, rect, radius);
+    if hero.liked {
+        super::sidebar::liked_cover(ui, rect, radius);
     } else {
-        160.0
-    };
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 24.0;
-        let (rect, _) = ui.allocate_exact_size(Vec2::splat(cover_size), Sense::hover());
-        let radius = if hero.round { cover_size / 2.0 } else { 6.0 };
-        widgets::paint_shadow(ui, &palette, rect, radius);
-        if hero.liked {
-            super::sidebar::liked_cover(ui, rect, radius);
-        } else {
-            widgets::paint_cover_with_thumbnail(
-                ui,
-                &palette,
-                widgets::CoverSources {
-                    requested: hero.images.image,
-                    previous: hero.images.previous,
-                    softened: softened.as_ref(),
-                    thumbnail: hero.images.thumbnail,
-                    align_thumbnail: hero.images.align_thumbnail,
-                },
-                rect,
-                radius,
-                if hero.round { Icon::User } else { Icon::Music },
-                Some(app.backend.art()),
-            );
+        widgets::paint_cover_with_thumbnail(
+            ui,
+            &palette,
+            widgets::CoverSources {
+                requested: hero.images.image,
+                previous: hero.images.previous,
+                softened: softened.as_ref(),
+                thumbnail: hero.images.thumbnail,
+                align_thumbnail: hero.images.align_thumbnail,
+            },
+            rect,
+            radius,
+            if hero.round { Icon::User } else { Icon::Music },
+            Some(app.backend.art()),
+        );
+    }
+
+    // The title, an optional description and one line of metadata, centred
+    // against the cover. The kind leads the metadata rather than sitting
+    // above the title.
+    let left = rect.right() + gap;
+    let width = (row.right() - left).max(1.0);
+    let mut size = if wide { 32.0 } else { 28.0 };
+    loop {
+        let galley =
+            ui.painter()
+                .layout_no_wrap(hero.title.to_string(), theme::bold(size), palette.text);
+        if galley.size().x <= width || size <= 20.0 {
+            break;
         }
-        ui.vertical(|ui| {
-            let width = ui.available_width();
-            ui.set_width(width);
-            ui.spacing_mut().item_spacing.y = 6.0;
-            ui.add_space(cover_size * 0.08);
-            theme::text(ui, hero.kind.as_ref(), theme::medium(12.5), palette.text);
-            let mut size = if cover_size > 200.0 { 56.0 } else { 40.0 };
-            loop {
-                let galley = ui.painter().layout_no_wrap(
-                    hero.title.to_string(),
-                    theme::bold(size),
-                    palette.text,
-                );
-                if galley.size().x <= width || size <= 22.0 {
-                    break;
-                }
-                size -= 6.0;
-            }
-            theme::text(ui, hero.title, theme::bold(size), palette.text);
-            if let Some(description) = &hero.description
-                && !description.is_empty()
-            {
-                theme::text(
-                    ui,
-                    description.as_str(),
-                    theme::regular(13.5),
-                    palette.secondary,
-                );
-            }
-            ui.horizontal_wrapped(|ui| {
-                ui.spacing_mut().item_spacing.x = 4.0;
-                for (index, (text, page)) in hero.byline.iter().enumerate() {
-                    if index > 0 {
-                        theme::text(ui, "•", theme::regular(13.5), palette.secondary);
-                    }
-                    match page {
-                        Some(page) => {
-                            if theme::link(ui, text, theme::semibold(13.5), palette.text).clicked()
-                            {
-                                app.actions.push(Action::Open(page.clone()));
-                            }
-                        }
-                        None => {
-                            theme::text(ui, text, theme::regular(13.5), palette.secondary);
-                        }
-                    }
-                }
-            });
-        });
+        size -= 2.0;
+    }
+    let description = hero
+        .description
+        .as_deref()
+        .filter(|description| !description.is_empty());
+    let meta_font = theme::regular(13.5);
+    let (title_row, meta_row) = ui.fonts_mut(|fonts| {
+        (
+            fonts.row_height(&theme::bold(size)),
+            fonts.row_height(&meta_font),
+        )
     });
-    ui.add_space(20.0);
+    const TITLE_GAP: f32 = 8.0;
+    const LINE_GAP: f32 = 4.0;
+    let block = title_row + TITLE_GAP + meta_row + description.map_or(0.0, |_| meta_row + LINE_GAP);
+    let top = row.top() + ((cover_size - block) / 2.0).max(0.0).round();
+    let mut column = ui.new_child(
+        egui::UiBuilder::new()
+            .max_rect(Rect::from_min_size(
+                pos2(left, top),
+                vec2(width, cover_size),
+            ))
+            .layout(Layout::top_down(Align::Min)),
+    );
+    column.spacing_mut().item_spacing.y = 0.0;
+    theme::text(&mut column, hero.title, theme::bold(size), palette.text);
+    column.add_space(TITLE_GAP);
+    if let Some(description) = description {
+        theme::text(
+            &mut column,
+            description,
+            meta_font.clone(),
+            palette.secondary,
+        );
+        column.add_space(LINE_GAP);
+    }
+    column.horizontal_wrapped(|ui| {
+        ui.spacing_mut().item_spacing = vec2(4.0, 2.0);
+        theme::text(
+            ui,
+            hero.kind.as_ref(),
+            theme::medium(13.5),
+            palette.secondary,
+        );
+        for (text, page) in &hero.byline {
+            theme::text(ui, "•", meta_font.clone(), palette.secondary);
+            match page {
+                Some(page) => {
+                    if theme::link(ui, text, theme::semibold(13.5), palette.text).clicked() {
+                        app.actions.push(Action::Open(page.clone()));
+                    }
+                }
+                None => {
+                    theme::text(ui, text, meta_font.clone(), palette.secondary);
+                }
+            }
+        }
+    });
+    // A byline wrapping past the cover pushes the page down rather than
+    // running into the controls.
+    let overflow = column.min_rect().bottom() - row.bottom();
+    if overflow > 0.0 {
+        ui.add_space(overflow);
+    }
+    ui.add_space(24.0);
+}
+
+/// The hero cover's lift off the glass: a deep soft shadow in the dark, a
+/// lighter one by daylight, both from the palette's shadow.
+fn cover_lift(ui: &egui::Ui, palette: &Palette, rect: Rect, radius: f32) {
+    let shadow = egui::epaint::Shadow {
+        offset: if palette.dark { [0, 14] } else { [0, 8] },
+        blur: if palette.dark { 36 } else { 24 },
+        spread: 0,
+        color: palette
+            .shadow
+            .gamma_multiply(if palette.dark { 0.9 } else { 0.8 }),
+    };
+    ui.painter().add(shadow.as_shape(
+        rect,
+        egui::CornerRadius::same(radius.clamp(0.0, 255.0) as u8),
+    ));
+}
+
+/// A library control on the hero's console: an icon on a clear glass key
+/// that brightens under the pointer. Bare icons stay for modes and menus.
+pub(super) fn glass_key(
+    ui: &mut egui::Ui,
+    palette: &Palette,
+    icon: Icon,
+    color: egui::Color32,
+    tooltip: &str,
+) -> egui::Response {
+    const KEY: f32 = 40.0;
+    let (rect, _) = ui.allocate_exact_size(Vec2::splat(KEY), Sense::hover());
+    // Reserved before the icon, so the key sits behind it.
+    let slot = ui.painter().add(egui::Shape::Noop);
+    let mut child = ui.new_child(
+        egui::UiBuilder::new()
+            .max_rect(rect)
+            .layout(Layout::centered_and_justified(egui::Direction::LeftToRight)),
+    );
+    let response = theme::icon_button(&mut child, icon, 20.0, color, palette.text, tooltip);
+    let lift = super::motion::toggle(
+        ui.ctx(),
+        response.id.with("key"),
+        response.hovered() || response.has_focus(),
+        super::motion::FEEDBACK,
+    );
+    ui.painter().set(
+        slot,
+        egui::Shape::Vec(vec![
+            egui::Shape::circle_filled(
+                rect.center(),
+                KEY / 2.0,
+                super::material::key_fill(palette, lift),
+            ),
+            egui::Shape::circle_stroke(
+                rect.center(),
+                KEY / 2.0 - 0.5,
+                egui::Stroke::new(1.0, super::material::rim_colour(palette)),
+            ),
+        ]),
+    );
+    response
 }
 
 pub struct Actions<'a> {
@@ -270,7 +356,7 @@ pub fn actions_row(
                 (
                     actions.saved_icons.1,
                     &actions.saved_tooltips.1,
-                    palette.accent,
+                    palette.text,
                 )
             } else {
                 (
@@ -279,17 +365,16 @@ pub fn actions_row(
                     palette.secondary,
                 )
             };
-            if theme::icon_button(ui, icon, 26.0, color, palette.text, tooltip).clicked() {
+            if glass_key(ui, &palette, icon, color, tooltip).clicked() {
                 app.actions.push(Action::ToggleSaved(uri.clone()));
             }
         }
         if let Some(seed) = &actions.save_radio
-            && theme::icon_button(
+            && glass_key(
                 ui,
+                &palette,
                 Icon::CirclePlus,
-                26.0,
                 palette.secondary,
-                palette.text,
                 &gettext(locale, "Save as playlist"),
             )
             .clicked()

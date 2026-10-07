@@ -25,8 +25,12 @@ Use existing CLIProxyAPI subscriptions for AI. Serge reports permission for
 broader Spotify inputs to AI. Document exactly what is sent and keep grants out
 of model prompts and sync. Use a small private service in Serge's existing
 Railway workspace. The iOS architecture remains undecided until independent
-background Spotify playback is demonstrated on a real iPhone. Serge deferred
-iOS work on October 6, 2026 and prioritized macOS; preserve that gate for later.
+background Spotify playback is demonstrated on a real iPhone. Serge resumed
+iOS work on October 6, 2026 after connecting and unlocking his phone. The
+signed device probe established 17 minutes 22 seconds of independent locked
+playback. The remaining gate is partial, and physical-device checks stopped at
+Serge's request. Matching native iOS interface work continues in source and
+Simulator; production playback and TestFlight remain gated.
 
 ## Brand Commitments
 
