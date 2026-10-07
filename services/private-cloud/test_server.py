@@ -40,6 +40,14 @@ class PrivateCloudTests(unittest.TestCase):
             with error:
                 return error.code, json.load(error)
 
+    def test_feedback_cutoff_tombstone_round_trips_in_the_version_one_schema(self):
+        document = {"version": 1, "records": {"feedback:retention": {
+            "stamp": {"counter": 1600, "device": "a" * 32}, "value": None}}}
+        status, stored = self.request("PUT", document, 0)
+        self.assertEqual(status, 200)
+        self.assertEqual(stored["revision"], 1)
+        self.assertEqual(self.request()[1]["document"], document)
+
     def test_unauthorized_requests_cannot_read_or_replace_state(self):
         self.assertEqual(self.request(token="wrong")[0], 401)
         self.assertEqual(self.request("PUT", {}, 0, "wrong")[0], 401)

@@ -13,6 +13,9 @@ pub const MAX_PROMPT_BYTES: usize = 4000;
 /// Live AI history entries per document, matching the newest ten the UI shows.
 /// Refreshes reuse the oldest history key once this many keys exist.
 pub const HISTORY_LIMIT: usize = 10;
+/// Keep recent ratings and cleared ratings within the shared storage budget.
+pub const FEEDBACK_LIMIT: usize = 500;
+const FEEDBACK_FLOOR: &str = "feedback:retention";
 
 /// Keep editor input within the wire/storage limit without splitting UTF-8.
 pub fn limit_prompt(text: &mut String) {
@@ -258,6 +261,20 @@ impl Document {
                 "Unsupported or oversized discovery state. Your local state is preserved.".into(),
             );
         }
+        self.validate_records()?;
+        if serde_json::to_vec(self)
+            .map_err(|_| "Cannot encode discovery state.")?
+            .len()
+            > MAX_BYTES
+        {
+            return Err(
+                "Discovery storage is full. Export and remove old mixes or history.".into(),
+            );
+        }
+        Ok(())
+    }
+
+    fn validate_records(&self) -> Result<(), String> {
         for (key, record) in &self.records {
             if key.len() > 200
                 || record.stamp.device.len() != 32
@@ -306,16 +323,36 @@ impl Document {
                 return Err("Invalid discovery record content.".into());
             }
         }
-        if serde_json::to_vec(self)
-            .map_err(|_| "Cannot encode discovery state.")?
-            .len()
-            > MAX_BYTES
-        {
-            return Err(
-                "Discovery storage is full. Export and remove old mixes or history.".into(),
+        Ok(())
+    }
+
+    /// A single tombstone is the forgetting boundary for all feedback keys.
+    /// Retaining it makes compaction converge even with an old offline replica.
+    /// Equal-clock cohorts are forgotten together, never split by merge order.
+    fn compact_feedback(&mut self) {
+        let mut floor = self.records.get(FEEDBACK_FLOOR).map(|r| r.stamp.clone());
+        let mut stamps = self
+            .records
+            .iter()
+            .filter(|(key, _)| key.starts_with("feedback:") && key.as_str() != FEEDBACK_FLOOR)
+            .map(|(_, record)| record.stamp.clone())
+            .collect::<Vec<_>>();
+        stamps.sort_unstable_by(|a, b| b.cmp(a));
+        if let Some(pruned) = stamps.get(FEEDBACK_LIMIT) {
+            floor = Some(floor.map_or_else(|| pruned.clone(), |old| old.max(pruned.clone())));
+        }
+        if let Some(floor) = floor {
+            self.records.retain(|key, record| {
+                !key.starts_with("feedback:") || key == FEEDBACK_FLOOR || record.stamp > floor
+            });
+            self.records.insert(
+                FEEDBACK_FLOOR.into(),
+                Record {
+                    stamp: floor,
+                    value: None,
+                },
             );
         }
-        Ok(())
     }
 
     /// Validate the entire remote snapshot before touching local records.
@@ -333,6 +370,7 @@ impl Document {
                 }
             }
         }
+        merged.compact_feedback();
         merged.validate()?;
         *self = merged;
         Ok(())
@@ -429,7 +467,10 @@ impl Replica {
                 self.document
                     .records
                     .iter()
-                    .filter(|(key, record)| snapshot.records.get(*key) != Some(*record))
+                    .filter(|(key, record)| {
+                        key.as_str() != FEEDBACK_FLOOR
+                            && snapshot.records.get(*key) != Some(*record)
+                    })
                     .map(|(key, record)| (key.clone(), record.clone()))
                     .collect::<Vec<_>>()
             })
@@ -520,6 +561,8 @@ impl Replica {
                 },
             );
         }
+        candidate.validate_records()?;
+        candidate.compact_feedback();
         candidate.validate()?;
         self.document = candidate;
         Ok(())
@@ -541,6 +584,7 @@ impl Replica {
         let mut replica: Self = serde_json::from_slice(&bytes)
             .map_err(|_| "Cannot read discovery state. The original file is preserved.")?;
         replica.document.validate()?;
+        replica.document.compact_feedback();
         if replica.cached_picks.len() > 12 {
             return Err("Invalid cached discovery results.".into());
         }
@@ -746,6 +790,203 @@ pub(crate) mod tests {
                 .is_none()
         );
         assert_eq!(a.document, b.document);
+    }
+
+    fn feedback_edit(index: usize, clear: bool) -> (String, Option<Value>) {
+        let uri = format!("spotify:track:{index:022}");
+        (
+            format!("feedback:{uri}"),
+            (!clear).then_some(Value::Feedback {
+                uri,
+                title: "Song".into(),
+                artist: "Artist".into(),
+                rating: Rating::Love,
+            }),
+        )
+    }
+
+    #[test]
+    fn feedback_and_clears_stay_bounded_without_crowding_out_mixes() {
+        let mut replica = device('a');
+        for index in 0..2100 {
+            let (key, value) = feedback_edit(index, index % 2 == 0);
+            replica.edit(key, value).unwrap();
+        }
+        assert_eq!(replica.document.records.len(), FEEDBACK_LIMIT + 1);
+        assert_eq!(replica.document.records[FEEDBACK_FLOOR].stamp.counter, 1600);
+        assert!(replica.document.records[FEEDBACK_FLOOR].value.is_none());
+        replica
+            .edit(
+                "mix:new".into(),
+                Some(Value::Mix {
+                    title: "Still works".into(),
+                    uris: vec![],
+                }),
+            )
+            .unwrap();
+        replica
+            .record_history(
+                "Still works".into(),
+                vec![Suggestion {
+                    title: "Song".into(),
+                    artist: "Artist".into(),
+                    reason: "Good match".into(),
+                }],
+            )
+            .unwrap();
+        assert_eq!(replica.document.records.len(), FEEDBACK_LIMIT + 3);
+    }
+
+    #[test]
+    fn feedback_compaction_converges_and_stale_ratings_cannot_return() {
+        let mut a = device('a');
+        let (old_key, old_value) = feedback_edit(0, false);
+        a.edit(old_key.clone(), old_value.clone()).unwrap();
+        let stale = a.document.clone();
+        for index in 1..=FEEDBACK_LIMIT {
+            let (key, value) = feedback_edit(index, index % 2 == 0);
+            a.edit(key, value).unwrap();
+        }
+        assert!(!a.document.records.contains_key(&old_key));
+        let compacted = a.document.clone();
+        a.document.merge(&stale).unwrap();
+        assert_eq!(a.document, compacted);
+        let mut old_replica = stale;
+        old_replica.merge(&compacted).unwrap();
+        assert_eq!(old_replica, compacted);
+        a.edit(old_key.clone(), old_value).unwrap();
+        assert!(
+            a.document.records[&old_key].value.is_some(),
+            "a new rating is above the cutoff"
+        );
+        assert_eq!(a.document.records.len(), FEEDBACK_LIMIT + 1);
+    }
+
+    #[test]
+    fn feedback_union_compacts_before_capacity_validation_and_handles_clock_ties() {
+        let mut a = device('a');
+        let mut b = device('b');
+        // Two valid legacy snapshots together exceed the 2,000-record ceiling.
+        for index in 0..1200 {
+            let stamp = |device: &str| Stamp {
+                counter: index as u64 + 1,
+                device: device.into(),
+            };
+            let (key, value) = feedback_edit(index, false);
+            a.document.records.insert(
+                key,
+                Record {
+                    stamp: stamp(&a.device),
+                    value,
+                },
+            );
+            let (key, value) = feedback_edit(index + 1200, true);
+            b.document.records.insert(
+                key,
+                Record {
+                    stamp: stamp(&b.device),
+                    value,
+                },
+            );
+        }
+        let mut left = a.document.clone();
+        left.merge(&b.document).unwrap();
+        b.document.merge(&a.document).unwrap();
+        assert_eq!(left, b.document);
+        assert_eq!(left.records.len(), FEEDBACK_LIMIT + 1);
+        // A merge acknowledgment can give several edits the same clock.
+        let mut tied = device('c');
+        tied.edit_many(
+            (0..=FEEDBACK_LIMIT)
+                .map(|i| feedback_edit(i, false))
+                .collect(),
+        )
+        .unwrap();
+        assert_eq!(
+            tied.document.records.len(),
+            1,
+            "forget a tied cohort atomically"
+        );
+        tied.document.merge(&left).unwrap();
+        left.merge(&tied.document).unwrap();
+        assert_eq!(left, tied.document);
+    }
+
+    #[test]
+    fn sync_ack_preserves_new_feedback_without_restamping_the_cutoff() {
+        let mut local = device('a');
+        for index in 0..=FEEDBACK_LIMIT {
+            let (key, value) = feedback_edit(index, false);
+            local.edit(key, value).unwrap();
+        }
+        let snapshot = local.document.clone();
+        let (key, value) = feedback_edit(FEEDBACK_LIMIT + 1, false);
+        local.edit(key.clone(), value).unwrap();
+        let mut remote = device('b');
+        remote.document.merge(&snapshot).unwrap();
+        for _ in 0..10 {
+            remote.edit("taste".into(), taste("remote clock")).unwrap();
+        }
+        let (_, conflicting) = feedback_edit(FEEDBACK_LIMIT + 1, false);
+        remote.edit(key.clone(), conflicting).unwrap();
+        local
+            .merge_synced(&remote.document, Some(&snapshot))
+            .unwrap();
+        assert!(
+            local.document.records[&key].stamp.counter
+                > remote.document.records["taste"].stamp.counter
+        );
+        assert_eq!(local.document.records[FEEDBACK_FLOOR].stamp.counter, 2);
+        remote.document.merge(&local.document).unwrap();
+        assert_eq!(local.document, remote.document);
+    }
+
+    #[test]
+    fn legacy_feedback_is_compacted_after_validation_on_load() {
+        let mut legacy = device('a');
+        for index in 0..1999 {
+            let (key, value) = feedback_edit(index, index % 2 == 0);
+            legacy.document.records.insert(
+                key,
+                Record {
+                    stamp: Stamp {
+                        counter: index as u64 + 1,
+                        device: legacy.device.clone(),
+                    },
+                    value,
+                },
+            );
+        }
+        legacy.document.records.insert(
+            "taste".into(),
+            Record {
+                stamp: Stamp {
+                    counter: 2000,
+                    device: legacy.device.clone(),
+                },
+                value: taste("Keep my taste"),
+            },
+        );
+        let directory = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("target")
+            .join(format!(
+                "feedback-retention-{:032x}",
+                rand::random::<u128>()
+            ));
+        std::fs::create_dir_all(&directory).unwrap();
+        let path = directory.join("legacy.json");
+        legacy.save(&path).unwrap();
+        let loaded = Replica::load(&path).unwrap();
+        assert_eq!(loaded.document.records.len(), FEEDBACK_LIMIT + 2);
+        assert_eq!(loaded.document.taste(), "Keep my taste");
+        assert_eq!(
+            legacy.document.records.len(),
+            2000,
+            "loading does not alter the original file"
+        );
+        loaded.save(&path).unwrap();
+        assert_eq!(Replica::load(&path).unwrap().document, loaded.document);
+        std::fs::remove_dir_all(directory).unwrap();
     }
 
     fn device(id: char) -> Replica {

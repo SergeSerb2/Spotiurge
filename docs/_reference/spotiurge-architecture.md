@@ -103,6 +103,16 @@ Persist locally before cloud writes. Failures keep the local snapshot,
 cached recommendations and playback usable. Offline metadata access is allowed;
 offline Spotify audio downloads are not a supported feature.
 
+Feedback storage keeps at most 500 URI records, counting cleared ratings. The
+version-one `feedback:retention` tombstone is a shared logical cutoff. Merges
+remove feedback at or below that stamp, including records from an old offline
+copy. Equal-clock cohorts are forgotten together. New ratings use a clock above
+the cutoff; an acknowledged sync re-expresses feedback changed after its snapshot
+above the imported clock, preserving immediate local intent. The cutoff itself
+is never re-stamped as a user edit. Offline feedback older than the cutoff is
+forgotten, even if a device's wall clock is later. Mixes, taste and AI history
+are unaffected. All devices must upgrade to enforce this retention policy.
+
 Recommendation generations are invalidated by saved taste, feedback, exploration
 changes or imported taste/feedback. The superseded request retains its worker
 slot until completion, then its results and errors are discarded without

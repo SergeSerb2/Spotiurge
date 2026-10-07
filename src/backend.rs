@@ -3289,6 +3289,7 @@ impl Worker {
             })
             .and_then(|credentials| crate::zeroconf::Credentials::from_playback(credentials).ok());
         let lease = self.credentials.lease(CredentialSlot::Playback);
+        let device_name = self.engine_config.device_name.clone();
         tokio::task::spawn_blocking(move || {
             let name = receiver.name.clone();
             let result = (|| -> Result<(), String> {
@@ -3309,7 +3310,7 @@ impl Worker {
                 if !lease.current() {
                     return Err("Sign-in changed before receiver activation.".into());
                 }
-                crate::zeroconf::add_user(&http, &receiver, &info, &credentials, "Spotifast")
+                crate::zeroconf::add_user(&http, &receiver, &info, &credentials, &device_name)
                     .map_err(|error| error.to_string())
             })();
             let _ = events.send(Event::ReceiverActivated { name, result });

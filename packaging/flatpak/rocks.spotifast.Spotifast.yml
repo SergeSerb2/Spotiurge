@@ -32,7 +32,7 @@ finish-args:
   # Platform storage for this application's Spotify grants.
   - --talk-name=org.freedesktop.secrets
   - --talk-name=org.kde.StatusNotifierWatcher
-  - --own-name=org.mpris.MediaPlayer2.spotifast
+  - --own-name=org.mpris.MediaPlayer2.spotiurge
   # Older Flatpak versions leave XDG_STATE_HOME unset. Keep the fallback
   # state directory (session, history, logs, and credential markers) durable.
   - --persist=.local/state

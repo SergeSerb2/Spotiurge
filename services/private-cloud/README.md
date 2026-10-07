@@ -41,9 +41,16 @@ also carry up to 12 local catalogue matches and are limited to 2 MiB. Unknown
 document schemas and malformed clocks fail closed. Record deletions are retained
 as tombstones. Clients keep at most ten live AI history entries by reusing the
 oldest `history:` key after ten exist, and tombstone older live entries in the
-same write; the server schema is unchanged. There is no tombstone compaction;
+same write; the server schema is unchanged. Clients retain the newest 500
+feedback records, including cleared ratings. A
+`feedback:retention` tombstone stores the highest forgotten logical stamp; merges
+discard feedback at or below it, preventing old offline snapshots from
+resurrecting discarded ratings. Equal-clock cohorts are discarded together, so
+fewer than 500 may remain. A new rating advances above the cutoff. Older client
+versions do not enforce this bound and should be upgraded. There is no mix
+tombstone compaction;
 storage limits produce an error and keep prior state. Before routine use, add
-export/deletion controls and a retention policy for mixes and feedback.
+export/deletion controls and a retention policy for mixes.
 
 For an export, use an authenticated GET through a tool that reads its token from
 protected storage, save the response to an owner-only file, and back up the volume
