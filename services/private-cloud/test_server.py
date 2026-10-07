@@ -1,3 +1,4 @@
+import io
 import json
 import threading
 import unittest
@@ -157,7 +158,7 @@ class PrivateCloudTests(unittest.TestCase):
         self.assertEqual(self.store.read()["revision"], 1)
 
     def test_proxy_rate_limit_does_not_attempt_another_subscription_model(self):
-        error = urllib.error.HTTPError("https://proxy.invalid/v1/chat/completions", 429, "rate limited", {}, None)
+        error = urllib.error.HTTPError("https://proxy.invalid/v1/chat/completions", 429, "rate limited", {}, io.BytesIO(b"rate limited"))
         with patch("server.urllib.request.OpenerDirector.open", side_effect=error) as call:
             with self.assertRaises(RateLimited):
                 recommend({"taste": "warm jazz"}, {"models": ["primary", "fallback"], "proxy_url": "https://proxy.invalid/v1", "proxy_key": "dummy"})
@@ -170,6 +171,20 @@ class PrivateCloudTests(unittest.TestCase):
                 "proxy_url": "https://proxy.invalid/v1", "proxy_key": "dummy"}))
             self.assertEqual(call.call_count, 1)
             self.assertEqual(json.loads(call.call_args.args[0].data)["model"], "gpt-6-luna")
+
+    def test_proxy_http_error_streams_close_before_return_or_propagation(self):
+        for status in (429, 401, 500):
+            with self.subTest(status=status):
+                stream = io.BytesIO(b"private response, never read or logged")
+                error = urllib.error.HTTPError("https://proxy.invalid/v1/chat/completions", status, "refused", {}, stream)
+                with patch("server.urllib.request.OpenerDirector.open", side_effect=error) as call:
+                    if status == 429:
+                        with self.assertRaises(RateLimited):
+                            recommend({"taste": "jazz"}, {"proxy_url": "https://proxy.invalid/v1", "proxy_key": "dummy"})
+                    else:
+                        self.assertIsNone(recommend({"taste": "jazz"}, {"proxy_url": "https://proxy.invalid/v1", "proxy_key": "dummy"}))
+                    self.assertTrue(stream.closed)
+                    self.assertEqual(call.call_count, 1)
 
     def test_unexpected_secret_fields_are_rejected_before_committing(self):
         document = {"version": 1, "records": {"taste": {"stamp": {"counter": 1, "device": "a" * 32}, "value": {"kind": "taste", "text": "jazz", "spotify_token": "dummy"}}}}

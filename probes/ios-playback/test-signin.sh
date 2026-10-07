@@ -6,6 +6,7 @@ root=$(cd "$here/../.." && pwd)
 out="$root/target/ios-signin-tests"
 mkdir -p "$out"
 xcrun swiftc -swift-version 5 "$here/app/PlaybackProbe/SignInSupport.swift" \
+    "$here/app/PlaybackProbe/AudioGraph.swift" \
     "$here/tests/SignInSupportTests.swift" -o "$out/signin-tests"
 codesign --force --sign - "$out/signin-tests"
 "$out/signin-tests"

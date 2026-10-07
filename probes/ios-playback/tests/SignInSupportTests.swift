@@ -3,7 +3,14 @@ import Security
 
 @main
 struct SignInSupportTests {
+    @MainActor
     static func main() throws {
+        let original = ProbeAudioGraph(render: { _, _, _, _ in 0 })
+        let replacement = ProbeAudioGraph(render: { _, _, _, _ in 0 })
+        precondition(original.engine !== replacement.engine)
+        precondition(original.source !== replacement.source)
+        precondition(!original.engine.isRunning && !replacement.engine.isRunning)
+        precondition(replacement.engine.attachedNodes.contains(replacement.source))
         var interruption = InterruptionPlayback()
         precondition(!interruption.ended(shouldResume: true))
         interruption.began(playing: false)
@@ -29,8 +36,13 @@ struct SignInSupportTests {
         precondition(LoopbackRequest.redirect("GET /favicon.ico HTTP/1.1", state: "x") == .stray)
         precondition(LoopbackRequest.redirect("GET /login-extra?code=x&state=x HTTP/1.1", state: "x") == .stray)
         precondition(LoopbackRequest.redirect("POST /login?code=x&state=x HTTP/1.1", state: "x") == .stray)
-        precondition(LoopbackRequest.redirect("GET /login?code=x&state=wrong HTTP/1.1", state: "x") == .refused)
-        precondition(LoopbackRequest.redirect("GET /login?code=x&state=x&state=x HTTP/1.1", state: "x") == .refused)
+        precondition(LoopbackRequest.redirect("GET /login?code=x&state=wrong HTTP/1.1", state: "x") == .stray)
+        precondition(LoopbackRequest.redirect("GET /login?code=x&state=x&state=x HTTP/1.1", state: "x") == .stray)
+        precondition(LoopbackRequest.redirect("GET /login?code=x HTTP/1.1", state: "x") == .stray)
+        precondition(LoopbackRequest.redirect("GET /login?error=access_denied&state=old HTTP/1.1", state: "x") == .stray)
+        precondition(LoopbackRequest.redirect("GET /login?error=access_denied&state=x HTTP/1.1", state: "x") == .refused)
+        precondition(LoopbackRequest.redirect("GET /login?error=access_denied&code=x&state=x HTTP/1.1", state: "x") == .refused)
+        precondition(LoopbackRequest.redirect("GET /login?code=next&state=x HTTP/1.1", state: "x") == .code("next"))
         var oversized = LoopbackRequest()
         do {
             _ = try oversized.append(Data(repeating: 65, count: 16_385))
@@ -64,6 +76,6 @@ struct SignInSupportTests {
         var value: CFTypeRef?
         precondition(SecItemCopyMatching(read as CFDictionary, &value) == errSecSuccess)
         precondition(value as? Data == new)
-        print("PASS: interruption resume intent, fragmented callback, request bounds, failure preservation, and disposable native Keychain round trip")
+        print("PASS: fresh stopped audio graph, interruption resume intent, fragmented callback, request bounds, failure preservation, and disposable native Keychain round trip")
     }
 }

@@ -67,3 +67,8 @@ them afterward. `examples/discovery_probe.rs` exercises the production Rust
 merge, TLS and native credential path for two-device verification. It never
 prints the pairing token. Synthetic protocol/device checks are not proof of
 three-platform application sync, recommendation quality or iPhone playback.
+
+Proxy HTTP errors close their response streams before returning or propagating
+a rate-limit result. Busy responses still mean that another device holds the
+single AI slot; clients retry after 15 seconds without increasing model-error
+backoff. Model requests remain limited to `gpt-6-luna` through CLIProxyAPI.

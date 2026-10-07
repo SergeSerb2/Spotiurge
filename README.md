@@ -77,7 +77,9 @@ Existing Spotify playlist/album context handoff remains available.
 **More like this** and **Less like this** affect the next recommendation request;
 click a selected rating again to clear it. Feedback triggers a debounced refresh
 after 45 seconds, at most once per ten minutes. AI failures retry after 10, 20,
-40 minutes, up to six hours; pairing failures wait for a user action. Cached
+40 minutes, up to six hours; pairing failures wait for a user action. When another
+device holds the AI slot, retry waits only 15 seconds without increasing failure
+backoff. Cached
 music and playback stay available. Exploration and automatic-pick controls are
 saved per device; taste and feedback synchronize through the private store.
 **Save this mix** keeps an ordered Spotiurge mix without creating a Spotify
@@ -88,7 +90,9 @@ loads independently of proxy credential restoration. Exploration and edits stay
 disabled until loading succeeds, preserving an unreadable state file. Feedback
 retains the newest 500 records, counting cleared ratings. A shared logical cutoff
 prevents forgotten ratings from returning from an old offline device. Older
-feedback below that cutoff is discarded; a bounded local pending-stamp map keeps new unsent ratings and clears across restarts, then advances them above the imported cutoff before uploading. Upgrade
+feedback below that cutoff is discarded; a bounded local pending-stamp map keeps
+new unsent ratings and clears across restarts, then advances them above the imported
+cutoff or a conflicting remote rating before uploading. Upgrade
 all devices to enforce this bound. Saved mixes and taste remain separate.
 Saved mixes have a remove control. New saves reuse removed slots, then the
 oldest slot once 100 mix slots exist, so repeated saves do not grow storage

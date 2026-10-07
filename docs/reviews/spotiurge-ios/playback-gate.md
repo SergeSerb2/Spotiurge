@@ -221,3 +221,10 @@ backoff, obsolete sessions cannot publish or forward player events, and a cancel
 decoder leaves its full PCM queue wait. All six Rust host tests and Clippy pass.
 This source was not installed or exercised on the physical iPhone and adds no
 device evidence.
+
+The next host-only round replaces the audio graph and its configuration observer
+after media-services resets, reapplies the session category, and waits for a new
+playback request. Stale or unbound sign-in states are ignored; a current-state
+denial still fails. Native Mac graph/callback/Keychain regressions and iPhoneOS
+SDK typechecking pass. No physical reset or post-reset audio was tested, and no
+new build was installed on the phone.

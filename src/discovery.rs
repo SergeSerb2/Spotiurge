@@ -217,6 +217,11 @@ impl AutoRecommendations {
             self.suspended = true;
             return;
         }
+        if kind == RecommendationErrorKind::Busy {
+            // No model request ran: another device holds the single AI slot.
+            self.retry_at = Some(now + std::time::Duration::from_secs(15));
+            return;
+        }
         self.failures = self.failures.saturating_add(1).min(10);
         let seconds = (600_u64 << (self.failures - 1)).min(21_600);
         self.retry_at = Some(now + std::time::Duration::from_secs(seconds));
@@ -557,7 +562,7 @@ impl Replica {
     }
 
     /// Import a cloud clock before uploading. A new offline rating may be
-    /// below its retention floor; distinguish unsent intent from old replicas.
+    /// below its retention floor or a newer remote record; keep unsent intent.
     pub fn merge_for_sync(&mut self, remote: &Document) -> Result<(), String> {
         let pending = self
             .pending_feedback
@@ -567,14 +572,15 @@ impl Replica {
                     .records
                     .get(key)
                     .filter(|record| &record.stamp == stamp)
-                    .map(|record| (key.clone(), record.value.clone()))
+                    .map(|record| (key.clone(), record.clone()))
             })
             .collect::<Vec<_>>();
         let mut merged = self.clone();
         merged.document.merge(remote)?;
         let lost = pending
             .into_iter()
-            .filter(|(key, _)| !merged.document.records.contains_key(key))
+            .filter(|(key, record)| merged.document.records.get(key) != Some(record))
+            .map(|(key, record)| (key, record.value))
             .collect::<Vec<_>>();
         if !lost.is_empty() {
             merged.edit_many(lost)?;
@@ -944,6 +950,36 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn busy_retries_are_short_non_exponential_and_restart_safe() {
+        use std::time::{Duration, Instant};
+        let now = Instant::now();
+        let mut scheduler = AutoRecommendations::default();
+        scheduler.failed(RecommendationErrorKind::RateLimited, now);
+        for offset in 0..5 {
+            let attempt = now + Duration::from_secs(600 + offset * 15);
+            scheduler.attempted(attempt);
+            scheduler.failed(RecommendationErrorKind::Busy, attempt);
+            assert_eq!(scheduler.failures, 1);
+            assert_eq!(
+                scheduler.retry_after(attempt),
+                Some(Duration::from_secs(15))
+            );
+            assert_eq!(
+                scheduler.due(attempt, 100_000, &Preferences::default(), true, true, true),
+                Some(Duration::from_secs(15))
+            );
+            let restored = AutoRecommendations::restore(
+                &scheduler.checkpoint(attempt, 100_000),
+                attempt,
+                100_005,
+            );
+            assert_eq!(restored.retry_after(attempt), Some(Duration::from_secs(10)));
+        }
+        scheduler.failed(RecommendationErrorKind::RateLimited, now);
+        assert_eq!(scheduler.retry_after(now), Some(Duration::from_secs(1200)));
+    }
+
+    #[test]
     fn recommendation_throttles_survive_restart_and_clock_changes() {
         use std::time::{Duration, Instant};
         let now = Instant::now();
@@ -1198,6 +1234,54 @@ pub(crate) mod tests {
             local.edit(key, value).unwrap();
         }
         assert_eq!(local.pending_feedback.len(), FEEDBACK_LIMIT);
+    }
+
+    #[test]
+    fn unsent_ratings_override_existing_higher_remote_records_then_acknowledge() {
+        for rating in [Some(Rating::Love), Some(Rating::Less), None] {
+            let mut local = device('a');
+            let (key, value) = feedback_edit(0, false);
+            local.edit(key.clone(), value.clone()).unwrap();
+            // The offline device has not seen the newer cloud clock.
+            let mut remote = local.document.clone();
+            remote.records.get_mut(&key).unwrap().stamp = Stamp {
+                counter: 100,
+                device: "b".repeat(32),
+            };
+            let edit = rating.map(|rating| match value.clone().unwrap() {
+                Value::Feedback {
+                    uri, title, artist, ..
+                } => Value::Feedback {
+                    uri,
+                    title,
+                    artist,
+                    rating,
+                },
+                _ => unreachable!(),
+            });
+            local.edit(key.clone(), edit.clone()).unwrap();
+            let bytes = serde_json::to_vec(&local).unwrap();
+            let mut restarted: Replica = serde_json::from_slice(&bytes).unwrap();
+            restarted.merge_for_sync(&remote).unwrap();
+            assert_eq!(restarted.document.records[&key].value, edit);
+            assert_eq!(restarted.document.records[&key].stamp.counter, 101);
+            assert_eq!(
+                restarted.pending_feedback[&key],
+                restarted.document.records[&key].stamp
+            );
+            // Repeated conflict reads neither lose nor restamp this intent.
+            let pending = restarted.document.clone();
+            restarted.merge_for_sync(&remote).unwrap();
+            assert_eq!(restarted.document, pending);
+            remote.merge(&pending).unwrap();
+            restarted.merge_synced(&remote, Some(&pending)).unwrap();
+            assert_eq!(restarted.document.records[&key].value, edit);
+            assert!(restarted.pending_feedback.is_empty());
+            remote.records.get_mut(&key).unwrap().stamp.counter = 200;
+            remote.records.get_mut(&key).unwrap().value = value;
+            restarted.merge_for_sync(&remote).unwrap();
+            assert_eq!(restarted.document, remote);
+        }
     }
 
     #[test]

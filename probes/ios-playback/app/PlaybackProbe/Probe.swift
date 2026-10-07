@@ -12,8 +12,10 @@ import UIKit
 final class Probe {
     static let shared = Probe()
 
-    private let engine = AVAudioEngine()
-    private var source: AVAudioSourceNode?
+    private var audio = ProbeAudioGraph(render: Probe.render)
+    private var engine: AVAudioEngine { audio.engine }
+    private var engineObserver: NSObjectProtocol?
+    private var awaitingPlaybackRequest = false
     private(set) var connected = false
     private(set) var playing = false
     private(set) var track = ""
@@ -104,11 +106,39 @@ final class Probe {
         } catch {
             record(["t": "error", "stage": "category", "msg": error.localizedDescription])
         }
-        let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 2)!
-        let source = AVAudioSourceNode(format: format, renderBlock: Self.render)
-        engine.attach(source)
-        engine.connect(source, to: engine.mainMixerNode, format: format)
-        self.source = source
+    }
+
+    private func mediaServicesReset() {
+        record(["t": "media_services_reset"])
+        // Apple requires new audio objects and session configuration, with
+        // playback left stopped until a new user request.
+        awaitingPlaybackRequest = true
+        wantsEngine = false
+        playing = false
+        interruptionPlayback = InterruptionPlayback()
+        probe_command(1)
+        probe_flush()
+        engine.stop()
+        if let engineObserver { NotificationCenter.default.removeObserver(engineObserver) }
+        audio = ProbeAudioGraph(render: Self.render)
+        configureSession()
+        observeEngine()
+        updateNowPlaying()
+        onChange?()
+    }
+
+    /// All screen and remote playback requests pass through the reset gate.
+    @discardableResult
+    func command(_ command: UInt32) -> Int32 {
+        if command == 0 || command == 2 || command == 3 || command == 4 {
+            awaitingPlaybackRequest = false
+        }
+        return probe_command(command)
+    }
+
+    func load(_ uri: String) -> Int32 {
+        awaitingPlaybackRequest = false
+        return probe_load(uri)
     }
 
     /// Runs on Core Audio's real-time thread. Not main-actor isolated.
@@ -123,6 +153,7 @@ final class Probe {
     }
 
     private func activateAndRun(reason: String) {
+        guard !awaitingPlaybackRequest else { return }
         wantsEngine = true
         do {
             try AVAudioSession.sharedInstance().setActive(true)
@@ -146,15 +177,9 @@ final class Probe {
             let reason = (note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt).flatMap(AVAudioSession.RouteChangeReason.init)
             MainActor.assumeIsolated { Probe.shared.routeChanged(reason) }
         }
-        center.addObserver(forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main) { _ in
-            MainActor.assumeIsolated {
-                let probe = Probe.shared
-                probe.record(["t": "engine_configuration_change", "running": probe.engine.isRunning])
-                if probe.wantsEngine, !probe.engine.isRunning { probe.activateAndRun(reason: "configuration_change") }
-            }
-        }
+        observeEngine()
         center.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { Probe.shared.record(["t": "media_services_reset"]) }
+            MainActor.assumeIsolated { Probe.shared.mediaServicesReset() }
         }
         for (name, label) in [
             (UIApplication.didEnterBackgroundNotification, "background"),
@@ -168,6 +193,17 @@ final class Probe {
                     if label == "background" { Probe.shared.wasBackgrounded = true }
                     if label == "foreground" { Probe.shared.refreshSessionIfIdle() }
                 }
+            }
+        }
+    }
+
+    private func observeEngine() {
+        engineObserver = NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main) { note in
+            MainActor.assumeIsolated {
+                let probe = Probe.shared
+                guard let changed = note.object as? AVAudioEngine, changed === probe.engine else { return }
+                probe.record(["t": "engine_configuration_change", "running": probe.engine.isRunning])
+                if probe.wantsEngine, !probe.engine.isRunning { probe.activateAndRun(reason: "configuration_change") }
             }
         }
     }
@@ -229,6 +265,11 @@ final class Probe {
             track = "\(event["name"] as? String ?? "") — \(event["artists"] as? String ?? "")"
             durationMs = event["duration_ms"] as? UInt32 ?? 0
         case "playing":
+            if awaitingPlaybackRequest {
+                probe_command(1)
+                probe_flush()
+                break
+            }
             idleSince = nil
             playing = true
             positionMs = event["position_ms"] as? UInt32 ?? positionMs
@@ -256,13 +297,13 @@ final class Probe {
 
     private func configureRemoteCommands() {
         let commands = MPRemoteCommandCenter.shared()
-        commands.playCommand.addTarget { _ in probe_command(0) == 0 ? .success : .commandFailed }
-        commands.pauseCommand.addTarget { _ in probe_command(1) == 0 ? .success : .commandFailed }
+        commands.playCommand.addTarget { _ in MainActor.assumeIsolated { Probe.shared.command(0) == 0 ? .success : .commandFailed } }
+        commands.pauseCommand.addTarget { _ in MainActor.assumeIsolated { Probe.shared.command(1) == 0 ? .success : .commandFailed } }
         commands.togglePlayPauseCommand.addTarget { _ in
-            MainActor.assumeIsolated { probe_command(Probe.shared.playing ? 1 : 0) == 0 ? .success : .commandFailed }
+            MainActor.assumeIsolated { Probe.shared.command(Probe.shared.playing ? 1 : 0) == 0 ? .success : .commandFailed }
         }
-        commands.nextTrackCommand.addTarget { _ in probe_command(2) == 0 ? .success : .commandFailed }
-        commands.previousTrackCommand.addTarget { _ in probe_command(3) == 0 ? .success : .commandFailed }
+        commands.nextTrackCommand.addTarget { _ in MainActor.assumeIsolated { Probe.shared.command(2) == 0 ? .success : .commandFailed } }
+        commands.previousTrackCommand.addTarget { _ in MainActor.assumeIsolated { Probe.shared.command(3) == 0 ? .success : .commandFailed } }
     }
 
     private func updateNowPlaying() {

@@ -180,6 +180,14 @@ A synthetic tone, the simulator, or the Spotify app's own audio does not pass.
 
 ## Sign-in regressions
 
+Current source treats a callback with missing, duplicate or different `state`
+as stray traffic and keeps listening. A denial bound to the current state still
+fails sign-in. Media-services resets pause the Rust player, flush PCM, replace
+the audio engine and source node, restore the Playback category, and bind the
+configuration observer to the new engine. Audio stays stopped until a screen or
+lock-screen playback request. These changes have host regressions and iPhoneOS
+type checking, not a new physical-device reset test.
+
 `probes/ios-playback/test-signin.sh` runs host-only callback and credential
 regressions. It checks every TCP request-line split, malformed/oversized requests,
 replacement failures, and a disposable native Mac Keychain round trip. The

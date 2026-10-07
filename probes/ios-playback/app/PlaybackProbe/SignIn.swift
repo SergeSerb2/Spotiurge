@@ -101,7 +101,7 @@ final class SignIn: NSObject, ASWebAuthenticationPresentationContextProviding {
                     connection.send(content: Data(reply.utf8), completion: .contentProcessed { _ in connection.cancel() })
                     switch redirect {
                     case .stray: return
-                    case .refused: self.done(.failure(ProbeError("sign-in was refused or its state did not match")))
+                    case .refused: self.done(.failure(ProbeError("sign-in was refused")))
                     case .code(let code):
                         self.redirected = true
                         self.session?.cancel()

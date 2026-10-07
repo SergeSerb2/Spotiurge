@@ -44,9 +44,9 @@ final class ProbeViewController: UIViewController {
             button("Sign in to Spotify (streaming)") { [weak self] in self?.startSignIn() },
             context,
             button("Play context on this iPhone") { [weak self] in self?.play() },
-            row(button("Play") { probe_command(0) }, button("Pause") { probe_command(1) }),
-            row(button("Previous") { probe_command(3) }, button("Next") { probe_command(2) }),
-            button("Take over from active Connect device") { probe_command(4) },
+            row(button("Play") { Probe.shared.command(0) }, button("Pause") { Probe.shared.command(1) }),
+            row(button("Previous") { Probe.shared.command(3) }, button("Next") { Probe.shared.command(2) }),
+            button("Take over from active Connect device") { Probe.shared.command(4) },
             button("Forget stored credential") { CredentialStore.delete() },
         ])
         stack.axis = .vertical
@@ -71,7 +71,7 @@ final class ProbeViewController: UIViewController {
         let uri = Self.contextURI(context.text ?? "")
         guard uri.hasPrefix("spotify:") else { return }
         UserDefaults.standard.set(uri, forKey: "context")
-        let result = probe_load(uri)
+        let result = Probe.shared.load(uri)
         Probe.shared.record(["t": "load_requested", "uri": uri, "result": Int(result)])
         if result == -2 { Probe.shared.failed("play", "not connected to Spotify yet") }
     }

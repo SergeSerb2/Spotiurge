@@ -254,8 +254,9 @@ def recommend(body, config):
             return {"suggestions": fresh, "model": model}
         except urllib.error.HTTPError as error:
             # Rate limits are surfaced; do not evade the same subscription quota.
-            if error.code == 429:
-                raise RateLimited from None
+            with error:
+                if error.code == 429:
+                    raise RateLimited from None
         except (urllib.error.URLError, TimeoutError, ValueError, KeyError, TypeError, IndexError):
             pass
     return None

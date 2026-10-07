@@ -1,5 +1,8 @@
 # Scenery preview verification
 
+[Round seven review fixes](review-fixes-r7.md) record conflict-feedback preservation,
+short AI-slot retry, probe media-reset/state handling and proxy response cleanup.
+
 Recorded October 7, 2026. This extends the [discovery](../spotiurge-discovery/verification.md)
 and [glass preview](../spotiurge-glass/verification.md) records. Those earlier
 integration tests are not tests of this new package.
