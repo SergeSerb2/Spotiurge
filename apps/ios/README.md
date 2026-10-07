@@ -243,3 +243,12 @@ AI-slot contention, and ignore stale/unbound sign-in callbacks. Current-state
 Spotify denials still fail. These core changes pass 45 Swift tests, 16 hosted
 Simulator tests and an unsigned device compile without the playback engine.
 No physical phone was accessed and these checks add no audio proof.
+
+Playback Forget now cancels browser/token work and reconnect, stops audio and
+clears Now Playing before deleting the Keychain item. Failed deletion is
+reported while playback stays stopped. Generation tickets reject queued
+credential/event callbacks even after a new sign-in. This follow-up passes
+45 core tests and 17 hosted Simulator tests with dummy secrets, an unsigned
+generic iPhoneOS build without the engine, and iPhoneOS typechecking of all
+Swift sources with `SPOTIURGE_ENGINE` enabled. The latter checks the bridge
+source; it does not link or run a production engine. No phone was accessed.

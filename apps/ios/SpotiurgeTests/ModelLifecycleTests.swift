@@ -329,6 +329,28 @@ struct ModelLifecycle {
         #expect(player.engine == engine)
     }
 
+    @Test func `forget rejects queued playback credentials even after a new connection`() {
+        let secrets = FakeSecrets([Keychain.playback: Data("dummy-playback".utf8)])
+        let player = Player(secrets: secrets.store)
+        Player.credentialCallbacks.begin()
+        let old = Player.credentialCallbacks.ticket()!
+        player.forget()
+        #expect(secrets.value(Keychain.playback) == nil)
+        #expect(Player.credentialCallbacks.ticket() == nil)
+        Player.credentialCallbacks.begin()
+        player.receiveCredential(Data("stale credential".utf8), ticket: old)
+        #expect(secrets.value(Keychain.playback) == nil)
+        let fresh = Player.credentialCallbacks.ticket()!
+        player.receiveCredential(Data("fresh credential".utf8), ticket: fresh)
+        #expect(secrets.value(Keychain.playback) == Data("fresh credential".utf8))
+        secrets.undeletable.withLock { $0 = true }
+        player.forget()
+        #expect(Player.credentialCallbacks.ticket() == nil && !player.playing)
+        #expect(player.notice?.contains("Playback is stopped") == true)
+        player.receiveCredential(Data("stale replacement".utf8), ticket: fresh)
+        #expect(secrets.value(Keychain.playback) == Data("fresh credential".utf8))
+    }
+
     @Test func `leaving demo retries a Spotify restore refused by the locked Keychain`() async {
         StubNetwork.reset(["GET /v1/me": me, "GET /v1/me/tracks": emptyTracks, "GET /v1/me/playlists": emptyPlaylists])
         let secrets = FakeSecrets([Keychain.webRefresh: grant])

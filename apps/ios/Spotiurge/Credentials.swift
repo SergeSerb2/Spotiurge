@@ -137,6 +137,7 @@ final class PKCESignIn: NSObject, ASWebAuthenticationPresentationContextProvidin
     private var session: ASWebAuthenticationSession?
     private var continuation: CheckedContinuation<Tokens, Error>?
     private var deadline: Task<Void, Never>?
+    private var exchangeTask: Task<Void, Never>?
     private var requests = 0
     private var redirected = false
 
@@ -152,10 +153,20 @@ final class PKCESignIn: NSObject, ASWebAuthenticationPresentationContextProvidin
     }
 
     func run() async throws -> Tokens {
-        try await withCheckedThrowingContinuation { continuation in
-            self.continuation = continuation
-            start()
+        try await withTaskCancellationHandler {
+            try Task.checkCancellation()
+            return try await withCheckedThrowingContinuation { continuation in
+                guard !Task.isCancelled else { continuation.resume(throwing: SignInError.cancelled); return }
+                self.continuation = continuation
+                start()
+            }
+        } onCancel: {
+            Task { @MainActor in self.cancel() }
         }
+    }
+
+    private func cancel() {
+        finish(.failure(SignInError.cancelled))
     }
 
     private func start() {
@@ -243,12 +254,18 @@ final class PKCESignIn: NSObject, ASWebAuthenticationPresentationContextProvidin
                     case .code(let code):
                         self.redirected = true
                         self.session?.cancel()
-                        do {
-                            self.finish(.success(try await Self.token([
-                                "grant_type": "authorization_code", "code": code, "redirect_uri": self.grant.redirect,
-                                "client_id": self.grant.clientID, "code_verifier": verifier,
-                            ])))
-                        } catch { self.finish(.failure(error)) }
+                        self.exchangeTask = Task {
+                            do {
+                                let tokens = try await Self.token([
+                                    "grant_type": "authorization_code", "code": code, "redirect_uri": self.grant.redirect,
+                                    "client_id": self.grant.clientID, "code_verifier": verifier,
+                                ])
+                                try Task.checkCancellation()
+                                self.finish(.success(tokens))
+                            } catch {
+                                if !Task.isCancelled { self.finish(.failure(error)) }
+                            }
+                        }
                     }
                 } catch { connection.cancel() }
             }
@@ -275,14 +292,17 @@ final class PKCESignIn: NSObject, ASWebAuthenticationPresentationContextProvidin
     }
 
     private func finish(_ result: Result<Tokens, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        exchangeTask?.cancel()
+        exchangeTask = nil
         deadline?.cancel()
         deadline = nil
         listener?.cancel()
         listener = nil
+        session?.cancel()
         session = nil
-        let continuation = continuation
-        self.continuation = nil
-        continuation?.resume(with: result)
+        continuation.resume(with: result)
     }
 
     /// Base64url of `count` random bytes, or nil if the system RNG fails.

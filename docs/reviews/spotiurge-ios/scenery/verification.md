@@ -104,3 +104,13 @@ backoff, and ignores stale callback states. All 45 Swift core tests and 16 hoste
 Simulator tests pass. An unsigned generic-device build without the engine also
 passes. The physical phone was not read or changed. These are source/lifecycle
 checks, not new audio, cloud-sync or sign-in measurements.
+
+The credential-lifecycle follow-up cancels playback sign-in and prevents
+forgotten credentials from being re-saved by queued callbacks, including after
+a new connection begins. Forget stops output and clears Now Playing even if
+Keychain deletion fails, and shows that failure. All 45 core and 17 hosted
+Simulator tests pass, including the injected-store callback/deletion regression.
+The unsigned generic-device build without the engine and iPhoneOS source
+typechecking with `SPOTIURGE_ENGINE` enabled pass. No engine linking, browser
+OAuth or audible playback is claimed by those checks. The physical phone
+remained untouched, and the approved scenery appearance is preserved.

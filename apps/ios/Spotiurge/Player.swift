@@ -26,6 +26,7 @@ struct NowPlaying: Equatable {
 @Observable
 final class Player {
     static let shared = Player()
+    nonisolated static let credentialCallbacks = CredentialCallbackGate()
 
     enum Engine: Equatable {
         /// This build has no engine linked.
@@ -57,6 +58,8 @@ final class Player {
 
     @ObservationIgnored private var requested: [String: Track] = [:]
     @ObservationIgnored private let secrets: SecretStore
+    @ObservationIgnored private var signInTask: Task<Void, Never>?
+    @ObservationIgnored private var signInAttempt: UInt64 = 0
 
     init(secrets: SecretStore = .keychain) {
         self.secrets = secrets
@@ -163,18 +166,18 @@ final class Player {
         let cache = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appending(path: "librespot").path
         try? FileManager.default.createDirectory(atPath: cache, withIntermediateDirectories: true)
         let started = probe_start(cache, "Spotiurge (iPhone)", { json, _ in
-            guard let json else { return }
+            guard let json, let ticket = Player.credentialCallbacks.ticket() else { return }
             let line = String(cString: json)
-            DispatchQueue.main.async { MainActor.assumeIsolated { Player.shared.event(line) } }
+            DispatchQueue.main.async { MainActor.assumeIsolated {
+                guard Player.credentialCallbacks.accepts(ticket) else { return }
+                Player.shared.event(line)
+            } }
         }, { data, length, _ in
-            guard let data else { return }
+            guard let data, let ticket = Player.credentialCallbacks.ticket() else { return }
             let blob = Data(bytes: data, count: length)
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
-                    // The session keeps playing; only reconnecting later needs it.
-                    do { try Player.shared.secrets.write(blob, Keychain.playback) } catch {
-                        Player.shared.notice = "The Keychain did not keep the playback sign-in; you may need to sign in again later."
-                    }
+                    Player.shared.receiveCredential(blob, ticket: ticket)
                 }
             }
         }, nil)
@@ -200,11 +203,17 @@ final class Player {
         #if SPOTIURGE_ENGINE
         guard !demo, engine != .connecting else { return }
         engine = .connecting
-        Task {
+        signInAttempt &+= 1
+        let attempt = signInAttempt
+        signInTask = Task {
+            defer { if attempt == signInAttempt { signInTask = nil } }
             do {
                 let tokens = try await PKCESignIn(.playback).run()
+                try Task.checkCancellation()
+                guard attempt == signInAttempt else { return }
                 connect(kind: 0, Data(tokens.access_token.utf8))
             } catch {
+                guard !Task.isCancelled, attempt == signInAttempt else { return }
                 engine = .failed((error as? SignInError)?.errorDescription ?? SignInError.failed.errorDescription!)
             }
         }
@@ -215,19 +224,45 @@ final class Player {
     /// demo session.
     func forget() {
         guard !demo else { return }
-        do { try secrets.delete(Keychain.playback) } catch {
-            notice = "The Keychain did not remove the playback sign-in. Try again after unlocking."
-            return
-        }
+        signInAttempt &+= 1
+        signInTask?.cancel()
+        signInTask = nil
+        Self.credentialCallbacks.revoke()
         #if SPOTIURGE_ENGINE
         probe_disconnect()
-        engine = .needsSignIn
-        playing = false
+        probe_flush()
         #endif
+        wantsAudio = false
+        resumeAfterInterruption = false
+        audio.stop()
+        playing = false
+        nowPlaying = nil
+        position = (0, .now)
+        requested.removeAll()
+        engine = Self.includesEngine ? .needsSignIn : .notIncluded
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        do { try secrets.delete(Keychain.playback) } catch {
+            notice = "Playback is stopped, but the Keychain did not remove the sign-in. Try Forget again after unlocking."
+            return
+        }
+        notice = nil
+    }
+
+    /// Main-actor delivery rejects credentials queued before Forget or a new
+    /// connection; the runtime callback must copy and capture its ticket first.
+    func receiveCredential(_ blob: Data, ticket: UInt64) {
+        guard !demo, Self.credentialCallbacks.accepts(ticket) else { return }
+        do { try secrets.write(blob, Keychain.playback) } catch {
+            notice = "The Keychain did not keep the playback sign-in; you may need to sign in again later."
+        }
     }
 
     #if SPOTIURGE_ENGINE
     private func connect(kind: UInt32, _ data: Data) {
+        Self.credentialCallbacks.revoke()
+        probe_disconnect()
+        Self.credentialCallbacks.begin()
         engine = .connecting
         let result = data.withUnsafeBytes { probe_connect(kind, $0.bindMemory(to: UInt8.self).baseAddress, data.count) }
         if result != 0 { engine = .failed("The playback engine refused the credential.") }
@@ -372,7 +407,8 @@ final class Player {
         center.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated {
                 let player = Player.shared
-                guard player.wasBackgrounded, !player.playing, let stored = try? player.secrets.read(Keychain.playback) else { return }
+                guard player.wasBackgrounded, !player.playing, Self.credentialCallbacks.ticket() != nil,
+                      let stored = try? player.secrets.read(Keychain.playback) else { return }
                 probe_disconnect()
                 player.connect(kind: 1, stored)
             }
