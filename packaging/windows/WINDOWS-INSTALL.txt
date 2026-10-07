@@ -1,0 +1,46 @@
+Spotiurge for Windows 10/11 (64-bit)
+
+1. Download the installer from Serge's private download link and run it.
+   This personal development package is not Authenticode-signed. Compare its
+   SHA-256 with checksums.txt. No administrator rights are needed.
+2. Open Spotiurge from the Start menu. It installs under
+   %LOCALAPPDATA%\Programs\Spotiurge, separately from Spotifast and Spotify.
+3. Complete Spotiurge's Spotify sign-in in your browser. Approve the separate
+   streaming sign-in when offered; Spotify Premium is needed for local audio.
+4. Pair this computer once using the private token in Serge's email. Fully quit
+   Spotiurge, including its tray icon. Open Windows PowerShell and paste these
+   commands. The token prompt is masked and does not put it in command history:
+
+   $pairing = Read-Host 'Spotiurge cloud token' -AsSecureString
+   try {
+     $env:SPOTIURGE_CLOUD_TOKEN = [Net.NetworkCredential]::new('', $pairing).Password
+     Start-Process "$env:LOCALAPPDATA\Programs\Spotiurge\Spotiurge.exe"
+   } finally {
+     Remove-Item Env:SPOTIURGE_CLOUD_TOKEN -ErrorAction SilentlyContinue
+     $pairing.Dispose()
+   }
+
+   Paste the token only into the masked prompt. The app removes it from its
+   environment and stores it in Windows Credential Manager for the default
+   https://private-cloud-production.up.railway.app origin. On Home, use Sync
+   to import saved taste, feedback and mixes from your Mac. No Settings pairing
+   form exists in this preview. Subsequent launches need no token.
+5. Home recommends automatically from saved taste and intentional feedback.
+   Choose Familiar, Balanced or Adventurous; rate tracks to improve future
+   picks. Luna is the only recommendation model, through CLIProxyAPI.
+6. Choose This computer for local playback. Spotify Connect hands album and
+   playlist playback to another signed-in device. Unchecked suggestions cannot
+   play until matched against Spotify; Retry matching does not spend another
+   AI call. Playback and cached picks remain usable during cloud/AI outages.
+
+Spotiurge keeps its own profile and protected Windows credentials. Installing
+or uninstalling it does not change Spotifast's files or delete your music taste.
+Spotify link defaults are optional: choose them through Windows Default apps.
+Automatic app updates are disabled in this development build.
+
+The standalone Spotiurge.exe also runs without installing. It uses the same
+per-user Spotiurge profile; it is not a portable profile container.
+Only one regular Spotiurge instance runs at a time.
+
+This development package omits the optional MilkDrop visualizer. Discovery,
+local Spotify playback, Connect and the other native visualizers are included.

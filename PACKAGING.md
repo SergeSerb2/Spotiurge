@@ -1,5 +1,44 @@
 # Packaging
 
+## Private Spotiurge Windows packages
+
+The inherited recipes below describe Spotifast's packaging. For this fork's
+private Windows development distribution, use `packaging/windows/spotiurge.iss`
+through `package-spotiurge.ps1`. It has an independent installer GUID, per-user
+`Spotiurge` directory, executable, Start menu entry, protocol choice and scenery
+icon. Installation and removal never write Spotifast's keys or the shared
+`spotify:` handler. Windows Default apps controls any explicit link association.
+Fork automatic updates remain disabled. Do not publish this package to upstream
+channels or use the inherited Windows recipe for a Spotiurge release.
+
+In a Windows MSVC developer shell with Rust 1.98 and Inno Setup 6.3 or later:
+
+```powershell
+cargo build --locked --release --no-default-features --features demo --target x86_64-pc-windows-msvc
+./packaging/windows/package-spotiurge.ps1 `
+  -Binary target/x86_64-pc-windows-msvc/release/spotifast.exe `
+  -Version 0.12.0-dev.20261007 -OutputDir dist/windows
+./packaging/windows/test-spotiurge.ps1 `
+  -Installer dist/windows/Spotiurge-0.12.0-dev.20261007-windows-x86_64-setup.exe `
+  -Binary dist/windows/Spotiurge.exe -WorkDir target/windows-package-check
+```
+
+The static CRT configuration in `.cargo/config.toml` must remain enabled. Inspect
+the actual executable with `dumpbin /dependents`; it must not import MSVCP or
+VCRUNTIME DLLs. This package omits optional MilkDrop, leaving discovery, playback,
+Connect and the other native visualizers available. The `demo` feature supports
+deterministic native captures without real account data. The test installs,
+upgrades and uninstalls in an owned scratch directory, checks executable identity
+and hashes, preserves a profile fixture, and compares existing Spotify/Spotifast
+registrations. It refuses to replace an existing Spotiurge installation.
+
+The output contains an installer, standalone `Spotiurge.exe`, installation
+instructions and SHA-256 checksums. A development package is unsigned; no public
+stable release or Authenticode signature is implied. Verify the uploaded bytes
+and private permissions before emailing download links. Follow
+`packaging/windows/WINDOWS-INSTALL.txt` for Spotify sign-in and one-time cloud
+pairing; credentials never belong in the installer or its checksums.
+
 [`native-packages.yaml`](native-packages.yaml) is the packaging configuration:
 it pins the shared CLI and nFPM versions and declares Linux amd64/arm64 inputs,
 DEB/RPM/AppImage contents, dependencies, recipe templates and downstream repositories.
