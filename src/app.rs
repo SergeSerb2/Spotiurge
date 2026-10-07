@@ -1931,8 +1931,22 @@ impl App {
                     prompt,
                     result,
                 } => {
+                    let completed_active = self.discovery.in_flight_request == Some(request);
                     self.finish_discovery_request(request);
                     if request != self.discovery.request {
+                        // Picks belong to their input generation; service limits
+                        // belong to the completed request even after input changes.
+                        if completed_active
+                            && let Err(error) = result
+                            && matches!(
+                                error.kind,
+                                crate::discovery::RecommendationErrorKind::Busy
+                                    | crate::discovery::RecommendationErrorKind::RateLimited
+                                    | crate::discovery::RecommendationErrorKind::Pairing
+                            )
+                        {
+                            self.discovery_request_failed(error);
+                        }
                         continue;
                     }
                     self.discovery.busy = false;
@@ -1967,12 +1981,7 @@ impl App {
                             self.discovery.picks = picks;
                         }
                         Err(error) => {
-                            self.discovery.automatic.failed(error.kind, Instant::now());
-                            self.checkpoint_discovery_throttle();
-                            self.backend
-                                .send(Command::SaveDiscovery(self.discovery.replica.clone()));
-                            self.discovery.last_error = Some(error.kind);
-                            self.discovery.status = error.message;
+                            self.discovery_request_failed(error);
                         }
                     }
                 }
@@ -9916,6 +9925,15 @@ impl App {
         }
     }
 
+    fn discovery_request_failed(&mut self, error: crate::discovery::RecommendationError) {
+        self.discovery.automatic.failed(error.kind, Instant::now());
+        self.checkpoint_discovery_throttle();
+        self.backend
+            .send(Command::SaveDiscovery(self.discovery.replica.clone()));
+        self.discovery.last_error = Some(error.kind);
+        self.discovery.status = error.message;
+    }
+
     fn request_discovery(&mut self, automatic: bool) {
         if self.offline || !self.discovery.ready || self.discovery.busy || !self.is_connected() {
             return;
@@ -16005,6 +16023,9 @@ mod tests {
                         &ctx,
                     ),
                     _ => {
+                        // This fixture represents an already-uploaded taste.
+                        // A clock import must preserve a genuinely pending edit.
+                        app.discovery.replica.pending_edits.clear();
                         let mut remote = app.discovery.replica.document.clone();
                         let taste = remote.records.get_mut("taste").unwrap();
                         taste.stamp.counter = 10;
@@ -16132,6 +16153,114 @@ mod tests {
         );
         reopened.backend.shutdown();
         app.backend.shutdown();
+    }
+
+    #[test]
+    fn superseded_ai_requests_keep_service_throttles_without_accepting_content() {
+        use crate::discovery::{Exploration, RecommendationError, RecommendationErrorKind};
+        for exploration in [false, true] {
+            for kind in [
+                RecommendationErrorKind::Busy,
+                RecommendationErrorKind::RateLimited,
+                RecommendationErrorKind::Pairing,
+            ] {
+                let mut app = test_app("discovery-superseded-throttle");
+                app.backend.set_offline(true);
+                app.discovery.ready = true;
+                app.auth = AuthStatus::Connected {
+                    username: "fixture".into(),
+                };
+                app.discovery.draft = "Jazz".into();
+                let ctx = egui::Context::default();
+                app.apply(Action::DiscoveryRecommend, &ctx);
+                let request = app.discovery.request;
+                if exploration {
+                    app.apply(Action::DiscoveryExploration(Exploration::Adventurous), &ctx);
+                } else {
+                    app.apply(Action::DiscoveryDraft("Soul".into()), &ctx);
+                    app.apply(Action::DiscoverySaveTaste, &ctx);
+                }
+                let generation = app.discovery.request;
+                assert!(generation > request && app.discovery.busy);
+                let inputs = app.discovery.replica.document.clone();
+                let refreshed = app.settings.discovery.refreshed_at;
+                app.handle_backend_events(vec![Event::DiscoveryRecommended {
+                    request,
+                    prompt: "old prompt".into(),
+                    result: Err(RecommendationError {
+                        kind,
+                        message: "Service throttle".into(),
+                    }),
+                }]);
+                assert!(!app.discovery.busy);
+                assert_eq!(app.discovery.replica.document, inputs);
+                assert_eq!(app.settings.discovery.refreshed_at, refreshed);
+                assert_eq!(app.discovery.last_error, Some(kind));
+                assert_eq!(app.discovery.status, "Service throttle");
+                let now = Instant::now();
+                let restored = crate::discovery::AutoRecommendations::restore(
+                    &app.discovery.replica.recommendation_throttle,
+                    now,
+                    crate::discovery::unix_now(),
+                );
+                if kind == RecommendationErrorKind::Pairing {
+                    assert!(app.discovery.automatic.suspended && restored.suspended);
+                    assert!(
+                        app.discovery
+                            .automatic
+                            .due(
+                                now,
+                                crate::discovery::unix_now(),
+                                &app.settings.discovery,
+                                true,
+                                true,
+                                true
+                            )
+                            .is_none()
+                    );
+                } else {
+                    let minimum = if kind == RecommendationErrorKind::Busy {
+                        10
+                    } else {
+                        590
+                    };
+                    assert!(
+                        app.discovery.automatic.retry_after(now).unwrap()
+                            > Duration::from_secs(minimum)
+                    );
+                    assert!(restored.retry_after(now).unwrap() > Duration::from_secs(minimum));
+                    for automatic in [false, true] {
+                        app.request_discovery(automatic);
+                        assert_eq!(app.discovery.request, generation);
+                        assert!(!app.discovery.busy);
+                    }
+                }
+                // A duplicate old completion cannot throttle or clear newer work.
+                app.discovery.automatic.rearm();
+                app.discovery.last_error = None;
+                app.request_discovery(false);
+                assert!(app.discovery.busy);
+                let current = app.discovery.request;
+                app.handle_backend_events(vec![Event::DiscoveryRecommended {
+                    request,
+                    prompt: "duplicate old prompt".into(),
+                    result: Err(RecommendationError {
+                        kind: RecommendationErrorKind::RateLimited,
+                        message: "Duplicate throttle".into(),
+                    }),
+                }]);
+                assert!(app.discovery.busy);
+                assert_eq!(app.discovery.in_flight_request, Some(current));
+                assert!(
+                    app.discovery
+                        .automatic
+                        .retry_after(Instant::now())
+                        .is_none()
+                );
+                assert!(app.discovery.last_error.is_none());
+                app.backend.shutdown();
+            }
+        }
     }
 
     #[test]

@@ -125,6 +125,13 @@ final class CredentialCallbackGate: @unchecked Sendable {
         lock.lock(); defer { lock.unlock() }
         return enabled && generation == ticket
     }
+
+    /// The C ABI rejects malformed/empty credentials before starting a task.
+    /// No asynchronous event follows that rejection; close its callback gate.
+    func connectionStarted(_ result: Int32) -> Bool {
+        guard result == 0 else { revoke(); return false }
+        return true
+    }
 }
 
 enum SecureVerifier {

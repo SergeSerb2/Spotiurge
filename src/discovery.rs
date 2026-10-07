@@ -512,10 +512,10 @@ pub struct Replica {
     /// Local catalogue matches, excluded from the cloud document and AI input.
     #[serde(default)]
     pub cached_picks: Vec<Pick>,
-    /// Unsynced local ratings, persisted separately from the cloud document.
+    /// Unsynced local record edits, persisted outside the cloud document.
     /// Only exact current stamps survive; acknowledged or forgotten edits leave.
-    #[serde(default)]
-    pub pending_feedback: BTreeMap<String, Stamp>,
+    #[serde(default, alias = "pending_feedback")]
+    pub pending_edits: BTreeMap<String, Stamp>,
     /// Restart-safe per-installation AI limits, outside the cloud document.
     #[serde(default)]
     pub recommendation_throttle: RecommendationThrottle,
@@ -527,7 +527,7 @@ impl Default for Replica {
             device: format!("{:032x}", rand::random::<u128>()),
             document: Document::default(),
             cached_picks: Vec::new(),
-            pending_feedback: BTreeMap::new(),
+            pending_edits: BTreeMap::new(),
             recommendation_throttle: RecommendationThrottle::default(),
         }
     }
@@ -561,11 +561,11 @@ impl Replica {
         self.edit(target, Some(Value::Mix { title, uris }))
     }
 
-    /// Import a cloud clock before uploading. A new offline rating may be
-    /// below its retention floor or a newer remote record; keep unsent intent.
+    /// Import a cloud clock before uploading without losing any unsent record,
+    /// including tombstones and feedback below the remote retention floor.
     pub fn merge_for_sync(&mut self, remote: &Document) -> Result<(), String> {
         let pending = self
-            .pending_feedback
+            .pending_edits
             .iter()
             .filter_map(|(key, stamp)| {
                 self.document
@@ -591,7 +591,7 @@ impl Replica {
     }
 
     fn keep_current_pending(&mut self) {
-        self.pending_feedback.retain(|key, stamp| {
+        self.pending_edits.retain(|key, stamp| {
             self.document
                 .records
                 .get(key)
@@ -605,19 +605,20 @@ impl Replica {
         remote: &Document,
         snapshot: Option<&Document>,
     ) -> Result<(), String> {
-        let changed = snapshot
-            .map(|snapshot| {
-                self.document
-                    .records
-                    .iter()
-                    .filter(|(key, record)| {
-                        key.as_str() != FEEDBACK_FLOOR
-                            && snapshot.records.get(*key) != Some(*record)
-                    })
-                    .map(|(key, record)| (key.clone(), record.clone()))
-                    .collect::<Vec<_>>()
+        // Without a dispatched snapshot there is no acknowledgment. Preserve
+        // the pending journal just as when importing a cloud clock for upload.
+        let Some(snapshot) = snapshot else {
+            return self.merge_for_sync(remote);
+        };
+        let changed = self
+            .document
+            .records
+            .iter()
+            .filter(|(key, record)| {
+                key.as_str() != FEEDBACK_FLOOR && snapshot.records.get(*key) != Some(*record)
             })
-            .unwrap_or_default();
+            .map(|(key, record)| (key.clone(), record.clone()))
+            .collect::<Vec<_>>();
         let mut merged = self.clone();
         merged.document.merge(remote)?;
         // Incorporate the remote clock first, then express the newer local
@@ -630,14 +631,12 @@ impl Replica {
         if !edits.is_empty() {
             merged.edit_many(edits)?;
         }
-        if let Some(snapshot) = snapshot {
-            merged.pending_feedback.retain(|key, stamp| {
-                snapshot
-                    .records
-                    .get(key)
-                    .is_none_or(|sent| &sent.stamp != stamp)
-            });
-        }
+        merged.pending_edits.retain(|key, stamp| {
+            snapshot
+                .records
+                .get(key)
+                .is_none_or(|sent| &sent.stamp != stamp)
+        });
         merged.keep_current_pending();
         *self = merged;
         Ok(())
@@ -717,14 +716,12 @@ impl Replica {
         candidate.compact_feedback();
         candidate.validate()?;
         for (key, record) in &candidate.records {
-            if key.starts_with("feedback:")
-                && key != FEEDBACK_FLOOR
+            if key != FEEDBACK_FLOOR
                 && self.document.records.get(key) != Some(record)
                 && record.stamp.device == self.device
                 && record.stamp.counter == counter
             {
-                self.pending_feedback
-                    .insert(key.clone(), record.stamp.clone());
+                self.pending_edits.insert(key.clone(), record.stamp.clone());
             }
         }
         self.document = candidate;
@@ -748,10 +745,9 @@ impl Replica {
         let mut replica: Self = serde_json::from_slice(&bytes)
             .map_err(|_| "Cannot read discovery state. The original file is preserved.")?;
         replica.document.validate()?;
-        if replica.pending_feedback.len() > FEEDBACK_LIMIT
-            || replica.pending_feedback.iter().any(|(key, stamp)| {
+        if replica.pending_edits.len() > replica.document.records.len()
+            || replica.pending_edits.iter().any(|(key, stamp)| {
                 key == FEEDBACK_FLOOR
-                    || !key.starts_with("feedback:")
                     || replica
                         .document
                         .records
@@ -759,7 +755,7 @@ impl Replica {
                         .is_none_or(|record| &record.stamp != stamp)
             })
         {
-            return Err("Invalid pending discovery feedback.".into());
+            return Err("Invalid pending discovery edits.".into());
         }
         replica.document.compact_feedback();
         replica.keep_current_pending();
@@ -1191,7 +1187,7 @@ pub(crate) mod tests {
         let snapshot = local.document.clone();
         local.merge_synced(&uploaded, Some(&snapshot)).unwrap();
         assert_eq!(local.document, uploaded);
-        assert!(local.pending_feedback.is_empty());
+        assert!(local.pending_edits.is_empty());
         // Once acknowledged, this is an old replica, not fresh user intent.
         remote
             .records
@@ -1201,7 +1197,7 @@ pub(crate) mod tests {
             .counter = 200;
         local.merge_for_sync(&remote).unwrap();
         assert!(!local.document.records.contains_key(&key));
-        assert!(local.pending_feedback.is_empty());
+        assert!(local.pending_edits.is_empty());
     }
 
     #[test]
@@ -1225,15 +1221,15 @@ pub(crate) mod tests {
         local.merge_synced(&remote, Some(&snapshot)).unwrap();
         assert_eq!(local.document.records[&key].stamp.counter, 101);
         assert!(local.document.records[&key].value.is_none());
-        assert_eq!(local.pending_feedback.len(), 1);
+        assert_eq!(local.pending_edits.len(), 1);
         let sent = local.document.clone();
         local.merge_synced(&sent, Some(&sent)).unwrap();
-        assert!(local.pending_feedback.is_empty());
+        assert!(local.pending_edits.is_empty());
         for index in 1..=FEEDBACK_LIMIT + 100 {
             let (key, value) = feedback_edit(index, false);
             local.edit(key, value).unwrap();
         }
-        assert_eq!(local.pending_feedback.len(), FEEDBACK_LIMIT);
+        assert_eq!(local.pending_edits.len(), FEEDBACK_LIMIT);
     }
 
     #[test]
@@ -1266,7 +1262,7 @@ pub(crate) mod tests {
             assert_eq!(restarted.document.records[&key].value, edit);
             assert_eq!(restarted.document.records[&key].stamp.counter, 101);
             assert_eq!(
-                restarted.pending_feedback[&key],
+                restarted.pending_edits[&key],
                 restarted.document.records[&key].stamp
             );
             // Repeated conflict reads neither lose nor restamp this intent.
@@ -1276,12 +1272,117 @@ pub(crate) mod tests {
             remote.merge(&pending).unwrap();
             restarted.merge_synced(&remote, Some(&pending)).unwrap();
             assert_eq!(restarted.document.records[&key].value, edit);
-            assert!(restarted.pending_feedback.is_empty());
+            assert!(restarted.pending_edits.is_empty());
             remote.records.get_mut(&key).unwrap().stamp.counter = 200;
             remote.records.get_mut(&key).unwrap().value = value;
             restarted.merge_for_sync(&remote).unwrap();
             assert_eq!(restarted.document, remote);
         }
+    }
+
+    #[test]
+    fn unsent_record_edits_survive_restart_clock_import_conflicts_and_ack() {
+        let history = Some(Value::History {
+            prompt: "old prompt".into(),
+            suggestions: vec![Suggestion {
+                title: "Fixture".into(),
+                artist: "Fixture artist".into(),
+                reason: String::new(),
+            }],
+        });
+        let mix = Some(Value::Mix {
+            title: "old mix".into(),
+            uris: vec![],
+        });
+        let cases = [
+            ("taste", taste("old taste"), taste("new taste")),
+            ("taste", taste("old taste"), None),
+            ("mix:fixture", mix.clone(), None),
+            (
+                "mix:fixture",
+                mix,
+                Some(Value::Mix {
+                    title: "changed mix".into(),
+                    uris: vec![],
+                }),
+            ),
+            ("history:fixture", history, None),
+        ];
+        let directory = std::env::temp_dir().join(format!(
+            "spotiurge-pending-edits-{:032x}",
+            rand::random::<u128>()
+        ));
+        let path = directory.join("state.json");
+        for (key, prior, intent) in cases {
+            let mut local = device('a');
+            local.edit(key.into(), prior.clone()).unwrap();
+            let acknowledged = local.document.clone();
+            local
+                .merge_synced(&acknowledged, Some(&acknowledged))
+                .unwrap();
+            assert!(local.pending_edits.is_empty());
+            let mut remote = acknowledged;
+            remote.records.get_mut(key).unwrap().stamp = Stamp {
+                counter: 100,
+                device: "b".repeat(32),
+            };
+            // Local user intent exists before dispatch, below the remote clock.
+            local.edit(key.into(), intent.clone()).unwrap();
+            local.save(&path).unwrap();
+            let dispatched = local.document.clone();
+            let mut worker = Replica::load(&path).unwrap();
+            worker.merge_for_sync(&remote).unwrap();
+            assert_eq!(worker.document.records[key].value, intent);
+            assert_eq!(worker.document.records[key].stamp.counter, 101);
+            // CAS conflict: the second read has another higher cloud version.
+            remote.records.get_mut(key).unwrap().stamp.counter = 150;
+            worker.merge_for_sync(&remote).unwrap();
+            let uploaded = worker.document.clone();
+            assert_eq!(uploaded.records[key].stamp.counter, 151);
+            worker.merge_for_sync(&remote).unwrap();
+            assert_eq!(worker.document, uploaded);
+            assert_eq!(worker.pending_edits[key], uploaded.records[key].stamp);
+
+            let mut live = Replica::load(&path).unwrap();
+            live.merge_synced(&uploaded, Some(&dispatched)).unwrap();
+            assert_eq!(live.document, uploaded);
+            assert!(live.pending_edits.is_empty());
+            // An acknowledged edit is not reasserted against a later cloud edit.
+            remote.records.get_mut(key).unwrap().stamp.counter = 200;
+            live.merge_for_sync(&remote).unwrap();
+            assert_eq!(live.document, remote);
+            assert!(live.pending_edits.is_empty());
+        }
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn legacy_pending_feedback_migrates_and_unacknowledged_import_keeps_taste() {
+        let mut local = device('a');
+        let (key, value) = feedback_edit(0, false);
+        local.edit(key.clone(), value).unwrap();
+        let mut encoded = serde_json::to_value(&local).unwrap();
+        let pending = encoded
+            .as_object_mut()
+            .unwrap()
+            .remove("pending_edits")
+            .unwrap();
+        encoded["pending_feedback"] = pending;
+        let migrated: Replica = serde_json::from_value(encoded).unwrap();
+        assert_eq!(migrated.pending_edits, local.pending_edits);
+        let saved = serde_json::to_value(migrated).unwrap();
+        assert!(saved.get("pending_feedback").is_none());
+        assert!(saved.get("pending_edits").is_some());
+
+        local.edit("taste".into(), taste("pending taste")).unwrap();
+        let mut remote = device('b');
+        for _ in 0..10 {
+            remote.edit("taste".into(), taste("cloud taste")).unwrap();
+        }
+        local.merge_synced(&remote.document, None).unwrap();
+        assert_eq!(local.document.taste(), "pending taste");
+        assert!(local.document.records["taste"].stamp.counter > 10);
+        assert!(local.pending_edits.contains_key("taste"));
     }
 
     #[test]

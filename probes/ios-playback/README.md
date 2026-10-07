@@ -47,6 +47,12 @@ also belong to their exact sign-in state. Host regressions use ephemeral local
 ports, including an occupied-port test, without opening Spotify. These source
 fixes have not been installed or tested on the physical phone.
 
+A synchronous connection rejection also revokes its callback gate, clears live
+playback status and displays a credential recovery error. No asynchronous
+engine event is expected when the C ABI refuses an empty or malformed blob.
+The saved credential stays intact for explicit replacement or Forget; foreground
+restoration cannot keep retrying a revoked connection.
+
 ## Why webpki roots instead of the desktop's native roots
 
 `rustls-native-certs` 0.8 only reads the system trust store on macOS and

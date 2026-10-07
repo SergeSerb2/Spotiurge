@@ -64,6 +64,15 @@ struct SignInSupportTests {
         precondition(gate.ticket() == nil && !gate.accepts(pending))
         gate.begin()
         precondition(!gate.accepts(pending) && gate.accepts(gate.ticket()!))
+        for result: Int32 in [-1, -2, -3, 1] {
+            gate.begin()
+            let rejected = gate.ticket()!
+            precondition(!gate.connectionStarted(result))
+            precondition(gate.ticket() == nil && !gate.accepts(rejected))
+            gate.begin()
+            precondition(!gate.accepts(rejected) && gate.connectionStarted(0))
+            precondition(gate.accepts(gate.ticket()!))
+        }
         let original = ProbeAudioGraph(render: { _, _, _, _ in 0 })
         let replacement = ProbeAudioGraph(render: { _, _, _, _ in 0 })
         precondition(original.engine !== replacement.engine)

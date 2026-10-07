@@ -120,7 +120,7 @@ mod tests {
         std::fs::remove_file(&path).unwrap();
         let reopened = reopened.unwrap();
         assert_eq!(reopened.document, uploaded.document);
-        assert!(reopened.pending_feedback.is_empty());
+        assert!(reopened.pending_edits.is_empty());
         assert_eq!(reopened.document.rating(uri), Some(Rating::Love));
     }
 }

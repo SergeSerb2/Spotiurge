@@ -118,12 +118,23 @@ the cutoff; an acknowledged sync re-expresses feedback changed after its snapsho
 above the imported clock, preserving immediate local intent. The cutoff itself
 is never re-stamped as a user edit. Offline feedback older than the cutoff is
 forgotten, even if a device's wall clock is later. Mixes, taste and AI history
-are unaffected. All devices must upgrade to enforce this retention policy. A bounded local `pending_feedback` stamp map distinguishes new, unsent ratings from old replica data. On sync it imports the remote clock and restamps only pending ratings removed by the cutoff before uploading. Successful acknowledgments clear the dispatched stamps; edits made during sync remain pending. This map is atomically saved with local state and never enters the cloud document or AI prompts.
+are unaffected. All devices must upgrade to enforce this retention policy.
+A bounded local `pending_edits` stamp journal distinguishes unsent record edits
+from acknowledged replica data. It covers taste, feedback, mix/history edits
+and tombstones, and reads older `pending_feedback` entries. On sync it imports
+the remote clock and re-expresses pending intent that a higher record or feedback
+cutoff would otherwise replace. Successful acknowledgments clear only dispatched
+stamps; edits made during sync remain pending. An import without a dispatched
+snapshot acknowledges nothing. The journal is atomically saved with local state
+and never enters the cloud document or AI prompts.
 
 Recommendation generations are invalidated by saved taste, feedback, exploration
 changes or imported taste/feedback. The superseded request retains its worker
-slot until completion, then its results and errors are discarded without
-replacing cached picks, refresh time or AI history. An old completion cannot
+slot until completion, then its content and input-specific errors are discarded
+without replacing cached picks, refresh time or AI history. Request-wide busy,
+rate-limit and pairing failures still install and persist the retry deadline or
+automatic suspension. Duplicate old completions cannot throttle newer work.
+An old completion cannot
 release a newer request's slot. Unfinished taste-editor drafts do not change the
 saved recommendation inputs.
 

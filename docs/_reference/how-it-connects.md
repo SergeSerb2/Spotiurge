@@ -192,7 +192,13 @@ not promise secure erasure of older SQLite pages or external backups.
 
 Offline edits remain locally pending. Sync refetches on revision conflicts,
 merges records by logical clock and writer identifier, and restamps unsent
-feedback when a remote record would otherwise replace it. Cached picks and
+record edits, including taste, mix/history edits and deletions, when a remote
+record would otherwise replace them. The bounded local `pending_edits` stamp
+journal also protects fresh feedback against an advanced retention cutoff.
+Older `pending_feedback` entries load into this journal. Only dispatched stamps
+are acknowledged; edits made during sync remain pending. An import without a
+dispatched snapshot cannot acknowledge local intent. The journal itself never
+reaches the cloud or AI. Cached picks and
 Spotify playback remain usable when cloud or AI requests fail. Export, volume
 backup and pairing-token rotation are documented in the
 [private-cloud service guide](https://github.com/SergeSerb2/Spotiurge/tree/main/services/private-cloud#readme).

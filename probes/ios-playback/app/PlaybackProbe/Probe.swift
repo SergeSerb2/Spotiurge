@@ -113,6 +113,11 @@ final class Probe {
         Self.credentialCallbacks.begin()
         let result = data.withUnsafeBytes { probe_connect(kind, $0.bindMemory(to: UInt8.self).baseAddress, data.count) }
         record(["t": "connect_requested", "kind": kind == 0 ? "fresh_sign_in" : "stored_credential", "result": Int(result)])
+        if !Self.credentialCallbacks.connectionStarted(result) {
+            playback.receive("error", stage: "connect", at: Date())
+            updateNowPlaying()
+            failed("credential_connect", "Playback could not start. Sign in again to replace the credential, tap Forget, or restart the probe.")
+        }
     }
 
     func forget() {
