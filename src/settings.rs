@@ -264,6 +264,8 @@ pub struct Settings {
     pub home: HomeSettings,
     /// Tint the interface with the colour of the playing album's art.
     pub accent_from_art: bool,
+    /// The photos behind the window.
+    pub scenery: crate::scenery::PhotoSet,
     /// A spectrum or waveform of the playing song behind the player bar.
     pub player_bar_vis: PlayerBarVis,
     /// Show interface changes at once instead of animating them. macOS's
@@ -437,6 +439,7 @@ impl Default for Settings {
             system_theme_cache: None,
             home: HomeSettings::default(),
             accent_from_art: true,
+            scenery: crate::scenery::PhotoSet::default(),
             player_bar_vis: PlayerBarVis::Off,
             reduce_motion: false,
             volume: (u16::MAX as u32 * 70 / 100) as u16,

@@ -136,7 +136,7 @@ jobs:
           & $iscc "/DVersion=$version" /DArch=x86_64 "/DBinary=$PWD\target\debug\spotifast.exe" "/DOutputDir=$env:RUNNER_TEMP\spotifast-installer-check" packaging\windows\spotifast.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           ./packaging/windows/package-spotiurge.ps1 -Binary target/debug/spotifast.exe -Version $version -Compiler $iscc -OutputDir target/spotiurge-installer-check
-          ./packaging/windows/test-spotiurge.ps1 -Installer "target/spotiurge-installer-check/Spotiurge-$version-windows-x86_64-setup.exe" -Binary target/spotiurge-installer-check/Spotiurge.exe -WorkDir target/spotiurge-install-check
+          ./packaging/windows/test-spotiurge.ps1 -Installer "target/spotiurge-installer-check/Spotiurge-$version-windows-x86_64-setup.exe" -Binary target/spotiurge-installer-check/Spotiurge.exe -WorkDir "$env:RUNNER_TEMP\spotiurge-install-check"
 
       - name: macOS bundle identity and helper startup
         if: runner.os == 'macOS'

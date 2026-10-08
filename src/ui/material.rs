@@ -1,8 +1,10 @@
-//! Flat chrome glass over one locally bundled mountain scene.
+//! Flat chrome glass over a scenery photo.
 //!
 //! Like T3 Pretty, the scene sits beneath a black/white contrast wash. Glass
-//! belongs to navigation and controls; the main page stays clear. The scene
-//! is decoded once off the UI thread and never changes with playback.
+//! belongs to navigation and controls; the main page stays clear. The page's
+//! Unsplash photo (see `crate::scenery`) loads through the artwork cache and
+//! cross-fades in over the previous one; the bundled mountain lake, decoded
+//! once off the UI thread, stands in until it arrives and when photos are off.
 
 use crate::theme::Palette;
 use egui::epaint::Shadow;
@@ -137,8 +139,10 @@ fn scene_texture(ctx: &egui::Context) -> Option<egui::TextureHandle> {
 
 /// T3 Pretty's scenery stack, with the dense-text contrast boost enabled.
 /// Image + wash cover 85% of the base, without an animated gradient or blur.
+/// The dark wash is a little heavier than T3 Pretty's 0.612 so dim text
+/// stays at 4.5:1 even over a pure white photo.
 fn scenery_layers(palette: &Palette) -> (Color32, Color32) {
-    let wash = if palette.dark { 0.612 } else { 0.68 };
+    let wash = if palette.dark { 0.63 } else { 0.68 };
     let image = (0.85 - wash) / (1.0 - wash);
     (
         Color32::WHITE.gamma_multiply(image),
@@ -151,18 +155,122 @@ fn scenery_layers(palette: &Palette) -> (Color32, Color32) {
     )
 }
 
-pub fn paint_scenery(painter: &Painter, rect: Rect, palette: &Palette) {
-    painter.rect_filled(rect, 0.0, palette.window);
-    if let Some(texture) = scene_texture(painter.ctx()) {
-        let (image, wash) = scenery_layers(palette);
-        painter.image(
-            texture.id(),
-            rect,
-            cover_uv(rect.size(), texture.size_vec2()),
-            image,
-        );
-        painter.rect_filled(rect, 0.0, wash);
+/// The photo shown and the one it is fading in over.
+#[derive(Clone, Default)]
+struct Shown {
+    current: Option<String>,
+    previous: Option<String>,
+}
+
+/// A loaded photo's texture, kept within the artwork memory budget.
+fn photo_texture(
+    ctx: &egui::Context,
+    art: &crate::images::ArtLoader,
+    url: &str,
+) -> Option<egui::load::SizedTexture> {
+    art.touch(url);
+    let Ok(egui::load::TexturePoll::Ready { texture }) =
+        ctx.try_load_texture(url, egui::TextureOptions::LINEAR, egui::SizeHint::default())
+    else {
+        return None;
+    };
+    art.release_bytes(url);
+    art.note_decoded(
+        url,
+        texture.size.x.round() as usize,
+        texture.size.y.round() as usize,
+    );
+    Some(texture)
+}
+
+/// Paints the window's scenery: `photo` once it has loaded, faded in over
+/// what was there, else the bundled scene.
+pub fn paint_scenery(
+    painter: &Painter,
+    rect: Rect,
+    palette: &Palette,
+    photo: Option<&str>,
+    art: &crate::images::ArtLoader,
+) {
+    let ctx = painter.ctx();
+    let id = egui::Id::new("spotiurge-scenery-shown");
+    let mut shown = ctx
+        .data(|data| data.get_temp::<Shown>(id))
+        .unwrap_or_default();
+    let target = photo.and_then(|url| photo_texture(ctx, art, url).map(|texture| (url, texture)));
+    match (&target, photo) {
+        (Some((url, _)), _) if shown.current.as_deref() != Some(*url) => {
+            shown.previous = shown.current.replace((*url).to_string());
+        }
+        // Photos turned off, or a new one is not here yet: keep what shows.
+        (None, None) => shown = Shown::default(),
+        _ => {}
     }
+    let current = target
+        .map(|(_, texture)| texture)
+        .or_else(|| photo_texture(ctx, art, shown.current.as_deref()?));
+    let fade = super::motion::entrance(
+        ctx,
+        id.with("fade"),
+        shown.current.as_deref().map_or(0, stable_key),
+        super::motion::AMBIENT,
+    );
+    let under = (fade < 1.0)
+        .then(|| {
+            shown
+                .previous
+                .as_deref()
+                .and_then(|url| photo_texture(ctx, art, url))
+                .map(|texture| (texture.id, texture.size))
+                .or_else(|| scene_texture(ctx).map(|texture| (texture.id(), texture.size_vec2())))
+        })
+        .flatten();
+    if fade >= 1.0 {
+        shown.previous = None;
+    }
+    ctx.data_mut(|data| data.insert_temp(id, shown));
+
+    painter.rect_filled(rect, 0.0, palette.window);
+    let (image, wash) = scenery_layers(palette);
+    let layers: Vec<((egui::TextureId, egui::Vec2), f32)> = match current {
+        Some(texture) => under
+            .map(|under| (under, 1.0))
+            .into_iter()
+            .chain([((texture.id, texture.size), fade)])
+            .collect(),
+        None => scene_texture(ctx)
+            .map(|texture| ((texture.id(), texture.size_vec2()), 1.0))
+            .into_iter()
+            .collect(),
+    };
+    if layers.is_empty() {
+        return;
+    }
+    // Opaque photos first, then the window colour over them, so a fade
+    // between two photos leaves the same image strength as either alone.
+    for ((texture, size), alpha) in layers {
+        painter.image(
+            texture,
+            rect,
+            cover_uv(rect.size(), size),
+            Color32::WHITE.gamma_multiply(alpha),
+        );
+    }
+    painter.rect_filled(
+        rect,
+        0.0,
+        palette
+            .window
+            .gamma_multiply(1.0 - f32::from(image.a()) / 255.0),
+    );
+    painter.rect_filled(rect, 0.0, wash);
+}
+
+fn stable_key(url: &str) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    url.hash(&mut hasher);
+    hasher.finish()
 }
 
 /// Centred aspect fill, shared across window sizes without resizing the texture.
@@ -388,13 +496,24 @@ mod tests {
         assert!(empty.is_empty());
     }
 
-    /// The real bundled photo is sampled after the same premultiplied gamma
-    /// compositing used by egui. Text remains readable both directly on the
-    /// wash and beneath translucent chrome, including hovered/selected rows.
+    /// The real bundled photo, plus the extremes any Unsplash photo can
+    /// reach, is sampled after the same premultiplied gamma compositing used
+    /// by egui. Text remains readable both directly on the wash and beneath
+    /// translucent chrome, including hovered/selected rows.
     #[test]
     fn every_scene_pixel_preserves_text_contrast() {
         let scene = decode_scene().expect("bundled JPEG");
         assert_eq!(scene.size, [960, 540]);
+        let extremes = [
+            Color32::BLACK,
+            Color32::WHITE,
+            Color32::from_rgb(255, 0, 0),
+            Color32::from_rgb(0, 255, 0),
+            Color32::from_rgb(0, 0, 255),
+            Color32::from_rgb(255, 255, 0),
+            Color32::from_rgb(0, 255, 255),
+            Color32::from_rgb(255, 0, 255),
+        ];
         for palette in [Palette::dark(), Palette::light()] {
             let (image, wash) = scenery_layers(&palette);
             let roles = [
@@ -407,7 +526,7 @@ mod tests {
             ];
             let mut minima = [f32::MAX; 6];
             let mut chip_minimum = f32::MAX;
-            for pixel in &scene.pixels {
+            for pixel in scene.pixels.iter().chain(&extremes) {
                 let ground = palette
                     .window
                     .blend(pixel.gamma_multiply(f32::from(image.a()) / 255.0))

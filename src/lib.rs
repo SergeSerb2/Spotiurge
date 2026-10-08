@@ -39,6 +39,7 @@ pub mod paths;
 pub mod player;
 pub mod playlist_cover;
 pub mod resample;
+pub mod scenery;
 pub mod session_reads;
 pub mod settings;
 pub mod single_instance;

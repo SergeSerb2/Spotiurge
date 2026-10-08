@@ -11,6 +11,19 @@ soft stone/forest/sage tones and a calm sky. Wide composition for a native
 music app beneath flat light/dark legibility washes. No text, logos, people,
 buildings, neon, glow or saturated gradients.
 
-The app uses one cached image and theme-colored flat washes. It does not
+It is the Alpine Lake setting, and stands in while an Unsplash photo loads.
+
+## Unsplash photo sets
+
+`photos.tsv` is the seed pool of T3 Pretty's five photo sets, and
+`catalog.tsv` the curated places the app searches Unsplash for. Both are
+generated from T3 Pretty's `apps/web/src/scenery` by
+`contrib/scenery/build-photos.py`, which also measures each photo's mean
+and accent colour from a small thumbnail, the same way the app measures
+album covers, so pages can pick the closest photo. Photos stay on Unsplash
+and load at run time under the Unsplash License, credited to their
+photographers in Settings.
+
+The app draws one cached photo under theme-coloured flat washes. It does not
 animate scenery or apply a per-frame backdrop blur. The native shell follows
 T3 Pretty's World Scenery vocabulary while preserving readable music content.

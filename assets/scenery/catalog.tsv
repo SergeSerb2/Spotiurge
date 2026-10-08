@@ -1,0 +1,541 @@
+# set	place	query
+world-scenery	Santorini, Greece	santorini greece caldera
+world-scenery	Tre Cime, Italy	tre cime dolomites italy
+world-scenery	Lofoten, Norway	lofoten islands norway
+world-scenery	Zermatt, Switzerland	matterhorn zermatt switzerland
+world-scenery	Skógafoss, Iceland	skogafoss waterfall iceland
+world-scenery	Cappadocia, Türkiye	cappadocia turkey balloons
+world-scenery	Plitvice Lakes, Croatia	plitvice lakes croatia
+world-scenery	Isle of Skye, United Kingdom	isle of skye scotland
+world-scenery	Lake Bled, Slovenia	lake bled slovenia
+world-scenery	Sete Cidades, Portugal	sete cidades azores portugal
+world-scenery	Hallstatt, Austria	hallstatt austria lake mountains
+world-scenery	Saxon Switzerland, Germany	saxon switzerland germany bastion bridge
+world-scenery	Mont Saint-Michel, France	mont saint michel france
+world-scenery	Geirangerfjord, Norway	geirangerfjord norway
+world-scenery	Faroe Islands, Denmark	faroe islands waterfall village
+world-scenery	Cliffs of Moher, Ireland	cliffs of moher ireland
+world-scenery	Kirkjufell, Iceland	kirkjufell mountain iceland
+world-scenery	Seceda, Italy	seceda dolomites italy
+world-scenery	Lauterbrunnen, Switzerland	lauterbrunnen valley switzerland
+world-scenery	Prokletije, Albania	prokletije albanian alps
+world-scenery	Kotor Bay, Montenegro	kotor bay montenegro
+world-scenery	Meteora, Greece	meteora monasteries greece
+world-scenery	Picos de Europa, Spain	picos de europa spain mountains
+world-scenery	Benagil Cave, Portugal	benagil cave algarve portugal
+world-scenery	Étretat, France	etretat cliffs normandy france
+world-scenery	Sveti Stefan, Montenegro	sveti stefan montenegro
+world-scenery	Rila Lakes, Bulgaria	seven rila lakes bulgaria
+world-scenery	Transfăgărășan, Romania	transfagarasan road romania mountains
+world-scenery	Český Krumlov, Czechia	cesky krumlov czech republic
+world-scenery	Białowieża Forest, Poland	bialowieza forest poland
+world-scenery	Curonian Spit, Lithuania	curonian spit lithuania dunes
+world-scenery	Gauja Valley, Latvia	gauja national park latvia autumn
+world-scenery	Saaremaa, Estonia	saaremaa estonia coast
+world-scenery	Lapland, Finland	finnish lapland aurora cabin
+world-scenery	Abisko, Sweden	abisko sweden northern lights
+world-scenery	Senja, Norway	senja norway mountains ocean
+world-scenery	Giant's Causeway, United Kingdom	giants causeway northern ireland
+world-scenery	Snowdonia, United Kingdom	snowdonia wales mountains lake
+world-scenery	Calanques, France	calanques cassis france turquoise
+world-scenery	Lake Königssee, Germany	konigssee bavaria germany lake
+world-scenery	Grossglockner, Austria	grossglockner austria alpine road
+world-scenery	Soča Valley, Slovenia	soca river valley slovenia
+world-scenery	Hvar, Croatia	hvar croatia adriatic
+world-scenery	Durmitor, Montenegro	durmitor national park montenegro
+world-scenery	Mostar, Bosnia and Herzegovina	mostar old bridge bosnia
+world-scenery	Ohrid, North Macedonia	lake ohrid north macedonia
+world-scenery	Lofou, Cyprus	lofou village cyprus stone
+world-scenery	Gozo, Malta	gozo malta coast
+world-scenery	Vík, Iceland	vik iceland black sand beach
+world-scenery	Madeira, Portugal	madeira portugal mountain coast
+world-scenery	Kyoto, Japan	kyoto japan temple
+world-scenery	Petra, Jordan	petra jordan treasury
+world-scenery	Zhangjiajie, China	zhangjiajie china mountains
+world-scenery	Ha Long Bay, Vietnam	ha long bay vietnam
+world-scenery	El Nido, Philippines	el nido palawan philippines
+world-scenery	Ubud, Indonesia	tegalalang rice terrace bali indonesia
+world-scenery	Mount Fuji, Japan	mount fuji japan lake cherry blossoms
+world-scenery	Arashiyama, Japan	arashiyama bamboo forest kyoto
+world-scenery	Shirakawa-go, Japan	shirakawa go japan winter village
+world-scenery	Jeju Island, South Korea	jeju island south korea coast
+world-scenery	Seoraksan, South Korea	seoraksan south korea autumn
+world-scenery	Guilin, China	guilin china karst li river
+world-scenery	Jiuzhaigou, China	jiuzhaigou china turquoise lake
+world-scenery	Yuanyang, China	yuanyang rice terraces china
+world-scenery	Tiger's Nest, Bhutan	tigers nest monastery bhutan
+world-scenery	Punakha, Bhutan	punakha dzong bhutan
+world-scenery	Annapurna, Nepal	annapurna nepal himalaya
+world-scenery	Everest Base Camp, Nepal	everest base camp nepal himalaya
+world-scenery	Pangong Lake, India	pangong lake ladakh india
+world-scenery	Valley of Flowers, India	valley of flowers uttarakhand india
+world-scenery	Munnar, India	munnar kerala india tea plantations
+world-scenery	Hampi, India	hampi india ruins landscape
+world-scenery	Sigiriya, Sri Lanka	sigiriya rock sri lanka
+world-scenery	Ella, Sri Lanka	ella sri lanka nine arches bridge
+world-scenery	Bagan, Myanmar	bagan myanmar temples sunrise
+world-scenery	Inle Lake, Myanmar	inle lake myanmar
+world-scenery	Luang Prabang, Laos	luang prabang laos waterfall
+world-scenery	Angkor Wat, Cambodia	angkor wat cambodia sunrise
+world-scenery	Ninh Bình, Vietnam	ninh binh vietnam limestone river
+world-scenery	Hội An, Vietnam	hoi an vietnam lanterns
+world-scenery	Khao Sok, Thailand	khao sok thailand lake limestone
+world-scenery	Railay Beach, Thailand	railay beach thailand cliffs
+world-scenery	Komodo, Indonesia	komodo island indonesia pink beach
+world-scenery	Mount Bromo, Indonesia	mount bromo indonesia sunrise
+world-scenery	Raja Ampat, Indonesia	raja ampat indonesia islands
+world-scenery	Banaue, Philippines	banaue rice terraces philippines
+world-scenery	Chocolate Hills, Philippines	chocolate hills bohol philippines
+world-scenery	Mount Kinabalu, Malaysia	mount kinabalu malaysia
+world-scenery	Cameron Highlands, Malaysia	cameron highlands malaysia tea
+world-scenery	Gardens by the Bay, Singapore	gardens by the bay singapore night
+world-scenery	Wadi Rum, Jordan	wadi rum jordan desert
+world-scenery	Socotra, Yemen	socotra yemen dragon blood trees
+world-scenery	Musandam, Oman	musandam oman fjords
+world-scenery	AlUla, Saudi Arabia	alula saudi arabia desert rocks
+world-scenery	Sheikh Zayed Mosque, United Arab Emirates	sheikh zayed mosque abu dhabi
+world-scenery	Hormuz Island, Iran	hormuz island iran colorful mountains
+world-scenery	Cappadocia Valleys, Türkiye	cappadocia turkey rock formations sunrise
+world-scenery	Lake Sevan, Armenia	lake sevan armenia monastery
+world-scenery	Kazbegi, Georgia	kazbegi georgia caucasus church
+world-scenery	Gobustan, Azerbaijan	gobustan azerbaijan mud volcano
+world-scenery	Charyn Canyon, Kazakhstan	charyn canyon kazakhstan
+world-scenery	Song-Kul, Kyrgyzstan	song kul lake kyrgyzstan yurts
+world-scenery	Pamir Highway, Tajikistan	pamir highway tajikistan mountains
+world-scenery	Registan, Uzbekistan	registan samarkand uzbekistan
+world-scenery	Darvaza, Turkmenistan	darvaza gas crater turkmenistan
+world-scenery	Gobi Desert, Mongolia	gobi desert mongolia dunes camels
+world-scenery	Altai Mountains, Mongolia	altai mountains mongolia
+world-scenery	Tian Shan, Kyrgyzstan	tian shan kyrgyzstan mountains lake
+world-scenery	Hunza Valley, Pakistan	hunza valley pakistan mountains
+world-scenery	Fairy Meadows, Pakistan	fairy meadows nanga parbat pakistan
+world-scenery	Sossusvlei, Namibia	sossusvlei namibia dunes
+world-scenery	Merzouga, Morocco	merzouga sahara morocco dunes
+world-scenery	Serengeti, Tanzania	serengeti tanzania acacia sunset
+world-scenery	Ngorongoro, Tanzania	ngorongoro crater tanzania
+world-scenery	Mount Kilimanjaro, Tanzania	mount kilimanjaro tanzania
+world-scenery	Zanzibar, Tanzania	zanzibar tanzania turquoise beach
+world-scenery	Maasai Mara, Kenya	maasai mara kenya wildlife landscape
+world-scenery	Amboseli, Kenya	amboseli kenya elephants kilimanjaro
+world-scenery	Diani Beach, Kenya	diani beach kenya
+world-scenery	Bwindi Forest, Uganda	bwindi forest uganda mist
+world-scenery	Volcanoes National Park, Rwanda	volcanoes national park rwanda
+world-scenery	Simien Mountains, Ethiopia	simien mountains ethiopia
+world-scenery	Danakil Depression, Ethiopia	danakil depression ethiopia colors
+world-scenery	Lalibela, Ethiopia	lalibela ethiopia rock church
+world-scenery	Okavango Delta, Botswana	okavango delta botswana aerial
+world-scenery	Makgadikgadi, Botswana	makgadikgadi salt pans botswana
+world-scenery	Victoria Falls, Zimbabwe	victoria falls zimbabwe
+world-scenery	Mana Pools, Zimbabwe	mana pools zimbabwe elephants
+world-scenery	Blyde River Canyon, South Africa	blyde river canyon south africa
+world-scenery	Drakensberg, South Africa	drakensberg south africa mountains
+world-scenery	Cape Point, South Africa	cape point south africa coast
+world-scenery	Namaqualand, South Africa	namaqualand south africa flowers
+world-scenery	Bazaruto, Mozambique	bazaruto mozambique islands
+world-scenery	Avenue of the Baobabs, Madagascar	avenue of baobabs madagascar
+world-scenery	Tsingy de Bemaraha, Madagascar	tsingy de bemaraha madagascar
+world-scenery	Le Morne, Mauritius	le morne mauritius aerial
+world-scenery	Anse Source d'Argent, Seychelles	anse source argent seychelles
+world-scenery	Pico do Fogo, Cabo Verde	pico do fogo cape verde volcano
+world-scenery	Chefchaouen, Morocco	chefchaouen morocco blue city
+world-scenery	Atlas Mountains, Morocco	atlas mountains morocco village
+world-scenery	Moraine Lake, Canada	moraine lake banff canada
+world-scenery	Arenal, Costa Rica	arenal volcano costa rica
+world-scenery	Yosemite Valley, United States	yosemite valley california
+world-scenery	Grand Canyon, United States	grand canyon arizona sunrise
+world-scenery	Monument Valley, United States	monument valley arizona utah
+world-scenery	Na Pali Coast, United States	na pali coast kauai hawaii
+world-scenery	Denali, United States	denali alaska mountain
+world-scenery	Glacier Bay, United States	glacier bay alaska
+world-scenery	Antelope Canyon, United States	antelope canyon arizona light
+world-scenery	Maroon Bells, United States	maroon bells colorado autumn
+world-scenery	Yellowstone, United States	yellowstone grand prismatic spring
+world-scenery	Big Sur, United States	big sur california coast
+world-scenery	Mount Rainier, United States	mount rainier washington wildflowers
+world-scenery	Crater Lake, United States	crater lake oregon
+world-scenery	Bryce Canyon, United States	bryce canyon utah sunrise
+world-scenery	Banff, Canada	banff canada mountains lake
+world-scenery	Jasper, Canada	jasper national park canada
+world-scenery	Tofino, Canada	tofino vancouver island canada
+world-scenery	Gros Morne, Canada	gros morne newfoundland canada
+world-scenery	Torngat Mountains, Canada	torngat mountains canada
+world-scenery	Tulum, Mexico	tulum mexico ruins turquoise sea
+world-scenery	Sumidero Canyon, Mexico	sumidero canyon chiapas mexico
+world-scenery	Hierve el Agua, Mexico	hierve el agua oaxaca mexico
+world-scenery	Lake Atitlán, Guatemala	lake atitlan guatemala volcano
+world-scenery	Semuc Champey, Guatemala	semuc champey guatemala pools
+world-scenery	Great Blue Hole, Belize	great blue hole belize aerial
+world-scenery	Roatán, Honduras	roatan honduras reef beach
+world-scenery	Cerro Negro, Nicaragua	cerro negro volcano nicaragua
+world-scenery	Monteverde, Costa Rica	monteverde cloud forest costa rica
+world-scenery	Bocas del Toro, Panama	bocas del toro panama islands
+world-scenery	Viñales, Cuba	vinales cuba valley
+world-scenery	Samaná, Dominican Republic	samana dominican republic coast
+world-scenery	El Yunque, Puerto Rico	el yunque puerto rico rainforest
+world-scenery	Pitons, Saint Lucia	pitons saint lucia
+world-scenery	The Baths, British Virgin Islands	the baths virgin gorda
+world-scenery	Torres del Paine, Chile	torres del paine patagonia chile
+world-scenery	Machu Picchu, Peru	machu picchu peru
+world-scenery	Iguazu Falls, Argentina	iguazu falls argentina
+world-scenery	Salar de Uyuni, Bolivia	salar de uyuni bolivia reflection
+world-scenery	Lençóis Maranhenses, Brazil	lencois maranhenses brazil lagoons
+world-scenery	Rio de Janeiro, Brazil	rio de janeiro brazil sugarloaf
+world-scenery	Chapada Diamantina, Brazil	chapada diamantina brazil
+world-scenery	Fernando de Noronha, Brazil	fernando de noronha brazil aerial
+world-scenery	Mount Roraima, Venezuela	mount roraima venezuela
+world-scenery	Angel Falls, Venezuela	angel falls venezuela
+world-scenery	Cocora Valley, Colombia	cocora valley colombia wax palms
+world-scenery	Caño Cristales, Colombia	cano cristales colombia river
+world-scenery	Galápagos, Ecuador	galapagos ecuador landscape
+world-scenery	Cotopaxi, Ecuador	cotopaxi ecuador volcano
+world-scenery	Huacachina, Peru	huacachina peru oasis dunes
+world-scenery	Rainbow Mountain, Peru	rainbow mountain peru
+world-scenery	Laguna Colorada, Bolivia	laguna colorada bolivia flamingos
+world-scenery	Atacama Desert, Chile	atacama desert chile night sky
+world-scenery	Marble Caves, Chile	marble caves patagonia chile
+world-scenery	Perito Moreno, Argentina	perito moreno glacier argentina
+world-scenery	Fitz Roy, Argentina	fitz roy patagonia argentina
+world-scenery	Punta del Este, Uruguay	punta del este uruguay coast
+world-scenery	Kaieteur Falls, Guyana	kaieteur falls guyana
+world-scenery	Central Suriname Reserve, Suriname	suriname rainforest river
+world-scenery	Los Roques, Venezuela	los roques venezuela islands
+world-scenery	Milford Sound, New Zealand	milford sound new zealand
+world-scenery	Aoraki, New Zealand	aoraki mount cook new zealand
+world-scenery	Lake Tekapo, New Zealand	lake tekapo new zealand lupins
+world-scenery	Tongariro, New Zealand	tongariro alpine crossing new zealand
+world-scenery	Roy's Peak, New Zealand	roys peak wanaka new zealand
+world-scenery	Cathedral Cove, New Zealand	cathedral cove new zealand
+world-scenery	Great Barrier Reef, Australia	great barrier reef australia aerial
+world-scenery	Uluru, Australia	uluru australia sunset
+world-scenery	Twelve Apostles, Australia	twelve apostles australia coast
+world-scenery	Whitehaven Beach, Australia	whitehaven beach australia aerial
+world-scenery	Cradle Mountain, Australia	cradle mountain tasmania australia
+world-scenery	Kakadu, Australia	kakadu australia wetlands
+world-scenery	Bora Bora, French Polynesia	bora bora french polynesia aerial
+world-scenery	Moorea, French Polynesia	moorea french polynesia mountains
+world-scenery	Aitutaki, Cook Islands	aitutaki cook islands lagoon
+world-scenery	Yasawa Islands, Fiji	yasawa islands fiji
+world-scenery	Savai'i, Samoa	savaii samoa waterfall coast
+world-scenery	Vavaʻu, Tonga	vavau tonga islands
+world-scenery	Espiritu Santo, Vanuatu	espiritu santo vanuatu blue hole
+world-scenery	Rock Islands, Palau	rock islands palau aerial
+world-scenery	Kokoda Track, Papua New Guinea	kokoda track papua new guinea mountains
+world-scenery	Easter Island, Chile	easter island chile moai
+world-scenery	Lord Howe Island, Australia	lord howe island australia
+world-scenery	Norfolk Island, Australia	norfolk island australia coast
+world-scenery	Cinque Terre, Italy	cinque terre italy coast
+world-scenery	Positano, Italy	positano amalfi coast italy
+world-scenery	Val d'Orcia, Italy	val d orcia tuscany cypress
+world-scenery	Venice, Italy	venice italy canal sunrise
+world-scenery	Lake Como, Italy	lake como italy village mountains
+world-scenery	Passo Giau, Italy	passo giau dolomites italy
+world-scenery	Preikestolen, Norway	preikestolen pulpit rock norway
+world-scenery	Trolltunga, Norway	trolltunga norway
+world-scenery	Tromsø, Norway	tromso norway arctic fjord
+world-scenery	Jotunheimen, Norway	jotunheimen norway mountains
+world-scenery	Svalbard, Norway	svalbard norway glacier arctic
+world-scenery	Glencoe, United Kingdom	glencoe scotland mountains
+world-scenery	Glenfinnan, United Kingdom	glenfinnan viaduct scotland
+world-scenery	Ring of Kerry, Ireland	ring of kerry ireland coast
+world-scenery	Skellig Michael, Ireland	skellig michael ireland
+world-scenery	Møns Klint, Denmark	mons klint denmark cliffs
+world-scenery	Koli, Finland	koli national park finland lake
+world-scenery	Rügen, Germany	rugen germany chalk cliffs
+world-scenery	Rhine Valley, Germany	rhine valley germany castle
+world-scenery	Black Forest, Germany	black forest germany hills mist
+world-scenery	Verdon Gorge, France	verdon gorge france turquoise
+world-scenery	Annecy, France	annecy france lake mountains
+world-scenery	Chamonix, France	chamonix mont blanc france
+world-scenery	Provence, France	provence france lavender fields
+world-scenery	Calanques de Piana, France	calanques de piana corsica
+world-scenery	Douro Valley, Portugal	douro valley portugal terraces
+world-scenery	Pico Island, Portugal	pico island azores portugal
+world-scenery	Teide, Spain	mount teide tenerife spain
+world-scenery	Ronda, Spain	ronda spain gorge bridge
+world-scenery	Gaztelugatxe, Spain	san juan gaztelugatxe spain
+world-scenery	Serra de Tramuntana, Spain	serra de tramuntana mallorca
+world-scenery	Navagio, Greece	navagio shipwreck beach zakynthos
+world-scenery	Zagori, Greece	zagori greece stone villages
+world-scenery	Dubrovnik, Croatia	dubrovnik croatia walls adriatic
+world-scenery	Krka, Croatia	krka waterfalls croatia
+world-scenery	Prague, Czechia	prague czech republic charles bridge
+world-scenery	Bohemian Switzerland, Czechia	bohemian switzerland czech pravcicka
+world-scenery	Budapest, Hungary	budapest hungary parliament danube
+world-scenery	High Tatras, Slovakia	high tatras slovakia mountains lake
+world-scenery	Tatra Mountains, Poland	tatra mountains poland zakopane
+world-scenery	Transylvania, Romania	transylvania romania carpathian
+world-scenery	Theth, Albania	theth albania alps valley
+world-scenery	Albanian Riviera, Albania	albanian riviera beach mountains
+world-scenery	Bruges, Belgium	bruges belgium canal
+world-scenery	Giethoorn, Netherlands	giethoorn netherlands canals
+world-scenery	Mullerthal, Luxembourg	mullerthal luxembourg rock forest
+world-scenery	Grindelwald, Switzerland	grindelwald switzerland eiger
+world-scenery	Oeschinen Lake, Switzerland	oeschinen lake switzerland
+world-scenery	Mount Etna, Italy	mount etna sicily italy
+world-scenery	Stromboli, Italy	stromboli italy volcano
+world-scenery	Sapa, Vietnam	sapa vietnam rice terraces mist
+world-scenery	Nusa Penida, Indonesia	nusa penida indonesia cliffs
+world-scenery	Coron, Philippines	coron palawan philippines lagoons
+world-scenery	Kelimutu, Indonesia	kelimutu indonesia colored lakes
+world-scenery	Taroko Gorge, Taiwan	taroko gorge taiwan
+world-scenery	Sun Moon Lake, Taiwan	sun moon lake taiwan
+world-scenery	Alishan, Taiwan	alishan taiwan forest sunrise
+world-scenery	Boseong, South Korea	boseong tea fields south korea
+world-scenery	Kamikochi, Japan	kamikochi japan alps
+world-scenery	Biei, Japan	biei hokkaido japan blue pond
+world-scenery	Furano, Japan	furano hokkaido lavender
+world-scenery	Hakone, Japan	hakone japan mount fuji lake
+world-scenery	Shiretoko, Japan	shiretoko hokkaido japan
+world-scenery	Takachiho, Japan	takachiho gorge japan
+world-scenery	Okinawa, Japan	okinawa japan turquoise coast
+world-scenery	Dal Lake, India	dal lake srinagar kashmir
+world-scenery	Jaisalmer, India	jaisalmer india thar desert fort
+world-scenery	Rann of Kutch, India	rann of kutch india white desert
+world-scenery	Andaman Islands, India	andaman islands india beach
+world-scenery	Maldives	maldives aerial atoll turquoise
+world-scenery	Pamukkale, Türkiye	pamukkale turkey white terraces
+world-scenery	Svaneti, Georgia	svaneti georgia towers mountains
+world-scenery	Cedars of God, Lebanon	cedars of god lebanon
+world-scenery	Dead Sea, Jordan	dead sea jordan coastline
+world-scenery	Isfahan, Iran	isfahan iran mosque square
+world-scenery	Tigray, Ethiopia	tigray ethiopia rock churches landscape
+world-scenery	Fish River Canyon, Namibia	fish river canyon namibia
+world-scenery	Skeleton Coast, Namibia	skeleton coast namibia dunes ocean
+world-scenery	Table Mountain, South Africa	table mountain cape town south africa
+world-scenery	Spitzkoppe, Namibia	spitzkoppe namibia granite
+world-scenery	Lake Malawi, Malawi	lake malawi africa shoreline
+world-scenery	Virunga, Democratic Republic of the Congo	virunga volcanoes congo
+world-scenery	White Sands, United States	white sands new mexico dunes
+world-scenery	Zion, United States	zion national park utah
+world-scenery	Arches, United States	delicate arch utah sunset
+world-scenery	Canyonlands, United States	canyonlands utah mesa arch
+world-scenery	Death Valley, United States	death valley california dunes
+world-scenery	Olympic Peninsula, United States	olympic national park washington moss
+world-scenery	Acadia, United States	acadia maine coast sunrise
+world-scenery	Grand Teton, United States	grand teton wyoming snake river
+world-scenery	Great Smoky Mountains, United States	great smoky mountains mist
+world-scenery	Sedona, United States	sedona arizona red rocks
+world-scenery	Havasu Falls, United States	havasu falls arizona
+world-scenery	Multnomah Falls, United States	multnomah falls oregon
+world-scenery	Antelope Island, United States	great salt lake utah
+world-scenery	Lake Louise, Canada	lake louise banff canada
+world-scenery	Peyto Lake, Canada	peyto lake banff canada
+world-scenery	Niagara, Canada	niagara falls canada aerial
+world-scenery	Bay of Fundy, Canada	bay of fundy canada
+world-scenery	Saguenay Fjord, Canada	saguenay fjord canada
+world-scenery	Copper Canyon, Mexico	copper canyon mexico
+world-scenery	Peña de Bernal, Mexico	pena de bernal mexico
+world-scenery	Salar de Atacama, Chile	salar de atacama chile lagoon
+world-scenery	Quebrada de Humahuaca, Argentina	quebrada de humahuaca argentina
+world-scenery	Iguazu Brazilian Side, Brazil	iguazu falls brazil aerial
+world-scenery	Jalapão, Brazil	jalapao tocantins brazil dunes
+world-scenery	Ushuaia, Argentina	ushuaia argentina mountains
+world-scenery	Hooker Valley, New Zealand	hooker valley mount cook new zealand
+world-scenery	Doubtful Sound, New Zealand	doubtful sound new zealand
+world-scenery	Mount Aspiring, New Zealand	mount aspiring new zealand
+world-scenery	Punakaiki, New Zealand	punakaiki pancake rocks new zealand
+world-scenery	Bay of Islands, New Zealand	bay of islands new zealand
+world-scenery	Wilsons Promontory, Australia	wilsons promontory australia
+world-scenery	Blue Mountains, Australia	blue mountains australia three sisters
+world-scenery	The Pinnacles, Australia	pinnacles desert western australia
+world-scenery	Ningaloo, Australia	ningaloo reef australia aerial
+world-scenery	Bay of Fires, Australia	bay of fires tasmania
+world-scenery	Fiordland, New Zealand	fiordland new zealand waterfall
+world-scenery	Antarctica Peninsula	antarctica peninsula icebergs
+world-scenery	South Georgia	south georgia island landscape
+world-scenery	Greenland Ilulissat	ilulissat icefjord greenland
+world-scenery	Kalsoy, Faroe Islands	kalsoy lighthouse faroe islands
+night-cities	Shinjuku, Japan	tokyo shinjuku neon night
+night-cities	Shibuya, Japan	shibuya crossing tokyo night
+night-cities	Dotonbori, Japan	osaka dotonbori night neon
+night-cities	Hong Kong Island, China	hong kong skyline night victoria harbour
+night-cities	Mong Kok, China	hong kong neon rain night street
+night-cities	The Bund, China	shanghai bund night skyline
+night-cities	Pudong, China	shanghai pudong night rain
+night-cities	Seoul, South Korea	seoul night skyline namsan
+night-cities	Myeongdong, South Korea	seoul myeongdong night rain neon
+night-cities	Marina Bay, Singapore	singapore marina bay night
+night-cities	Times Square, United States	times square new york night
+night-cities	Brooklyn Bridge, United States	brooklyn bridge new york night
+night-cities	Manhattan, United States	manhattan skyline night rain
+night-cities	Chicago River, United States	chicago skyline night river
+night-cities	San Francisco, United States	san francisco night fog skyline
+night-cities	Los Angeles, United States	los angeles downtown night
+night-cities	Las Vegas, United States	las vegas strip night
+night-cities	Miami, United States	miami skyline night
+night-cities	Seattle, United States	seattle skyline night
+night-cities	Portland Rain, United States	portland oregon rain night street
+night-cities	London, United Kingdom	london thames night skyline
+night-cities	Paris, France	paris eiffel tower night
+night-cities	Berlin, Germany	berlin night skyline
+night-cities	Amsterdam, Netherlands	amsterdam canals night
+night-cities	Barcelona, Spain	barcelona night skyline
+night-cities	Prague Night, Czechia	prague night charles bridge
+night-cities	Budapest Night, Hungary	budapest parliament night
+night-cities	Vienna, Austria	vienna night city
+night-cities	Istanbul, Türkiye	istanbul night galata
+night-cities	Dubai, United Arab Emirates	dubai skyline night
+night-cities	Sydney, Australia	sydney harbour night opera house
+night-cities	Melbourne, Australia	melbourne night city rain
+night-cities	Toronto, Canada	toronto skyline night
+night-cities	Vancouver, Canada	vancouver night skyline mountains
+night-cities	Montreal, Canada	montreal night old city
+night-cities	Mexico City, Mexico	mexico city night skyline
+night-cities	São Paulo, Brazil	sao paulo night skyline
+night-cities	Rio Night, Brazil	rio de janeiro night skyline
+night-cities	Buenos Aires, Argentina	buenos aires night city
+night-cities	Bangkok, Thailand	bangkok night skyline river
+night-cities	Taipei, Taiwan	taipei 101 night skyline
+night-cities	Kuala Lumpur, Malaysia	kuala lumpur petronas night
+night-cities	Mumbai, India	mumbai night skyline marine drive
+night-cities	Cape Town, South Africa	cape town night waterfront
+night-cities	Cairo, Egypt	cairo night city nile
+night-cities	Moscow, Russia	moscow night red square
+night-cities	St. Petersburg, Russia	saint petersburg night palace
+night-cities	Tokyo Rain, Japan	tokyo rain night street neon
+night-cities	New York Rain, United States	new york rain night street reflections
+night-cities	Chicago Rain, United States	chicago rain night street
+deep-forest	Redwood National Park, United States	redwood forest california fog
+deep-forest	Hoh Rain Forest, United States	hoh rainforest olympic moss
+deep-forest	Olympic Peninsula Woods, United States	olympic national park mossy forest
+deep-forest	Sequoia Grove, United States	sequoia grove fog california
+deep-forest	Great Smoky Mountains Woods, United States	smoky mountains forest mist
+deep-forest	Appalachian Forest, United States	appalachian forest autumn mist
+deep-forest	Tongass, United States	tongass national forest alaska
+deep-forest	Yakushima, Japan	yakushima japan moss cedar forest
+deep-forest	Shirakami, Japan	shirakami sanchi japan beech forest
+deep-forest	Kamikochi Woods, Japan	kamikochi japan forest river
+deep-forest	Black Forest Woods, Germany	black forest germany fog trees
+deep-forest	Bavarian Forest, Germany	bavarian forest germany mist
+deep-forest	Białowieża Woods, Poland	bialowieza forest mist trees
+deep-forest	Carpathian Forest, Romania	carpathian forest romania mist
+deep-forest	Caledonian Forest, United Kingdom	caledonian forest scotland pine
+deep-forest	Ancient Woodland, United Kingdom	ancient woodland england bluebells
+deep-forest	Irati Forest, Spain	irati forest spain beech
+deep-forest	Fontainebleau, France	fontainebleau forest france
+deep-forest	Ardennes, Belgium	ardennes forest mist
+deep-forest	Taiga, Finland	finnish taiga pine forest mist
+deep-forest	Siberian Taiga, Russia	siberian taiga forest
+deep-forest	Daintree, Australia	daintree rainforest australia
+deep-forest	Tarkine, Australia	tarkine forest tasmania
+deep-forest	Waipoua, New Zealand	waipoua kauri forest new zealand
+deep-forest	Fiordland Forest, New Zealand	fiordland rainforest new zealand
+deep-forest	Amazon Rainforest, Brazil	amazon rainforest river canopy
+deep-forest	Valdivian Forest, Chile	valdivian rainforest chile
+deep-forest	Andean Cloud Forest, Ecuador	andean cloud forest ecuador
+deep-forest	Monteverde Woods, Costa Rica	monteverde cloud forest mist
+deep-forest	Borneo Rainforest, Malaysia	borneo rainforest mist
+deep-forest	Mossy Forest, Malaysia	mossy forest cameron highlands
+deep-forest	Sinharaja, Sri Lanka	sinharaja rainforest sri lanka
+deep-forest	Sumatra Rainforest, Indonesia	sumatra rainforest indonesia
+deep-forest	Madagascar Forest, Madagascar	madagascar rainforest mist
+deep-forest	Congo Basin, Republic of the Congo	congo basin rainforest
+deep-forest	Bwindi Woods, Uganda	bwindi forest mist uganda
+deep-forest	Cedar Forest, Morocco	atlas cedar forest morocco mist
+deep-forest	Pacific Northwest, Canada	british columbia rainforest moss
+deep-forest	Great Bear Rainforest, Canada	great bear rainforest canada
+deep-forest	Fundy Forest, Canada	bay of fundy forest fog
+deep-forest	Patagonian Woods, Chile	patagonia forest mist lenga
+deep-forest	Jiuzhaigou Woods, China	jiuzhaigou forest lake china
+deep-forest	Zhangjiajie Forest, China	zhangjiajie forest pillars mist
+deep-forest	Plitvice Woods, Croatia	plitvice forest waterfall moss
+deep-forest	Slovenian Forest, Slovenia	slovenia forest mist river
+deep-forest	Hallstatt Woods, Austria	austrian alpine forest mist
+deep-forest	Swiss Forest, Switzerland	swiss forest mist pine
+deep-forest	Norwegian Forest, Norway	norway pine forest fjord mist
+deep-forest	Hokkaido Forest, Japan	hokkaido forest autumn mist
+night-sky	Lofoten Aurora, Norway	lofoten norway aurora borealis
+night-sky	Tromsø Aurora, Norway	tromso aurora borealis night
+night-sky	Abisko Aurora, Sweden	abisko sweden northern lights
+night-sky	Lapland Aurora, Finland	finnish lapland aurora cabin
+night-sky	Iceland Aurora, Iceland	iceland aurora borealis landscape
+night-sky	Yukon Aurora, Canada	yukon canada northern lights
+night-sky	Yellowknife Aurora, Canada	yellowknife aurora borealis
+night-sky	Alaska Aurora, United States	alaska aurora borealis mountains
+night-sky	Atacama Sky, Chile	atacama desert milky way
+night-sky	Namib Sky, Namibia	namibia desert milky way
+night-sky	Wadi Rum Sky, Jordan	wadi rum milky way night
+night-sky	Sahara Sky, Morocco	sahara morocco milky way dunes
+night-sky	Aoraki Sky, New Zealand	aoraki mount cook milky way
+night-sky	Tekapo Sky, New Zealand	lake tekapo milky way
+night-sky	Uluru Sky, Australia	uluru milky way night
+night-sky	Death Valley Sky, United States	death valley milky way
+night-sky	Big Bend Sky, United States	big bend texas milky way
+night-sky	Utah Sky, United States	utah desert milky way arches
+night-sky	Yosemite Sky, United States	yosemite milky way night
+night-sky	Grand Canyon Sky, United States	grand canyon milky way
+night-sky	Monument Valley Sky, United States	monument valley milky way
+night-sky	Jasper Sky, Canada	jasper dark sky milky way
+night-sky	Mauna Kea, United States	mauna kea hawaii milky way
+night-sky	Canary Islands Sky, Spain	la palma milky way observatory
+night-sky	Alps Sky, Switzerland	swiss alps milky way
+night-sky	Dolomites Sky, Italy	dolomites milky way night
+night-sky	Himalaya Sky, Nepal	himalaya milky way night
+night-sky	Andes Sky, Peru	andes peru milky way
+night-sky	Patagonia Sky, Argentina	patagonia milky way fitz roy
+night-sky	Salar Sky, Bolivia	salar de uyuni milky way
+night-sky	Iceland Stars, Iceland	iceland milky way kirkjufell
+night-sky	Norway Stars, Norway	norway fjord milky way
+night-sky	Meteor Shower, United States	perseid meteor shower landscape
+night-sky	Star Trails, United States	star trails desert landscape
+night-sky	Moonrise Mountains, United States	full moon mountain landscape night
+night-sky	Airglow, New Zealand	airglow milky way night landscape
+night-sky	Zodiacal Light, Chile	zodiacal light desert night
+night-sky	Green Aurora, Iceland	green aurora over mountains
+night-sky	Purple Aurora, Norway	purple aurora borealis night
+night-sky	Aurora Lake, Canada	aurora borealis lake reflection
+night-sky	Dark Sky Park, United States	international dark sky park milky way
+night-sky	Pic du Midi, France	pic du midi milky way
+night-sky	Namib Dunes Sky, Namibia	sossusvlei milky way dunes
+night-sky	Gobi Sky, Mongolia	gobi desert milky way
+night-sky	Tibet Sky, China	tibet milky way mountains
+grand-buildings	Sagrada Família, Spain	sagrada familia barcelona architecture
+grand-buildings	Alhambra, Spain	alhambra granada architecture
+grand-buildings	Duomo di Milano, Italy	milan duomo cathedral architecture
+grand-buildings	Florence Cathedral, Italy	florence duomo architecture
+grand-buildings	St. Peter's Basilica, Italy	st peters basilica vatican architecture
+grand-buildings	Pantheon, Italy	pantheon rome architecture
+grand-buildings	Colosseum, Italy	colosseum rome architecture
+grand-buildings	Notre-Dame, France	notre dame paris cathedral architecture
+grand-buildings	Sainte-Chapelle, France	sainte chapelle paris stained glass
+grand-buildings	Mont-Saint-Michel Abbey, France	mont saint michel abbey architecture
+grand-buildings	Cologne Cathedral, Germany	cologne cathedral architecture
+grand-buildings	Neuschwanstein, Germany	neuschwanstein castle architecture
+grand-buildings	St. Basil's, Russia	st basils cathedral moscow architecture
+grand-buildings	Hagia Sophia, Türkiye	hagia sophia istanbul architecture
+grand-buildings	Blue Mosque, Türkiye	blue mosque istanbul architecture
+grand-buildings	Taj Mahal, India	taj mahal agra architecture
+grand-buildings	Golden Temple, India	golden temple amritsar architecture
+grand-buildings	Meenakshi Temple, India	meenakshi temple madurai architecture
+grand-buildings	Lotus Temple, India	lotus temple delhi architecture
+grand-buildings	Angkor Wat, Cambodia	angkor wat temple architecture
+grand-buildings	Borobudur, Indonesia	borobudur temple architecture
+grand-buildings	Prambanan, Indonesia	prambanan temple architecture
+grand-buildings	Wat Arun, Thailand	wat arun bangkok architecture
+grand-buildings	Kiyomizu-dera, Japan	kiyomizu dera kyoto architecture
+grand-buildings	Tōdai-ji, Japan	todaiji nara architecture
+grand-buildings	Byōdō-in, Japan	byodoin uji architecture
+grand-buildings	Forbidden City, China	forbidden city beijing architecture
+grand-buildings	Temple of Heaven, China	temple of heaven beijing architecture
+grand-buildings	Sheikh Zayed Mosque, United Arab Emirates	sheikh zayed mosque architecture
+grand-buildings	Hassan II Mosque, Morocco	hassan ii mosque casablanca architecture
+grand-buildings	Petra Treasury, Jordan	petra treasury architecture
+grand-buildings	Parthenon, Greece	parthenon athens architecture
+grand-buildings	Westminster, United Kingdom	westminster palace london architecture
+grand-buildings	St. Paul's, United Kingdom	st pauls cathedral london architecture
+grand-buildings	Sagrada Interior, Spain	sagrada familia interior columns
+grand-buildings	Casa Milà, Spain	casa mila gaudi architecture
+grand-buildings	Guggenheim Bilbao, Spain	guggenheim bilbao architecture
+grand-buildings	Fallingwater, United States	fallingwater wright architecture
+grand-buildings	Chrysler Building, United States	chrysler building new york architecture
+grand-buildings	Flatiron, United States	flatiron building new york architecture
+grand-buildings	Sydney Opera House, Australia	sydney opera house architecture
+grand-buildings	Petronas Towers, Malaysia	petronas towers architecture
+grand-buildings	Burj Khalifa, United Arab Emirates	burj khalifa architecture
+grand-buildings	Marina Bay Sands, Singapore	marina bay sands architecture
+grand-buildings	Louvre, France	louvre pyramid paris architecture
+grand-buildings	Château de Chenonceau, France	chenonceau castle architecture
+grand-buildings	Versailles, France	palace of versailles architecture
+grand-buildings	Schönbrunn, Austria	schonbrunn palace architecture
+grand-buildings	Potala Palace, China	potala palace lhasa architecture
+grand-buildings	Shwedagon, Myanmar	shwedagon pagoda architecture
