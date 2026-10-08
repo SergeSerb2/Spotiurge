@@ -412,6 +412,9 @@ pub struct App {
     accent_pending: HashSet<String>,
     /// Each cover's measured colours, for matching scenery to it.
     art_colors: HashMap<String, crate::images::ArtColors>,
+    /// When a cover last failed to be measured, so scenery retries it
+    /// at most once a minute.
+    art_colors_failed: HashMap<String, Instant>,
     pub scenery: crate::scenery::Scenery,
     /// The last scenery pick and what it was picked for.
     scenery_pick: Option<(SceneryFor, Option<crate::scenery::Photo>)>,
@@ -877,6 +880,7 @@ impl App {
             accents: HashMap::new(),
             accent_pending: HashSet::new(),
             art_colors: HashMap::new(),
+            art_colors_failed: HashMap::new(),
             scenery,
             scenery_pick: None,
             dialog: None,
@@ -1678,6 +1682,10 @@ impl App {
         let cover = self.scenery_cover();
         if let Some(url) = &cover
             && !self.art_colors.contains_key(url)
+            && self
+                .art_colors_failed
+                .get(url)
+                .is_none_or(|failed| failed.elapsed() >= Duration::from_secs(60))
             && self.accent_pending.insert(url.clone())
         {
             self.backend.send(Command::Accent { url: url.clone() });
@@ -1689,7 +1697,7 @@ impl App {
         let key = SceneryFor {
             set,
             colors,
-            date: jiff::Zoned::now().date(),
+            date: self.scenery.today(),
             generation: self.scenery.generation(),
         };
         if let Some((picked_for, photo)) = &self.scenery_pick
@@ -1927,7 +1935,11 @@ impl App {
 
     fn handle_backend_events(&mut self, events: Vec<Event>) {
         for event in events {
+            // A cover's measured colours are local artwork work, which the
+            // demo's scenery uses too.
+            let measured = matches!(&event, Event::Accent { .. } | Event::AccentFailed { .. });
             if self.offline
+                && !measured
                 && (self.update_source.is_github()
                     || !matches!(
                         &event,
@@ -2118,10 +2130,18 @@ impl App {
                 Event::Local(state) => self.handle_local(*state),
                 Event::Api(response) => self.handle_api(*response),
                 Event::Accent { url, colors } => {
-                    self.accent_pending.remove(&url);
-                    let tint = self.palette.tint_from_art(colors.accent);
                     self.art_colors.insert(url.clone(), colors);
-                    self.accents.insert(url, tint);
+                    // Offline demo windows keep their untinted pages; the
+                    // cover stays pending so it is not measured again.
+                    if !self.offline {
+                        self.accent_pending.remove(&url);
+                        let tint = self.palette.tint_from_art(colors.accent);
+                        self.accents.insert(url, tint);
+                    }
+                }
+                Event::AccentFailed { url } => {
+                    self.accent_pending.remove(&url);
+                    self.art_colors_failed.insert(url, Instant::now());
                 }
                 Event::ProxyRestored { config, password } => {
                     self.handle_proxy_restored(config, password)

@@ -220,6 +220,8 @@ struct Stored {
     cursor: BTreeMap<PhotoSet, usize>,
     /// Photos whose download ping Unsplash has received.
     registered: Vec<String>,
+    /// Seconds since the epoch of the last search run, for any set.
+    searched_at: u64,
 }
 
 struct Inner {
@@ -228,11 +230,14 @@ struct Inner {
     key: Option<String>,
     file: PathBuf,
     online: bool,
+    /// The day the photo of the day follows; `None` is today.
+    date: Option<jiff::civil::Date>,
     stored: Mutex<Stored>,
+    /// Held while `scenery.json` is written and replaced.
+    saving: Mutex<()>,
     refreshing: AtomicBool,
     generation: std::sync::atomic::AtomicU64,
-    /// Sets already refreshed (or tried) this run, so a failure is not retried
-    /// every frame.
+    /// Sets refreshed, or found fresh, this run.
     attempted: Mutex<HashSet<PhotoSet>>,
     registering: Mutex<HashSet<String>>,
 }
@@ -264,13 +269,42 @@ impl Scenery {
                 key: online.then(|| access_key(&config_dir)).flatten(),
                 file,
                 online,
+                date: None,
                 stored: Mutex::new(stored),
+                saving: Mutex::new(()),
                 refreshing: AtomicBool::new(false),
                 generation: std::sync::atomic::AtomicU64::new(0),
                 attempted: Mutex::new(HashSet::new()),
                 registering: Mutex::new(HashSet::new()),
             }),
         }
+    }
+
+    /// Demo mode: the seed pool on a fixed day, with no Unsplash key and
+    /// nothing saved, so captures repeat.
+    pub fn demo(art: &ArtLoader) -> Self {
+        let (http, runtime) = art.network();
+        Self {
+            inner: Arc::new(Inner {
+                http,
+                runtime,
+                key: None,
+                file: PathBuf::new(),
+                online: true,
+                date: Some(jiff::civil::date(2026, 10, 8)),
+                stored: Mutex::new(Stored::default()),
+                saving: Mutex::new(()),
+                refreshing: AtomicBool::new(false),
+                generation: std::sync::atomic::AtomicU64::new(0),
+                attempted: Mutex::new(HashSet::new()),
+                registering: Mutex::new(HashSet::new()),
+            }),
+        }
+    }
+
+    /// The day the photo of the day is for.
+    pub fn today(&self) -> jiff::civil::Date {
+        self.inner.date.unwrap_or_else(|| jiff::Zoned::now().date())
     }
 
     /// The set's photo of the day, the same all day.
@@ -318,37 +352,40 @@ impl Scenery {
         if set == PhotoSet::AlpineLake || inner.key.is_none() {
             return;
         }
-        if !inner
-            .attempted
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .insert(set)
-        {
+        let mut attempted = inner.attempted.lock().unwrap_or_else(|p| p.into_inner());
+        if attempted.contains(&set) {
             return;
         }
         let now = unix_now();
-        {
-            let mut stored = inner.stored.lock().unwrap_or_else(|p| p.into_inner());
-            match stored.fetched_at.get(&set) {
-                Some(&at) if now.saturating_sub(at) < STALE.as_secs() => return,
-                None if seed().get(&set).is_some_and(|seed| seed.len() >= 50) => {
-                    stored.fetched_at.insert(set, now);
-                    drop(stored);
-                    self.save();
-                    return;
-                }
-                _ => {}
+        let mut stored = inner.stored.lock().unwrap_or_else(|p| p.into_inner());
+        match stored.fetched_at.get(&set) {
+            Some(&at) if now.saturating_sub(at) < STALE.as_secs() => {
+                attempted.insert(set);
+                return;
             }
+            None if seed().get(&set).is_some_and(|seed| seed.len() >= 50) => {
+                attempted.insert(set);
+                stored.fetched_at.insert(set, now);
+                drop(stored);
+                self.save();
+                return;
+            }
+            _ => {}
         }
-        if inner.refreshing.swap(true, Ordering::AcqRel) {
-            // Another set is refreshing; try this one on a later frame.
-            inner
-                .attempted
-                .lock()
-                .unwrap_or_else(|p| p.into_inner())
-                .remove(&set);
+        // A stale set waits, checking again on later frames, while the proxy
+        // is still being restored, while another set searches, and for an
+        // hour after any search, so all sets together stay under Unsplash's
+        // 50 requests an hour.
+        if inner.http.client().is_err()
+            || now.saturating_sub(stored.searched_at) < 60 * 60
+            || inner.refreshing.swap(true, Ordering::AcqRel)
+        {
             return;
         }
+        attempted.insert(set);
+        stored.searched_at = now;
+        drop((stored, attempted));
+        self.save();
         let this = self.clone();
         let ctx = ctx.clone();
         inner.runtime.spawn(async move {
@@ -468,6 +505,10 @@ impl Scenery {
     }
 
     fn save(&self) {
+        if self.inner.file.as_os_str().is_empty() {
+            return;
+        }
+        let _saving = self.inner.saving.lock().unwrap_or_else(|p| p.into_inner());
         let text = {
             let stored = self.inner.stored.lock().unwrap_or_else(|p| p.into_inner());
             match serde_json::to_vec(&*stored) {
@@ -809,6 +850,53 @@ mod tests {
             Some(first)
         );
         assert!(online.daily(PhotoSet::AlpineLake, date).is_none());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_stale_set_waits_an_hour_after_any_search() {
+        let dir =
+            std::env::temp_dir().join(format!("spotiurge-scenery-gate-{}", std::process::id()));
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        let art = ArtLoader::new(Http::default(), runtime.handle().clone(), dir.join("art"));
+        let base = Scenery::new(&art, dir.clone(), dir.clone(), false);
+        let scenery = Scenery {
+            inner: Arc::new(Inner {
+                key: Some("test-key".into()),
+                file: dir.join("scenery.json"),
+                online: true,
+                ..Arc::into_inner(base.inner).unwrap()
+            }),
+        };
+        let now = unix_now();
+        {
+            let mut stored = scenery.inner.stored.lock().unwrap();
+            let stale = now - STALE.as_secs() - 1;
+            stored.fetched_at.insert(PhotoSet::NightSky, stale);
+            stored.fetched_at.insert(PhotoSet::DeepForest, now);
+            // Another set searched a minute ago.
+            stored.searched_at = now - 60;
+        }
+        let ctx = egui::Context::default();
+        scenery.refresh_if_stale(PhotoSet::NightSky, &ctx);
+        assert!(!scenery.inner.refreshing.load(Ordering::Acquire));
+        let attempted = scenery.inner.attempted.lock().unwrap().clone();
+        assert!(
+            !attempted.contains(&PhotoSet::NightSky),
+            "it tries again later"
+        );
+        scenery.refresh_if_stale(PhotoSet::DeepForest, &ctx);
+        assert!(
+            scenery
+                .inner
+                .attempted
+                .lock()
+                .unwrap()
+                .contains(&PhotoSet::DeepForest)
+        );
+        assert!(!scenery.inner.refreshing.load(Ordering::Acquire));
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

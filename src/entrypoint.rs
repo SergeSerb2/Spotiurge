@@ -517,6 +517,9 @@ pub(crate) fn run() -> eframe::Result<()> {
     }
     #[cfg(feature = "demo")]
     if demo {
+        // Demo windows show the scenery photos on a fixed day; tests keep the
+        // bundled photo and stay offline.
+        app.scenery = spotifast::scenery::Scenery::demo(app.backend.art());
         spotifast::demo::populate(&mut app);
         spotifast::demo::apply_flags(&mut app, cli.demo_page.as_deref(), cli.demo_show.as_deref());
         if let Some(feed) = &cli.demo_update_feed {

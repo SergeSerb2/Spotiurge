@@ -311,7 +311,8 @@ crash, attach `panic.log` too.
 
 Builds made with `cargo build --features demo` accept `--demo`, which loads
 sample data for screenshots and interface work. Demo mode never writes
-settings.
+settings. Its scenery shows the seed photo sets as of October 8, 2026, loaded from
+images.unsplash.com like its sample covers, without searching Unsplash.
 
 `--demo-page` opens a page, such as `home`, `playlist:pl1`, or `artist:art0`,
 and `--demo-show` adds surfaces on top of it: a comma separated list of

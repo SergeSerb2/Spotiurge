@@ -486,5 +486,5 @@ The For you content plate: Desk title, the update age (or "Demo picks"), shuffle
 - **Don't** use moss for selection, hover or grouping.
 - **Don't** paint a dark chip or disabled pill with opaque `surface-active`; it disappears on the dark content plate.
 - **Don't** use a second cue (rim plus fill) to separate a plate from its host.
-- **Don't** fetch scenery from anywhere but Unsplash, or show a photo without its photographer's credit.
+- **Don't** fetch scenery from anywhere but Unsplash, or drop the photographer's credit (with a link to their Unsplash profile) from Settings → Appearance → Scenery.
 - **Don't** claim playback features Spotify does not support.

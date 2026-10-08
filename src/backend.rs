@@ -1044,6 +1044,10 @@ pub enum Event {
         url: String,
         colors: crate::images::ArtColors,
     },
+    /// The cover could not be fetched or measured; it may be asked for again.
+    AccentFailed {
+        url: String,
+    },
     Error(String),
     /// GitHub answered an update check, or the request failed.
     UpdateChecked {
@@ -3711,16 +3715,18 @@ impl Worker {
         let events = self.events.clone();
         let waker = self.waker.clone();
         tokio::spawn(async move {
-            if let Ok(bytes) = art.fetch(&url).await {
-                let colors = tokio::task::spawn_blocking(move || art_colors(&bytes))
+            let colors = match art.fetch(&url).await {
+                Ok(bytes) => tokio::task::spawn_blocking(move || art_colors(&bytes))
                     .await
                     .ok()
-                    .flatten();
-                if let Some(colors) = colors {
-                    let _ = events.send(Event::Accent { url, colors });
-                    waker.wake();
-                }
-            }
+                    .flatten(),
+                Err(_) => None,
+            };
+            let _ = events.send(match colors {
+                Some(colors) => Event::Accent { url, colors },
+                None => Event::AccentFailed { url },
+            });
+            waker.wake();
         });
     }
 }
