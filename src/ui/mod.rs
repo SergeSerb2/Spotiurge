@@ -43,7 +43,15 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let signed_in = app.is_connected() && app.user.is_some();
     let connecting = matches!(app.auth, AuthStatus::Connecting | AuthStatus::Starting)
         || (app.is_connected() && app.user.is_none());
-    material::paint_scenery(ui.painter(), ui.max_rect(), &app.palette);
+    let photo = app.scenery_photo(ctx).map(|photo| photo.url());
+    let art = app.backend.art().clone();
+    material::paint_scenery(
+        ui.painter(),
+        ui.max_rect(),
+        &app.palette,
+        photo.as_deref(),
+        &art,
+    );
     if !signed_in {
         player_bar::end_tint_session(ctx);
         login::show(app, ui, connecting);

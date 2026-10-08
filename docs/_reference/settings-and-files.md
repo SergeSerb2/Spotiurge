@@ -16,6 +16,7 @@ Some internal filenames retain their upstream names. On Linux:
 | Settings | `~/.config/spotiurge/settings.json` | Yes, you lose preferences |
 | Winamp skins | `~/.config/spotiurge/skins/` | Yes, you add them again |
 | MilkDrop presets | `~/.config/spotiurge/milkdrop/` | Yes, you fetch them again |
+| Unsplash access key (optional) | `~/.config/spotiurge/unsplash-access-key` | Yes, scenery keeps its bundled photos and stops searching for more |
 | Spotify grants (available since 0.8.0) | System credential store | Use Sign out in Settings |
 | Credential revocation markers (available since 0.8.0) | `~/.local/state/spotiurge/credential-storage/` | Keep after a failed sign-out deletion |
 | Legacy shared Web API grant | `~/.local/state/spotiurge/shared_web_api_token.json` | Removed after migration or sign-out |
@@ -28,6 +29,7 @@ Some internal filenames retain their upstream names. On Linux:
 | Audio cache | `~/.cache/spotiurge/audio/` | Always |
 | Artwork cache | `~/.cache/spotiurge/art/` | Always |
 | Lyrics cache | `~/.cache/spotiurge/lyrics/` | Always |
+| Scenery photos found on Unsplash | `~/.cache/spotiurge/scenery.json` | Always |
 | Account-scoped playlist page cache | `~/.cache/spotiurge/playlists/<account-id>/` | Always |
 | Last run's log | `~/.local/state/spotiurge/spotifast.log` | Always |
 | Crash log | `~/.local/state/spotiurge/panic.log` | Always |
@@ -240,6 +242,7 @@ main fields are:
 | `custom_theme_cache` | absent | Last accepted custom palette; preserves appearance if its file is missing or invalid |
 | `system_theme_cache` | absent | Last accepted Omarchy palette for Follow system; retained across restarts |
 | `accent_from_art` | `true` | Tint pages with album art |
+| `scenery` | `world-scenery` | The photos behind the window: `world-scenery`, `night-cities`, `deep-forest`, `night-sky`, `grand-buildings`, or `alpine-lake` (the bundled photo only, with no Unsplash requests) |
 | `player_bar_vis` | `off` | Since 0.11.0: what moves behind the player bar while a song plays on this computer: `off`, `spectrum` or `waveform` |
 | `library_sort` | `{}` | Per-section Library order overrides, since 0.8.0: `library`, `recently_played`, `name`, `recently_added`, `local`, or `spotify`, where supported |
 | `sidebar_order` | `[]` | Saved local playlist arrangement, including an unpinned Liked Songs, retained when another sort is selected |

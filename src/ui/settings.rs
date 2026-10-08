@@ -4,8 +4,9 @@ use egui::{Align, CornerRadius, Frame, Layout, Margin, Stroke, Vec2};
 
 use crate::api::models::pick_image;
 use crate::app::App;
-use crate::i18n::{gettext, ngettext, pgettext};
+use crate::i18n::{Locale, gettext, ngettext, pgettext};
 use crate::model::{Action, Dialog};
+use crate::scenery::PhotoSet;
 use crate::settings::{LanguageChoice, ProxyMode, ThemeChoice};
 use crate::theme::{self, Icon, Palette};
 
@@ -852,6 +853,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let custom_titlebar = gettext(locale, "Custom title bar");
     let player_bar_vis = gettext(locale, "Player bar visualizer");
     let reduce_motion = gettext(locale, "Reduce motion");
+    let scenery_title = gettext(locale, "Scenery");
     let appearance_rows = [
         RowText::new(theme_title.clone(), {
             let detail = theme::catalog_detail(
@@ -935,6 +937,13 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             gettext(
                 locale,
                 "Show changes at once instead of animating them. macOS Reduce Motion also applies.",
+            ),
+        ),
+        RowText::new(
+            scenery_title.clone(),
+            gettext(
+                locale,
+                "Photos behind the app. Album, artist, playlist and show pages use the photo closest to their cover's colours; other pages show the photo of the day.",
             ),
         ),
     ];
@@ -1037,6 +1046,18 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                             buttons(ui);
                         }
                     });
+                },
+            );
+            filtered_row(
+                ui,
+                &palette,
+                &needle,
+                &appearance,
+                &appearance_rows[10],
+                |ui| {
+                    if scenery_picker(app, ui, &scenery_title) {
+                        changed = true;
+                    }
                 },
             );
             filtered_row(
@@ -2039,6 +2060,59 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
 /// A band's frequency the short way: 60, 170, 1K, 16K.
 /// The interface language: System first, then each language by its own name,
 /// so a reader can find theirs whatever language the app is showing.
+fn scenery_label(locale: Locale, set: PhotoSet) -> std::borrow::Cow<'static, str> {
+    match set {
+        PhotoSet::WorldScenery => gettext(locale, "World Scenery"),
+        PhotoSet::NightCities => gettext(locale, "Night Cities"),
+        PhotoSet::DeepForest => gettext(locale, "Deep Forest"),
+        PhotoSet::NightSky => gettext(locale, "Night Sky"),
+        PhotoSet::GrandBuildings => gettext(locale, "Grand Buildings"),
+        PhotoSet::AlpineLake => gettext(locale, "Alpine Lake"),
+    }
+}
+
+/// The photo set, and the credit for the photo showing. Returns whether the
+/// set changed.
+fn scenery_picker(app: &mut App, ui: &mut egui::Ui, name: &str) -> bool {
+    let locale = app.locale;
+    let current = app.settings.scenery;
+    let selected = scenery_label(locale, current);
+    let mut changed = false;
+    ui.with_layout(Layout::top_down(Align::Max), |ui| {
+        let response = egui::ComboBox::from_id_salt("appearance_scenery")
+            .selected_text(selected.as_ref())
+            .width(200.0_f32.min(ui.available_width()))
+            .show_ui(ui, |ui| {
+                for set in PhotoSet::ALL {
+                    if ui
+                        .selectable_label(current == set, scenery_label(locale, set).as_ref())
+                        .clicked()
+                        && current != set
+                    {
+                        app.settings.scenery = set;
+                        changed = true;
+                    }
+                }
+            });
+        response.response.widget_info(|| {
+            let mut info =
+                egui::WidgetInfo::labeled(egui::WidgetType::ComboBox, ui.is_enabled(), name);
+            info.current_text_value = Some(selected.to_string());
+            info
+        });
+        // Unsplash asks for the photographer's credit wherever a photo shows.
+        if let Some(photo) = app.scenery_shown() {
+            let credit = gettext(locale, "Photo by {name} on Unsplash")
+                .replace("{name}", &photo.photographer);
+            let link = ui.link(format!("{} · {credit}", photo.place));
+            if link.clicked() {
+                app.actions.push(Action::OpenUrl(photo.photographer_url()));
+            }
+        }
+    });
+    changed
+}
+
 fn language_picker(app: &mut App, ui: &mut egui::Ui) {
     let locale = app.locale;
     let system = pgettext(locale, "language", "System");

@@ -113,6 +113,16 @@ current-track pickup.
   carries the Spotify artwork URL for the desktop to resolve and asks for
   nothing extra.
 - Lyrics, in the cache directory, for a month.
+- Scenery photos: each loads once from images.unsplash.com into the artwork
+  cache. Album, artist, playlist, show and radio pages pick the photo closest
+  to the cover's measured colours, entirely on this computer; other pages show
+  the set's photo of the day. With an access key (`SPOTIURGE_UNSPLASH_KEY`, or
+  the `unsplash-access-key` file in the config directory), the app searches
+  api.unsplash.com every two weeks: 24 of the set's curated places, 8
+  photos each, then a small thumbnail of each to measure its colours. Results
+  are kept in `scenery.json` in the cache directory. Each photo's download
+  ping goes to api.unsplash.com once. Unsplash receives the place names
+  searched and the key, never Spotify data. Alpine Lake sends nothing.
 - Liked Songs metadata, scoped to the verified account, in the cache directory.
   This behavior is available since 0.8.0.
   Cached pages less than 15 minutes old need no repeat request. Older cached

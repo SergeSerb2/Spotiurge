@@ -67,6 +67,12 @@ impl ArtLoader {
         }
     }
 
+    /// The HTTP client and runtime artwork is fetched with, for other
+    /// image work that shares the proxy and stays off the UI thread.
+    pub fn network(&self) -> (Http, tokio::runtime::Handle) {
+        (self.inner.http.clone(), self.inner.runtime.clone())
+    }
+
     /// Bytes for `url`, from memory, disk, or the network.
     pub async fn fetch(&self, url: &str) -> Result<Arc<[u8]>, String> {
         self.inner.fetch(url).await
@@ -398,15 +404,27 @@ impl BytesLoader for ArtLoader {
     }
 }
 
-/// A colour that represents an album cover, suitable for tinting a dark or
-/// light surface: the most common saturated hue, with its lightness pulled
-/// into a range that still reads as a background.
-pub fn accent_color(bytes: &[u8]) -> Option<[u8; 3]> {
+/// A cover's colours: its accent, suitable for tinting a dark or light
+/// surface (the most common saturated hue, with its lightness pulled into a
+/// range that still reads as a background), and its plain mean. Scenery
+/// matching compares both with the same measure of each photo
+/// (`contrib/scenery/build-photos.py`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ArtColors {
+    pub accent: [u8; 3],
+    pub mean: [u8; 3],
+}
+
+pub fn art_colors(bytes: &[u8]) -> Option<ArtColors> {
     let decoded = image::load_from_memory(bytes).ok()?;
     let small = decoded.thumbnail(48, 48).to_rgb8();
     let mut buckets: HashMap<(u8, u8, u8), (u64, [u64; 3])> = HashMap::new();
+    let mut total = [0u64; 3];
     for pixel in small.pixels() {
         let [r, g, b] = pixel.0;
+        for (sum, channel) in total.iter_mut().zip([r, g, b]) {
+            *sum += u64::from(channel);
+        }
         let (max, min) = (r.max(g).max(b) as f32, r.min(g).min(b) as f32);
         let saturation = if max == 0.0 { 0.0 } else { (max - min) / max };
         let lightness = (max + min) / 510.0;
@@ -424,11 +442,15 @@ pub fn accent_color(bytes: &[u8]) -> Option<[u8; 3]> {
     if weight == 0 {
         return None;
     }
-    Some([
-        (sum[0] / weight) as u8,
-        (sum[1] / weight) as u8,
-        (sum[2] / weight) as u8,
-    ])
+    let pixels = (small.width() * small.height()).max(1) as u64;
+    Some(ArtColors {
+        accent: [
+            (sum[0] / weight) as u8,
+            (sum[1] / weight) as u8,
+            (sum[2] / weight) as u8,
+        ],
+        mean: total.map(|sum| (sum / pixels) as u8),
+    })
 }
 
 /// Blur applied to the full-window lyrics backdrop.
@@ -1195,7 +1217,7 @@ mod tests {
     }
 
     #[test]
-    fn accent_color_finds_dominant_hue() {
+    fn art_colors_find_dominant_hue_and_mean() {
         let mut image = image::RgbImage::new(16, 16);
         for (x, _, pixel) in image.enumerate_pixels_mut() {
             *pixel = if x < 12 {
@@ -1211,7 +1233,9 @@ mod tests {
                 image::ImageFormat::Png,
             )
             .unwrap();
-        let color = accent_color(&bytes).unwrap();
+        let colors = art_colors(&bytes).unwrap();
+        let color = colors.accent;
+        assert_eq!(colors.mean, [82, 156, 214]);
         assert!(
             color[2] > color[0],
             "expected the blue field, got {color:?}"

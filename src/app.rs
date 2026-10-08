@@ -188,6 +188,16 @@ impl PendingPaste {
     }
 }
 
+/// What a scenery pick was made for; a new page, cover, set, day, or
+/// refreshed pool picks again.
+#[derive(Clone, Copy, PartialEq)]
+struct SceneryFor {
+    set: crate::scenery::PhotoSet,
+    colors: Option<crate::images::ArtColors>,
+    date: jiff::civil::Date,
+    generation: u64,
+}
+
 /// How the application is being started.
 #[derive(Clone, Copy, Debug)]
 pub struct AppOptions {
@@ -400,6 +410,11 @@ pub struct App {
     saved_writes: HashMap<String, bool>,
     pub accents: HashMap<String, Color32>,
     accent_pending: HashSet<String>,
+    /// Each cover's measured colours, for matching scenery to it.
+    art_colors: HashMap<String, crate::images::ArtColors>,
+    pub scenery: crate::scenery::Scenery,
+    /// The last scenery pick and what it was picked for.
+    scenery_pick: Option<(SceneryFor, Option<crate::scenery::Photo>)>,
 
     pub dialog: Option<Dialog>,
     cover_request: u64,
@@ -689,6 +704,12 @@ impl App {
             waker.clone(),
             options.restore_sign_in,
         );
+        let scenery = crate::scenery::Scenery::new(
+            backend.art(),
+            dirs.config.clone(),
+            dirs.cache.clone(),
+            options.restore_sign_in,
+        );
         let locale = settings.language.resolve();
         let applied_proxy = if options.restore_sign_in {
             crate::settings::ProxyConfig::Invalid(
@@ -855,6 +876,9 @@ impl App {
             saved_writes: HashMap::new(),
             accents: HashMap::new(),
             accent_pending: HashSet::new(),
+            art_colors: HashMap::new(),
+            scenery,
+            scenery_pick: None,
             dialog: None,
             cover_request: 0,
             cover_uploads: HashMap::new(),
@@ -1646,6 +1670,86 @@ impl App {
         self.accents.get(&url).copied()
     }
 
+    /// The scenery photo for the page: the one closest to its cover's
+    /// colours, or the photo of the day. `None` shows the bundled photo.
+    pub fn scenery_photo(&mut self, ctx: &egui::Context) -> Option<crate::scenery::Photo> {
+        let set = self.settings.scenery;
+        self.scenery.refresh_if_stale(set, ctx);
+        let cover = self.scenery_cover();
+        if let Some(url) = &cover
+            && !self.art_colors.contains_key(url)
+            && self.accent_pending.insert(url.clone())
+        {
+            self.backend.send(Command::Accent { url: url.clone() });
+        }
+        let colors = cover
+            .as_ref()
+            .and_then(|url| self.art_colors.get(url))
+            .copied();
+        let key = SceneryFor {
+            set,
+            colors,
+            date: jiff::Zoned::now().date(),
+            generation: self.scenery.generation(),
+        };
+        if let Some((picked_for, photo)) = &self.scenery_pick
+            && *picked_for == key
+        {
+            return photo.clone();
+        }
+        let photo = match colors {
+            Some(colors) => self.scenery.matching(set, colors),
+            // A cover still being measured keeps the previous photo rather
+            // than flashing the photo of the day.
+            None if cover.is_some() => self
+                .scenery_pick
+                .as_ref()
+                .and_then(|(_, photo)| photo.clone())
+                .or_else(|| self.scenery.daily(set, key.date)),
+            None => self.scenery.daily(set, key.date),
+        };
+        if let Some(photo) = &photo {
+            self.scenery.register(photo);
+        }
+        if cover.is_none() || colors.is_some() {
+            self.scenery_pick = Some((key, photo.clone()));
+        }
+        photo
+    }
+
+    /// The scenery photo last picked, for its credit.
+    pub fn scenery_shown(&self) -> Option<&crate::scenery::Photo> {
+        self.scenery_pick.as_ref()?.1.as_ref()
+    }
+
+    /// The cover of the album, artist, playlist, show, or radio page open,
+    /// at the size its tint is measured from.
+    fn scenery_cover(&self) -> Option<String> {
+        use crate::api::models::pick_image;
+        let images = match self.page() {
+            Page::Album(id) => self.album_pages.get(id)?.album.get()?.images.clone(),
+            Page::Artist(id) => self.artist_pages.get(id)?.artist.get()?.images.clone(),
+            Page::Playlist(id) => self
+                .playlist_pages
+                .get(id)
+                .and_then(|page| page.playlist.get())
+                .or_else(|| self.known_playlist(id))?
+                .images
+                .clone(),
+            Page::Show(id) => self.show_pages.get(id)?.show.get()?.images.clone(),
+            Page::Radio(seed) => {
+                let images = self.radio_images(seed);
+                if images.is_empty() {
+                    self.radio_pages.get(seed)?.images.clone()
+                } else {
+                    images
+                }
+            }
+            _ => return None,
+        };
+        pick_image(&images, 64).map(str::to_string)
+    }
+
     pub fn tint_for(&mut self, url: Option<&str>) -> Option<Color32> {
         let url = url?;
         if let Some(color) = self.accents.get(url) {
@@ -2013,9 +2117,10 @@ impl App {
                 }
                 Event::Local(state) => self.handle_local(*state),
                 Event::Api(response) => self.handle_api(*response),
-                Event::Accent { url, color } => {
+                Event::Accent { url, colors } => {
                     self.accent_pending.remove(&url);
-                    let tint = self.palette.tint_from_art(color);
+                    let tint = self.palette.tint_from_art(colors.accent);
+                    self.art_colors.insert(url.clone(), colors);
                     self.accents.insert(url, tint);
                 }
                 Event::ProxyRestored { config, password } => {

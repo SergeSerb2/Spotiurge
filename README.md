@@ -15,10 +15,12 @@ https://github.com/user-attachments/assets/a5f669ce-b3b7-4f8e-9933-976a78876c7e
 ![Spotiurge's native For you desk, glass sidebar and player console](docs/reviews/spotiurge-scenery/after-home-dark-normal.jpg)
 
 The desktop interface shares T3 Pretty's forest/mist palette and quiet scenery
-language. One locally bundled mountain/lake image sits beneath a flat contrast
-wash, with translucent navigation and controls, clear page content and a new
-ridge-meter mark. The scene is decoded once off the UI thread and never animates
-or downloads. The album-art colour setting retains a faint, flat tint in the
+language. A landscape photo from Unsplash sits beneath a flat contrast wash,
+with translucent navigation and controls, clear page content and a new
+ridge-meter mark. **Settings → Appearance → Scenery** picks the photo set (World
+Scenery, Night Cities, Deep Forest, Night Sky, Grand Buildings, or the bundled
+Alpine Lake). Most pages show the set's photo of the day; album, artist,
+playlist, show and radio pages show the photo whose colours best match the cover. The album-art colour setting retains a faint, flat tint in the
 player console. No browser or continuous backdrop-blur pass is used.
 Selection, navigation and control feedback use short, finite transitions.
 **Settings → Appearance → Reduce motion**, or macOS Reduce Motion, shows changes

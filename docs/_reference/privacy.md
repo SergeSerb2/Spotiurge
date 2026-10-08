@@ -43,6 +43,13 @@ Spotifast connects only to the services below.
 - **LRCLIB.** When the lyrics panel is open and Spotify has no lyrics for the
   song, Spotifast sends its artist, title, album and length to
   [lrclib.net](https://lrclib.net). Nothing identifying you is included.
+- **Unsplash.** Unless **Settings → Appearance → Scenery** is Alpine Lake,
+  scenery photos load from images.unsplash.com. Which photo loads depends on
+  the day and on the colours of the cover on screen; neither the cover nor
+  what you play is sent. With an Unsplash access key, every two weeks the
+  app also searches api.unsplash.com for more photos of the set's curated
+  places, and tells Unsplash once when a photo is first shown, as Unsplash's
+  guidelines ask. The key is sent only to Unsplash and never logged.
 - **GitHub.** Once a day, Spotifast asks GitHub for the latest release. You
   can turn automatic checks off in Settings. Downloading an update, and the
   first opening of MilkDrop, also fetch files from GitHub. No Spotify data is

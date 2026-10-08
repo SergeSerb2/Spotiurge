@@ -1,6 +1,6 @@
 ---
 name: Spotiurge
-description: A quiet listening workspace in T3 Pretty's World Scenery family. Flat forest and mist chrome over one static mountain lake, with moss reserved for whatever is live.
+description: A quiet listening workspace in T3 Pretty's World Scenery family. Flat forest and mist chrome over a still Unsplash scenery photo matched to the page, with moss reserved for whatever is live.
 colors:
   dark-window: "#0e1110"
   dark-panel: "#141a17"
@@ -30,7 +30,7 @@ colors:
   dark-selected-fill: "rgba(255, 255, 255, 0.095)"
   dark-chip-fill: "rgba(255, 255, 255, 0.08)"
   dark-chip-fill-hover: "rgba(255, 255, 255, 0.12)"
-  dark-scenery-wash: "rgba(0, 0, 0, 0.612)"
+  dark-scenery-wash: "rgba(0, 0, 0, 0.63)"
   dark-liked-cover: "#3c5d4b"
   light-window: "#f4f6f4"
   light-panel: "#ffffff"
@@ -330,11 +330,11 @@ components:
 
 **Creative North Star: "The Quiet Listening Workspace"**
 
-Spotiurge is a quiet listening workspace in T3 Pretty's World Scenery family. Music stays in the foreground, and the scenery gives the app a recognizable place. One static, locally bundled, original mountain and lake image sits beneath a flat black or white contrast wash. Over it, flat translucent forest (dark) or mist (light) chrome holds navigation and the playback console. The main page stays clear. Menus and popovers are opaque.
+Spotiurge is a quiet listening workspace in T3 Pretty's World Scenery family. Music stays in the foreground, and the scenery gives the app a recognizable place. A still landscape photo from the chosen photo set sits beneath a flat black or white contrast wash: the set's photo of the day, or on album, artist, playlist, show and radio pages the photo whose colours sit closest to the cover's. The bundled mountain lake stands in while a photo loads and when photos are off. Over it, flat translucent forest (dark) or mist (light) chrome holds navigation and the playback console. The main page stays clear. Menus and popovers are opaque.
 
 The native composition is unchanged from the inherited app: sidebar, top bar, page and floating console, with Inter and the existing native control vocabulary. Glass here is painted compositing in egui (a translucent fill over the image and wash). It is not OS blur or backdrop-filter, and nothing is blurred per frame. Moss (mint in dark, deep forest in light) is the only accent, and it marks what is live: the play keys, the playing title, active console toggles and the Connect state.
 
-The scenery is static and never causes idle animation. Motion is finite, interruptible and short, and Reduce Motion removes it. The previous amber studio world, its cover glows, sheen, double rims and leading lamp bars are retired.
+The scenery is still and never causes idle animation; it changes only with the page, cross-fading once. Motion is finite, interruptible and short, and Reduce Motion removes it. The previous amber studio world, its cover glows, sheen, double rims and leading lamp bars are retired.
 
 **Key Characteristics:**
 - One static photographic scene under a flat wash, covering 85% of the base together.
@@ -421,7 +421,7 @@ Depth is tonal and flat. The image and wash form the ground, translucent glass s
 ### Named Rules
 **The Single Cue Rule.** A surface steps off its host with fill or with a hairline, never both, and never with a glow, sheen or second rim.
 
-**The Still Scenery Rule.** The scene is decoded once off the UI thread, cached as one texture and drawn under a flat wash. It never animates, never follows playback and is never blurred per frame.
+**The Still Scenery Rule.** Each photo is decoded off the UI thread, cached as one texture and drawn under a flat wash. It changes only with navigation (one finite cross-fade, none with Reduce Motion), never follows playback and is never blurred per frame. The wash keeps every text role at 4.5:1 even over a pure white or black photo.
 
 ## Shapes
 
@@ -486,5 +486,5 @@ The For you content plate: Desk title, the update age (or "Demo picks"), shuffle
 - **Don't** use moss for selection, hover or grouping.
 - **Don't** paint a dark chip or disabled pill with opaque `surface-active`; it disappears on the dark content plate.
 - **Don't** use a second cue (rim plus fill) to separate a plate from its host.
-- **Don't** fetch scenery or imagery from a network service; the scene is bundled.
+- **Don't** fetch scenery from anywhere but Unsplash, or show a photo without its photographer's credit.
 - **Don't** claim playback features Spotify does not support.
