@@ -1,0 +1,8 @@
+# Staged by build.sh from the repository's brand assets and the desktop's
+# pinned fastframe-fonts checkout; never committed as copies.
+/Spotiurge/InterVariable.ttf
+/Spotiurge/Assets.xcassets/AppIcon.appiconset/spotiurge-1024.png
+/SpotiurgeCore/.build/
+/Spotiurge.xcodeproj/project.xcworkspace/xcuserdata/
+/Spotiurge.xcodeproj/xcuserdata/
+/Spotiurge/Assets.xcassets/Scenery.imageset/alpine-lake.jpg

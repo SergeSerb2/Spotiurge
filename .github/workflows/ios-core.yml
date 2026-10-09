@@ -1,0 +1,30 @@
+name: iOS core
+
+on:
+  push:
+    branches: [main]
+    paths: ["apps/ios/**", "services/private-cloud/**", ".github/workflows/ios-core.yml"]
+  pull_request:
+    paths: ["apps/ios/**", "services/private-cloud/**", ".github/workflows/ios-core.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-core-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: Swift core and desktop wire compatibility
+    runs-on: macos-15
+    timeout-minutes: 10
+    env:
+      # Swift 6.2 and iOS 26 need this toolchain, not the image's default Xcode.
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check discovery, matching, conflict handling and server compatibility
+        working-directory: apps/ios/SpotiurgeCore
+        run: swift test --scratch-path ../../../target/ios-core
